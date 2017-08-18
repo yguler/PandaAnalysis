@@ -131,7 +131,8 @@ def merge(shortnames,mergedname):
 
 d = {
     'test'                 : ['Diboson_ww'],
-    'ZZ'                   : ['ZZTo2L2Nu_13TeV_powheg_pythia8','ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8','ZZTo4L_13TeV_powheg_pythia8','GluGluToContinToZZTo2e2mu_13TeV_MCFM701_pythia8','GluGluToContinToZZTo2e2tau_13TeV_MCFM701_pythia8','GluGluToContinToZZTo2mu2tau_13TeV_MCFM701_pythia8','GluGluToContinToZZTo4e_13TeV_MCFM701_pythia8','GluGluToContinToZZTo4mu_13TeV_MCFM701_pythia8','GluGluToContinToZZTo4tau_13TeV_MCFM701_pythia8','GluGluToContinToZZTo2e2nu_13TeV_MCFM701_pythia8','GluGluToContinToZZTo2mu2nu_13TeV_MCFM701_pythia8',],
+    'qqZZ'                 : ['ZZTo2L2Nu_13TeV_powheg_pythia8','ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8','ZZTo4L_13TeV_powheg_pythia8'],
+    'ggZZ'                 : ['GluGluToContinToZZTo2e2mu_13TeV_MCFM701_pythia8','GluGluToContinToZZTo2e2tau_13TeV_MCFM701_pythia8','GluGluToContinToZZTo2mu2tau_13TeV_MCFM701_pythia8','GluGluToContinToZZTo4e_13TeV_MCFM701_pythia8','GluGluToContinToZZTo4mu_13TeV_MCFM701_pythia8','GluGluToContinToZZTo4tau_13TeV_MCFM701_pythia8','GluGluToContinToZZTo2e2nu_13TeV_MCFM701_pythia8','GluGluToContinToZZTo2mu2nu_13TeV_MCFM701_pythia8',],
     'WZ'                   : ['WZTo1L1Nu2Q_13TeV_amcatnloFXFX_madspin_pythia8','WZTo1L3Nu_13TeV_amcatnloFXFX_madspin_pythia8','WZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8','WZTo3LNu_TuneCUETP8M1_13TeV-powheg-pythia8'],
     'qqWW'                 : ['WWTo2L2Nu_13TeV-powheg'],
     'ggWW'                 : ['GluGluWWTo2L2Nu_MCFM_13TeV'],

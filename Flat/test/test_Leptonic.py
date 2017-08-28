@@ -36,8 +36,8 @@ if skimmer.isData and False:
         for run,lumis in payload.iteritems():
             for l in lumis:
                 skimmer.AddGoodLumiRange(int(run),l[0],l[1])
-#skimmer.processType = root.PandaLeptonicAnalyzer.kTT
-skimmer.processType = root.PandaLeptonicAnalyzer.kWEWK
+skimmer.processType = root.PandaLeptonicAnalyzer.kNone
+#skimmer.processType = root.PandaLeptonicAnalyzer.kZPtCut
 skimmer.SetPreselectionBit(root.PandaLeptonicAnalyzer.kLepton)
 #system("pxrdcp %s input.root '!pfCandidates'"%(torun))
 #fin = root.TFile.Open('input.root')

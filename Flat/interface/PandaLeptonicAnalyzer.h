@@ -54,7 +54,7 @@ public :
 
     enum ProcessType { 
         kNone,
-        kZ,
+        kZPtCut,
         kW,
         kA,
         kZEWK,

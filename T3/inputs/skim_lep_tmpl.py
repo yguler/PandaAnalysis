@@ -84,22 +84,8 @@ def fn(input_name,isData,full_path):
     skimmer.SetPreselectionBit(root.PandaLeptonicAnalyzer.kLepton)
     processType=root.PandaLeptonicAnalyzer.kNone
     if not isData:
-        if any([x in full_path for x in ['Vector_','Scalar_']]):
-            processType=root.PandaLeptonicAnalyzer.kSignal
-        elif any([x in full_path for x in ['ST_','ZprimeToTT']]):
-            processType=root.PandaLeptonicAnalyzer.kTop
-        elif 'EWKZ2Jets' in full_path:
-            processType=root.PandaLeptonicAnalyzer.kZEWK
-        elif 'EWKW' in full_path:
-            processType=root.PandaLeptonicAnalyzer.kWEWK
-        elif 'ZJets' in full_path or 'DY' in full_path:
-            processType=root.PandaLeptonicAnalyzer.kZ
-        elif 'WJets' in full_path:
-            processType=root.PandaLeptonicAnalyzer.kW
-        elif 'GJets' in full_path:
-            processType=root.PandaLeptonicAnalyzer.kA
-        elif 'TTJets' in full_path or 'TT_' in full_path:
-            processType=root.PandaLeptonicAnalyzer.kTT
+        if  'DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM' in full_path:
+            processType=root.PandaLeptonicAnalyzer.kZPtCut
     skimmer.processType=processType 
 
     # read the inputs

@@ -58,6 +58,20 @@ void PandaLeptonicAnalyzer::SetOutputFile(TString fOutName) {
 }
 
 
+// phi*
+double PandaLeptonicAnalyzer::phi_star_eta(TLorentzVector lep1, TLorentzVector lep2, int pdgId1) {
+double theta_star_eta = 0;
+if(pdgId1 > 0){ // pdgId > 0 == q < 0
+  theta_star_eta = TMath::ACos(TMath::TanH((lep1.Eta()-lep2.Eta())/2.0));
+} else {
+  theta_star_eta = TMath::ACos(TMath::TanH((lep2.Eta()-lep1.Eta())/2.0));
+}
+
+double dphi = TMath::Abs(lep1.DeltaPhi(lep2));
+
+return TMath::Tan((TMath::Pi()-dphi)/2.0) * TMath::Sin(theta_star_eta);
+}
+
 int PandaLeptonicAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 {
   if (DEBUG) PDebug("PandaLeptonicAnalyzer::Init","Starting initialization");
@@ -74,7 +88,7 @@ int PandaLeptonicAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
                                      "pfMet", "caloMet", "puppiMet", "rawMet", 
-                                     "recoil","metFilters","genMet",});
+                                     "recoil","metFilters","genMet","superClusters"});
   readlist.setVerbosity(0);
 
   readlist.push_back("triggers");
@@ -92,79 +106,85 @@ int PandaLeptonicAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   hDTotalMCWeight = new TH1F("hDTotalMCWeight","hDTotalMCWeight",1,0,2);
   hDTotalMCWeight->SetBinContent(1,hweights->GetBinContent(1));
 
-  const int nBinRap = 24; Float_t xbinsRap[nBinRap+1]; for(int i=0; i<=nBinRap;i++) xbinsRap[i] = i * 0.1;
-/*
-  const int nBinPt = 57; Float_t xbinsPt[nBinPt+1] = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                       10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                       20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-                                                       30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
-                                                       40, 50, 60, 70, 80, 90,100,125,150,175, 
-						      200,250,300,350,400,450,500,1000};
-
-  const int nBinPtRap0 = 36; Float_t xbinsPtRap0[nBinPtRap0+1] = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                		   10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                		   20, 25, 30, 35, 40, 50, 60, 70, 80, 90,
-                                                		  100,150,200,300,400,500,1000};
-  const int nBinPtRap1 = 36; Float_t xbinsPtRap1[nBinPtRap1+1] = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                		   10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                		   20, 25, 30, 35, 40, 50, 60, 70, 80, 90,
-                                                		  100,150,200,300,400,500,1000};
-  const int nBinPtRap2 = 36; Float_t xbinsPtRap2[nBinPtRap2+1] = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                		   10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                		   20, 25, 30, 35, 40, 50, 60, 70, 80, 90,
-                                                		  100,150,200,300,400,500,1000};
-  const int nBinPtRap3 = 36; Float_t xbinsPtRap3[nBinPtRap3+1] = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                		   10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                		   20, 25, 30, 35, 40, 50, 60, 70, 80, 90,
-                                                		  100,150,200,300,400,500,1000};
-  const int nBinPtRap4 = 36; Float_t xbinsPtRap4[nBinPtRap4+1] = {  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
-                                                                  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                                                                  20, 25, 30, 35, 40, 50, 60, 70, 80, 90,
-                                                                 100,150,200,300,400,500,1000};
-*/
-  const int nBinPt     = 37; Float_t xbinsPt[nBinPt+1]         = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,350,400,450,500,1000};
-
-  const int nBinPtRap0 = 37; Float_t xbinsPtRap0[nBinPtRap0+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,350,400,450,500,1000};
-  const int nBinPtRap1 = 37; Float_t xbinsPtRap1[nBinPtRap1+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,350,400,450,500,1000};
-  const int nBinPtRap2 = 37; Float_t xbinsPtRap2[nBinPtRap2+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,350,400,450,500,1000};
-  const int nBinPtRap3 = 37; Float_t xbinsPtRap3[nBinPtRap3+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,350,400,450,500,1000};
-  const int nBinPtRap4 = 37; Float_t xbinsPtRap4[nBinPtRap4+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,350,400,450,500,1000};
+  Float_t xbinsPt[nBinPt+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,800,1500};
+  Float_t xbinsRap[nBinRap+1] = {0.0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4};
+  Float_t xbinsPhiStar[nBinPhiStar+1] = {0.0001,
+                                         0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.010,
+                                         0.020,0.030,0.040,0.050,0.060,0.070,0.080,0.090,0.100,0.200,														  
+                                         0.300,0.400,0.500,0.600,0.700,0.800,0.900,1.000,2.000,3.000,4.000,5.000};
+  Float_t xbinsPtRap0[nBinPtRap0+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
+  Float_t xbinsPtRap1[nBinPtRap1+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
+  Float_t xbinsPtRap2[nBinPtRap2+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
+  Float_t xbinsPtRap3[nBinPtRap3+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
+  Float_t xbinsPtRap4[nBinPtRap4+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
 
   hDDilPtMM = new TH1D("hDDilPtMM", "hDDilPtMM", nBinPt, xbinsPt);
   hDDilPtEE = new TH1D("hDDilPtEE", "hDDilPtEE", nBinPt, xbinsPt);
-
-  hDDilLowPtMM = new TH1D("hDDilLowPtMM", "hDDilLowPtMM", 500, 0, 50);
-  hDDilLowPtEE = new TH1D("hDDilLowPtEE", "hDDilLowPtEE", 500, 0, 50);
-
-  hDDilPt2MM = new TH1D("hDDilPt2MM", "hDDilPt2MM", 50, 0, 50);
-  hDDilPt2EE = new TH1D("hDDilPt2EE", "hDDilPt2EE", 50, 0, 50);
-
-  hDDilDRMM = new TH1D("hDDilDRMM", "hDDilDRMM", 100, 0, 5);
-  hDDilDREE = new TH1D("hDDilDREE", "hDDilDREE", 100, 0, 5);
-
   hDDilRapMM = new TH1D("hDDilRapMM", "hDDilRapMM", nBinRap, xbinsRap);
   hDDilRapEE = new TH1D("hDDilRapEE", "hDDilRapEE", nBinRap, xbinsRap);
-
-  hDDilRapPMM = new TH1D("hDDilRapPMM", "hDDilRapPMM", nBinRap, xbinsRap);
-  hDDilRapPEE = new TH1D("hDDilRapPEE", "hDDilRapPEE", nBinRap, xbinsRap);
-
-  hDDilRapMMM = new TH1D("hDDilRapMMM", "hDDilRapMMM", nBinRap, xbinsRap);
-  hDDilRapMEE = new TH1D("hDDilRapMEE", "hDDilRapMEE", nBinRap, xbinsRap);
-
+  hDDilPhiStarMM = new TH1D("hDDilPhiStarMM", "hDDilPhiStarMM", nBinPhiStar, xbinsPhiStar);
+  hDDilPhiStarEE = new TH1D("hDDilPhiStarEE", "hDDilPhiStarEE", nBinPhiStar, xbinsPhiStar);
   hDDilPtRap0MM = new TH1D("hDDilPtRap0MM", "hDDilPtRap0MM", nBinPtRap0, xbinsPtRap0);
   hDDilPtRap0EE = new TH1D("hDDilPtRap0EE", "hDDilPtRap0EE", nBinPtRap0, xbinsPtRap0);
-
   hDDilPtRap1MM = new TH1D("hDDilPtRap1MM", "hDDilPtRap1MM", nBinPtRap1, xbinsPtRap1);
   hDDilPtRap1EE = new TH1D("hDDilPtRap1EE", "hDDilPtRap1EE", nBinPtRap1, xbinsPtRap1);
-
   hDDilPtRap2MM = new TH1D("hDDilPtRap2MM", "hDDilPtRap2MM", nBinPtRap2, xbinsPtRap2);
   hDDilPtRap2EE = new TH1D("hDDilPtRap2EE", "hDDilPtRap2EE", nBinPtRap2, xbinsPtRap2);
-
   hDDilPtRap3MM = new TH1D("hDDilPtRap3MM", "hDDilPtRap3MM", nBinPtRap3, xbinsPtRap3);
   hDDilPtRap3EE = new TH1D("hDDilPtRap3EE", "hDDilPtRap3EE", nBinPtRap3, xbinsPtRap3);
-
   hDDilPtRap4MM = new TH1D("hDDilPtRap4MM", "hDDilPtRap4MM", nBinPtRap4, xbinsPtRap4);
   hDDilPtRap4EE = new TH1D("hDDilPtRap4EE", "hDDilPtRap4EE", nBinPtRap4, xbinsPtRap4);
+
+  hDDilPtMM_PDF = new TH1D("hDDilPtMM_PDF", "hDDilPtMM_PDF", nBinPt, xbinsPt);
+  hDDilPtEE_PDF = new TH1D("hDDilPtEE_PDF", "hDDilPtEE_PDF", nBinPt, xbinsPt);
+  hDDilRapMM_PDF = new TH1D("hDDilRapMM_PDF", "hDDilRapMM_PDF", nBinRap, xbinsRap);
+  hDDilRapEE_PDF = new TH1D("hDDilRapEE_PDF", "hDDilRapEE_PDF", nBinRap, xbinsRap);
+  hDDilPhiStarMM_PDF = new TH1D("hDDilPhiStarMM_PDF", "hDDilPhiStarMM_PDF", nBinPhiStar, xbinsPhiStar);
+  hDDilPhiStarEE_PDF = new TH1D("hDDilPhiStarEE_PDF", "hDDilPhiStarEE_PDF", nBinPhiStar, xbinsPhiStar);
+  hDDilPtRap0MM_PDF = new TH1D("hDDilPtRap0MM_PDF", "hDDilPtRap0MM_PDF", nBinPtRap0, xbinsPtRap0);
+  hDDilPtRap0EE_PDF = new TH1D("hDDilPtRap0EE_PDF", "hDDilPtRap0EE_PDF", nBinPtRap0, xbinsPtRap0);
+  hDDilPtRap1MM_PDF = new TH1D("hDDilPtRap1MM_PDF", "hDDilPtRap1MM_PDF", nBinPtRap1, xbinsPtRap1);
+  hDDilPtRap1EE_PDF = new TH1D("hDDilPtRap1EE_PDF", "hDDilPtRap1EE_PDF", nBinPtRap1, xbinsPtRap1);
+  hDDilPtRap2MM_PDF = new TH1D("hDDilPtRap2MM_PDF", "hDDilPtRap2MM_PDF", nBinPtRap2, xbinsPtRap2);
+  hDDilPtRap2EE_PDF = new TH1D("hDDilPtRap2EE_PDF", "hDDilPtRap2EE_PDF", nBinPtRap2, xbinsPtRap2);
+  hDDilPtRap3MM_PDF = new TH1D("hDDilPtRap3MM_PDF", "hDDilPtRap3MM_PDF", nBinPtRap3, xbinsPtRap3);
+  hDDilPtRap3EE_PDF = new TH1D("hDDilPtRap3EE_PDF", "hDDilPtRap3EE_PDF", nBinPtRap3, xbinsPtRap3);
+  hDDilPtRap4MM_PDF = new TH1D("hDDilPtRap4MM_PDF", "hDDilPtRap4MM_PDF", nBinPtRap4, xbinsPtRap4);
+  hDDilPtRap4EE_PDF = new TH1D("hDDilPtRap4EE_PDF", "hDDilPtRap4EE_PDF", nBinPtRap4, xbinsPtRap4);
+
+  hDDilPtMM_QCD = new TH1D("hDDilPtMM_QCD", "hDDilPtMM_QCD", nBinPt, xbinsPt);
+  hDDilPtEE_QCD = new TH1D("hDDilPtEE_QCD", "hDDilPtEE_QCD", nBinPt, xbinsPt);
+  hDDilRapMM_QCD = new TH1D("hDDilRapMM_QCD", "hDDilRapMM_QCD", nBinRap, xbinsRap);
+  hDDilRapEE_QCD = new TH1D("hDDilRapEE_QCD", "hDDilRapEE_QCD", nBinRap, xbinsRap);
+  hDDilPhiStarMM_QCD = new TH1D("hDDilPhiStarMM_QCD", "hDDilPhiStarMM_QCD", nBinPhiStar, xbinsPhiStar);
+  hDDilPhiStarEE_QCD = new TH1D("hDDilPhiStarEE_QCD", "hDDilPhiStarEE_QCD", nBinPhiStar, xbinsPhiStar);
+  hDDilPtRap0MM_QCD = new TH1D("hDDilPtRap0MM_QCD", "hDDilPtRap0MM_QCD", nBinPtRap0, xbinsPtRap0);
+  hDDilPtRap0EE_QCD = new TH1D("hDDilPtRap0EE_QCD", "hDDilPtRap0EE_QCD", nBinPtRap0, xbinsPtRap0);
+  hDDilPtRap1MM_QCD = new TH1D("hDDilPtRap1MM_QCD", "hDDilPtRap1MM_QCD", nBinPtRap1, xbinsPtRap1);
+  hDDilPtRap1EE_QCD = new TH1D("hDDilPtRap1EE_QCD", "hDDilPtRap1EE_QCD", nBinPtRap1, xbinsPtRap1);
+  hDDilPtRap2MM_QCD = new TH1D("hDDilPtRap2MM_QCD", "hDDilPtRap2MM_QCD", nBinPtRap2, xbinsPtRap2);
+  hDDilPtRap2EE_QCD = new TH1D("hDDilPtRap2EE_QCD", "hDDilPtRap2EE_QCD", nBinPtRap2, xbinsPtRap2);
+  hDDilPtRap3MM_QCD = new TH1D("hDDilPtRap3MM_QCD", "hDDilPtRap3MM_QCD", nBinPtRap3, xbinsPtRap3);
+  hDDilPtRap3EE_QCD = new TH1D("hDDilPtRap3EE_QCD", "hDDilPtRap3EE_QCD", nBinPtRap3, xbinsPtRap3);
+  hDDilPtRap4MM_QCD = new TH1D("hDDilPtRap4MM_QCD", "hDDilPtRap4MM_QCD", nBinPtRap4, xbinsPtRap4);
+  hDDilPtRap4EE_QCD = new TH1D("hDDilPtRap4EE_QCD", "hDDilPtRap4EE_QCD", nBinPtRap4, xbinsPtRap4);
+
+  for(int i=0; i<6; i++) hDDilPtMM_QCDPart[i] = new TH1D(Form("hDDilPtMM_QCD_%d",i) ,Form("hDDilPtMM_QCD_%d",i), nBinPt, xbinsPt);
+  for(int i=0; i<6; i++) hDDilPtEE_QCDPart[i] = new TH1D(Form("hDDilPtEE_QCD_%d",i) ,Form("hDDilPtEE_QCD_%d",i), nBinPt, xbinsPt);
+  for(int i=0; i<6; i++) hDDilRapMM_QCDPart[i] = new TH1D(Form("hDDilRapMM_QCD_%d",i) ,Form("hDDilRapMM_QCD_%d",i), nBinRap, xbinsRap);
+  for(int i=0; i<6; i++) hDDilRapEE_QCDPart[i] = new TH1D(Form("hDDilRapEE_QCD_%d",i) ,Form("hDDilRapEE_QCD_%d",i), nBinRap, xbinsRap);
+  for(int i=0; i<6; i++) hDDilPhiStarMM_QCDPart[i] = new TH1D(Form("hDDilPhiStarMM_QCD_%d",i) ,Form("hDDilPhiStarMM_QCD_%d",i), nBinPhiStar, xbinsPhiStar);
+  for(int i=0; i<6; i++) hDDilPhiStarEE_QCDPart[i] = new TH1D(Form("hDDilPhiStarEE_QCD_%d",i) ,Form("hDDilPhiStarEE_QCD_%d",i), nBinPhiStar, xbinsPhiStar);
+  for(int i=0; i<6; i++) hDDilPtRap0MM_QCDPart[i] = new TH1D(Form("hDDilPtRap0MM_QCD_%d",i) ,Form("hDDilPtRap0MM_QCD_%d",i), nBinPtRap0, xbinsPtRap0);
+  for(int i=0; i<6; i++) hDDilPtRap0EE_QCDPart[i] = new TH1D(Form("hDDilPtRap0EE_QCD_%d",i) ,Form("hDDilPtRap0EE_QCD_%d",i), nBinPtRap0, xbinsPtRap0);
+  for(int i=0; i<6; i++) hDDilPtRap1MM_QCDPart[i] = new TH1D(Form("hDDilPtRap1MM_QCD_%d",i) ,Form("hDDilPtRap1MM_QCD_%d",i), nBinPtRap1, xbinsPtRap1);
+  for(int i=0; i<6; i++) hDDilPtRap1EE_QCDPart[i] = new TH1D(Form("hDDilPtRap1EE_QCD_%d",i) ,Form("hDDilPtRap1EE_QCD_%d",i), nBinPtRap1, xbinsPtRap1);
+  for(int i=0; i<6; i++) hDDilPtRap2MM_QCDPart[i] = new TH1D(Form("hDDilPtRap2MM_QCD_%d",i) ,Form("hDDilPtRap2MM_QCD_%d",i), nBinPtRap2, xbinsPtRap2);
+  for(int i=0; i<6; i++) hDDilPtRap2EE_QCDPart[i] = new TH1D(Form("hDDilPtRap2EE_QCD_%d",i) ,Form("hDDilPtRap2EE_QCD_%d",i), nBinPtRap2, xbinsPtRap2);
+  for(int i=0; i<6; i++) hDDilPtRap3MM_QCDPart[i] = new TH1D(Form("hDDilPtRap3MM_QCD_%d",i) ,Form("hDDilPtRap3MM_QCD_%d",i), nBinPtRap3, xbinsPtRap3);
+  for(int i=0; i<6; i++) hDDilPtRap3EE_QCDPart[i] = new TH1D(Form("hDDilPtRap3EE_QCD_%d",i) ,Form("hDDilPtRap3EE_QCD_%d",i), nBinPtRap3, xbinsPtRap3);
+  for(int i=0; i<6; i++) hDDilPtRap4MM_QCDPart[i] = new TH1D(Form("hDDilPtRap4MM_QCD_%d",i) ,Form("hDDilPtRap4MM_QCD_%d",i), nBinPtRap4, xbinsPtRap4);
+  for(int i=0; i<6; i++) hDDilPtRap4EE_QCDPart[i] = new TH1D(Form("hDDilPtRap4EE_QCD_%d",i) ,Form("hDDilPtRap4EE_QCD_%d",i), nBinPtRap4, xbinsPtRap4);
 
   if (weightNames) {
     if (weightNames->GetEntries()!=377 && weightNames->GetEntries()!=22) {
@@ -229,31 +249,266 @@ panda::GenParticle const *PandaLeptonicAnalyzer::MatchToGen(double eta, double p
 
 
 void PandaLeptonicAnalyzer::Terminate() {
+  {
+    printf("hDDilPtMM: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtMM_QCDPart[0]->GetSumOfWeights(),hDDilPtMM_QCDPart[1]->GetSumOfWeights(),hDDilPtMM_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtMM_QCDPart[3]->GetSumOfWeights(),hDDilPtMM_QCDPart[4]->GetSumOfWeights(),hDDilPtMM_QCDPart[5]->GetSumOfWeights(),hDDilPtMM->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPt+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtMM_QCDPart[0]->GetBinContent(nb)-hDDilPtMM->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtMM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtMM->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtMM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtMM->GetBinContent(nb));
+      }
+      if(hDDilPtMM->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtMM->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtMM_QCD->SetBinContent(nb, hDDilPtMM->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtEE: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtEE_QCDPart[0]->GetSumOfWeights(),hDDilPtEE_QCDPart[1]->GetSumOfWeights(),hDDilPtEE_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtEE_QCDPart[3]->GetSumOfWeights(),hDDilPtEE_QCDPart[4]->GetSumOfWeights(),hDDilPtEE_QCDPart[5]->GetSumOfWeights(),hDDilPtEE->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPt+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtEE_QCDPart[0]->GetBinContent(nb)-hDDilPtEE->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtEE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtEE->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtEE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtEE->GetBinContent(nb));
+      }
+      if(hDDilPtEE->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtEE->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtEE_QCD->SetBinContent(nb, hDDilPtEE->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilRapMM: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilRapMM_QCDPart[0]->GetSumOfWeights(),hDDilRapMM_QCDPart[1]->GetSumOfWeights(),hDDilRapMM_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilRapMM_QCDPart[3]->GetSumOfWeights(),hDDilRapMM_QCDPart[4]->GetSumOfWeights(),hDDilRapMM_QCDPart[5]->GetSumOfWeights(),hDDilRapMM->GetSumOfWeights());
+    for(int nb=1; nb<=nBinRap+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilRapMM_QCDPart[0]->GetBinContent(nb)-hDDilRapMM->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilRapMM_QCDPart[nqcd]->GetBinContent(nb)-hDDilRapMM->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilRapMM_QCDPart[nqcd]->GetBinContent(nb)-hDDilRapMM->GetBinContent(nb));
+      }
+      if(hDDilRapMM->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilRapMM->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilRapMM_QCD->SetBinContent(nb, hDDilRapMM->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilRapEE: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilRapEE_QCDPart[0]->GetSumOfWeights(),hDDilRapEE_QCDPart[1]->GetSumOfWeights(),hDDilRapEE_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilRapEE_QCDPart[3]->GetSumOfWeights(),hDDilRapEE_QCDPart[4]->GetSumOfWeights(),hDDilRapEE_QCDPart[5]->GetSumOfWeights(),hDDilRapEE->GetSumOfWeights());
+    for(int nb=1; nb<=nBinRap+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilRapEE_QCDPart[0]->GetBinContent(nb)-hDDilRapEE->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilRapEE_QCDPart[nqcd]->GetBinContent(nb)-hDDilRapEE->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilRapEE_QCDPart[nqcd]->GetBinContent(nb)-hDDilRapEE->GetBinContent(nb));
+      }
+      if(hDDilRapEE->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilRapEE->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilRapEE_QCD->SetBinContent(nb, hDDilRapEE->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPhiStarMM: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPhiStarMM_QCDPart[0]->GetSumOfWeights(),hDDilPhiStarMM_QCDPart[1]->GetSumOfWeights(),hDDilPhiStarMM_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPhiStarMM_QCDPart[3]->GetSumOfWeights(),hDDilPhiStarMM_QCDPart[4]->GetSumOfWeights(),hDDilPhiStarMM_QCDPart[5]->GetSumOfWeights(),hDDilPhiStarMM->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPhiStar+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPhiStarMM_QCDPart[0]->GetBinContent(nb)-hDDilPhiStarMM->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPhiStarMM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPhiStarMM->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPhiStarMM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPhiStarMM->GetBinContent(nb));
+      }
+      if(hDDilPhiStarMM->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPhiStarMM->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPhiStarMM_QCD->SetBinContent(nb, hDDilPhiStarMM->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPhiStarEE: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPhiStarEE_QCDPart[0]->GetSumOfWeights(),hDDilPhiStarEE_QCDPart[1]->GetSumOfWeights(),hDDilPhiStarEE_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPhiStarEE_QCDPart[3]->GetSumOfWeights(),hDDilPhiStarEE_QCDPart[4]->GetSumOfWeights(),hDDilPhiStarEE_QCDPart[5]->GetSumOfWeights(),hDDilPhiStarEE->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPhiStar+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPhiStarEE_QCDPart[0]->GetBinContent(nb)-hDDilPhiStarEE->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPhiStarEE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPhiStarEE->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPhiStarEE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPhiStarEE->GetBinContent(nb));
+      }
+      if(hDDilPhiStarEE->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPhiStarEE->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPhiStarEE_QCD->SetBinContent(nb, hDDilPhiStarEE->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap0MM: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap0MM_QCDPart[0]->GetSumOfWeights(),hDDilPtRap0MM_QCDPart[1]->GetSumOfWeights(),hDDilPtRap0MM_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap0MM_QCDPart[3]->GetSumOfWeights(),hDDilPtRap0MM_QCDPart[4]->GetSumOfWeights(),hDDilPtRap0MM_QCDPart[5]->GetSumOfWeights(),hDDilPtRap0MM->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap0+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap0MM_QCDPart[0]->GetBinContent(nb)-hDDilPtRap0MM->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap0MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap0MM->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap0MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap0MM->GetBinContent(nb));
+      }
+      if(hDDilPtRap0MM->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap0MM->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap0MM_QCD->SetBinContent(nb, hDDilPtRap0MM->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap0EE: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap0EE_QCDPart[0]->GetSumOfWeights(),hDDilPtRap0EE_QCDPart[1]->GetSumOfWeights(),hDDilPtRap0EE_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap0EE_QCDPart[3]->GetSumOfWeights(),hDDilPtRap0EE_QCDPart[4]->GetSumOfWeights(),hDDilPtRap0EE_QCDPart[5]->GetSumOfWeights(),hDDilPtRap0EE->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap0+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap0EE_QCDPart[0]->GetBinContent(nb)-hDDilPtRap0EE->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap0EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap0EE->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap0EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap0EE->GetBinContent(nb));
+      }
+      if(hDDilPtRap0EE->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap0EE->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap0EE_QCD->SetBinContent(nb, hDDilPtRap0EE->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap1MM: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap1MM_QCDPart[0]->GetSumOfWeights(),hDDilPtRap1MM_QCDPart[1]->GetSumOfWeights(),hDDilPtRap1MM_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap1MM_QCDPart[3]->GetSumOfWeights(),hDDilPtRap1MM_QCDPart[4]->GetSumOfWeights(),hDDilPtRap1MM_QCDPart[5]->GetSumOfWeights(),hDDilPtRap1MM->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap1+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap1MM_QCDPart[0]->GetBinContent(nb)-hDDilPtRap1MM->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap1MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap1MM->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap1MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap1MM->GetBinContent(nb));
+      }
+      if(hDDilPtRap1MM->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap1MM->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap1MM_QCD->SetBinContent(nb, hDDilPtRap1MM->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap1EE: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap1EE_QCDPart[0]->GetSumOfWeights(),hDDilPtRap1EE_QCDPart[1]->GetSumOfWeights(),hDDilPtRap1EE_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap1EE_QCDPart[3]->GetSumOfWeights(),hDDilPtRap1EE_QCDPart[4]->GetSumOfWeights(),hDDilPtRap1EE_QCDPart[5]->GetSumOfWeights(),hDDilPtRap1EE->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap1+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap1EE_QCDPart[0]->GetBinContent(nb)-hDDilPtRap1EE->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap1EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap1EE->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap1EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap1EE->GetBinContent(nb));
+      }
+      if(hDDilPtRap1EE->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap1EE->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap1EE_QCD->SetBinContent(nb, hDDilPtRap1EE->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap2MM: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap2MM_QCDPart[0]->GetSumOfWeights(),hDDilPtRap2MM_QCDPart[1]->GetSumOfWeights(),hDDilPtRap2MM_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap2MM_QCDPart[3]->GetSumOfWeights(),hDDilPtRap2MM_QCDPart[4]->GetSumOfWeights(),hDDilPtRap2MM_QCDPart[5]->GetSumOfWeights(),hDDilPtRap2MM->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap2+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap2MM_QCDPart[0]->GetBinContent(nb)-hDDilPtRap2MM->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap2MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap2MM->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap2MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap2MM->GetBinContent(nb));
+      }
+      if(hDDilPtRap2MM->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap2MM->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap2MM_QCD->SetBinContent(nb, hDDilPtRap2MM->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap2EE: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap2EE_QCDPart[0]->GetSumOfWeights(),hDDilPtRap2EE_QCDPart[1]->GetSumOfWeights(),hDDilPtRap2EE_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap2EE_QCDPart[3]->GetSumOfWeights(),hDDilPtRap2EE_QCDPart[4]->GetSumOfWeights(),hDDilPtRap2EE_QCDPart[5]->GetSumOfWeights(),hDDilPtRap2EE->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap2+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap2EE_QCDPart[0]->GetBinContent(nb)-hDDilPtRap2EE->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap2EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap2EE->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap2EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap2EE->GetBinContent(nb));
+      }
+      if(hDDilPtRap2EE->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap2EE->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap2EE_QCD->SetBinContent(nb, hDDilPtRap2EE->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap3MM: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap3MM_QCDPart[0]->GetSumOfWeights(),hDDilPtRap3MM_QCDPart[1]->GetSumOfWeights(),hDDilPtRap3MM_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap3MM_QCDPart[3]->GetSumOfWeights(),hDDilPtRap3MM_QCDPart[4]->GetSumOfWeights(),hDDilPtRap3MM_QCDPart[5]->GetSumOfWeights(),hDDilPtRap3MM->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap3+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap3MM_QCDPart[0]->GetBinContent(nb)-hDDilPtRap3MM->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap3MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap3MM->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap3MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap3MM->GetBinContent(nb));
+      }
+      if(hDDilPtRap3MM->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap3MM->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap3MM_QCD->SetBinContent(nb, hDDilPtRap3MM->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap3EE: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap3EE_QCDPart[0]->GetSumOfWeights(),hDDilPtRap3EE_QCDPart[1]->GetSumOfWeights(),hDDilPtRap3EE_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap3EE_QCDPart[3]->GetSumOfWeights(),hDDilPtRap3EE_QCDPart[4]->GetSumOfWeights(),hDDilPtRap3EE_QCDPart[5]->GetSumOfWeights(),hDDilPtRap3EE->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap3+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap3EE_QCDPart[0]->GetBinContent(nb)-hDDilPtRap3EE->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap3EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap3EE->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap3EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap3EE->GetBinContent(nb));
+      }
+      if(hDDilPtRap3EE->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap3EE->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap3EE_QCD->SetBinContent(nb, hDDilPtRap3EE->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap4MM: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap4MM_QCDPart[0]->GetSumOfWeights(),hDDilPtRap4MM_QCDPart[1]->GetSumOfWeights(),hDDilPtRap4MM_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap4MM_QCDPart[3]->GetSumOfWeights(),hDDilPtRap4MM_QCDPart[4]->GetSumOfWeights(),hDDilPtRap4MM_QCDPart[5]->GetSumOfWeights(),hDDilPtRap4MM->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap4+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap4MM_QCDPart[0]->GetBinContent(nb)-hDDilPtRap4MM->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap4MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap4MM->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap4MM_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap4MM->GetBinContent(nb));
+      }
+      if(hDDilPtRap4MM->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap4MM->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap4MM_QCD->SetBinContent(nb, hDDilPtRap4MM->GetBinContent(nb)*systQCDScale);
+    }
+  }
+  {
+    printf("hDDilPtRap4EE: (%f/%f/%f/%f/%f/%f->%f)\n",
+  	    hDDilPtRap4EE_QCDPart[0]->GetSumOfWeights(),hDDilPtRap4EE_QCDPart[1]->GetSumOfWeights(),hDDilPtRap4EE_QCDPart[2]->GetSumOfWeights(),
+  	    hDDilPtRap4EE_QCDPart[3]->GetSumOfWeights(),hDDilPtRap4EE_QCDPart[4]->GetSumOfWeights(),hDDilPtRap4EE_QCDPart[5]->GetSumOfWeights(),hDDilPtRap4EE->GetSumOfWeights());
+    for(int nb=1; nb<=nBinPtRap4+1; nb++){
+      double systQCDScale = TMath::Abs(hDDilPtRap4EE_QCDPart[0]->GetBinContent(nb)-hDDilPtRap4EE->GetBinContent(nb));
+
+      for(int nqcd=1; nqcd<6; nqcd++) {
+        if(TMath::Abs(hDDilPtRap4EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap4EE->GetBinContent(nb)) > systQCDScale) systQCDScale = TMath::Abs(hDDilPtRap4EE_QCDPart[nqcd]->GetBinContent(nb)-hDDilPtRap4EE->GetBinContent(nb));
+      }
+      if(hDDilPtRap4EE->GetBinContent(nb) > 0) systQCDScale = 1.0+systQCDScale/hDDilPtRap4EE->GetBinContent(nb); else systQCDScale = 1;
+
+      hDDilPtRap4EE_QCD->SetBinContent(nb, hDDilPtRap4EE->GetBinContent(nb)*systQCDScale);
+    }
+  }
+
+
+
   fOut->WriteTObject(tOut);
-  fOut->WriteTObject(hDDilPtMM);    
-  fOut->WriteTObject(hDDilPtEE);    
-  fOut->WriteTObject(hDDilLowPtMM);    
-  fOut->WriteTObject(hDDilLowPtEE);    
-  fOut->WriteTObject(hDDilPt2MM);    
-  fOut->WriteTObject(hDDilPt2EE);    
-  fOut->WriteTObject(hDDilDRMM);    
-  fOut->WriteTObject(hDDilDREE);    
-  fOut->WriteTObject(hDDilRapMM);    
-  fOut->WriteTObject(hDDilRapEE);    
-  fOut->WriteTObject(hDDilRapPMM);    
-  fOut->WriteTObject(hDDilRapPEE);    
-  fOut->WriteTObject(hDDilRapMMM);    
-  fOut->WriteTObject(hDDilRapMEE);    
-  fOut->WriteTObject(hDDilPtRap0MM);    
-  fOut->WriteTObject(hDDilPtRap0EE);    
-  fOut->WriteTObject(hDDilPtRap1MM);    
-  fOut->WriteTObject(hDDilPtRap1EE);    
-  fOut->WriteTObject(hDDilPtRap2MM);    
-  fOut->WriteTObject(hDDilPtRap2EE);    
-  fOut->WriteTObject(hDDilPtRap3MM);    
-  fOut->WriteTObject(hDDilPtRap3EE);    
-  fOut->WriteTObject(hDDilPtRap4MM);    
-  fOut->WriteTObject(hDDilPtRap4EE);    
+  fOut->WriteTObject(hDDilPtMM);     fOut->WriteTObject(hDDilPtMM_PDF);     fOut->WriteTObject(hDDilPtMM_QCD);    
+  fOut->WriteTObject(hDDilPtEE);     fOut->WriteTObject(hDDilPtEE_PDF);     fOut->WriteTObject(hDDilPtEE_QCD);    
+  fOut->WriteTObject(hDDilRapMM);    fOut->WriteTObject(hDDilRapMM_PDF);    fOut->WriteTObject(hDDilRapMM_QCD);   
+  fOut->WriteTObject(hDDilRapEE);    fOut->WriteTObject(hDDilRapEE_PDF);    fOut->WriteTObject(hDDilRapEE_QCD);   
+  fOut->WriteTObject(hDDilPhiStarMM);fOut->WriteTObject(hDDilPhiStarMM_PDF);fOut->WriteTObject(hDDilPhiStarMM_QCD);    
+  fOut->WriteTObject(hDDilPhiStarEE);fOut->WriteTObject(hDDilPhiStarEE_PDF);fOut->WriteTObject(hDDilPhiStarEE_QCD);    
+  fOut->WriteTObject(hDDilPtRap0MM); fOut->WriteTObject(hDDilPtRap0MM_PDF); fOut->WriteTObject(hDDilPtRap0MM_QCD);
+  fOut->WriteTObject(hDDilPtRap0EE); fOut->WriteTObject(hDDilPtRap0EE_PDF); fOut->WriteTObject(hDDilPtRap0EE_QCD);
+  fOut->WriteTObject(hDDilPtRap1MM); fOut->WriteTObject(hDDilPtRap1MM_PDF); fOut->WriteTObject(hDDilPtRap1MM_QCD);
+  fOut->WriteTObject(hDDilPtRap1EE); fOut->WriteTObject(hDDilPtRap1EE_PDF); fOut->WriteTObject(hDDilPtRap1EE_QCD);
+  fOut->WriteTObject(hDDilPtRap2MM); fOut->WriteTObject(hDDilPtRap2MM_PDF); fOut->WriteTObject(hDDilPtRap2MM_QCD);
+  fOut->WriteTObject(hDDilPtRap2EE); fOut->WriteTObject(hDDilPtRap2EE_PDF); fOut->WriteTObject(hDDilPtRap2EE_QCD);
+  fOut->WriteTObject(hDDilPtRap3MM); fOut->WriteTObject(hDDilPtRap3MM_PDF); fOut->WriteTObject(hDDilPtRap3MM_QCD);
+  fOut->WriteTObject(hDDilPtRap3EE); fOut->WriteTObject(hDDilPtRap3EE_PDF); fOut->WriteTObject(hDDilPtRap3EE_QCD);
+  fOut->WriteTObject(hDDilPtRap4MM); fOut->WriteTObject(hDDilPtRap4MM_PDF); fOut->WriteTObject(hDDilPtRap4MM_QCD);
+  fOut->WriteTObject(hDDilPtRap4EE); fOut->WriteTObject(hDDilPtRap4EE_PDF); fOut->WriteTObject(hDDilPtRap4EE_QCD);
   fOut->Close();
 
   //for (auto *f : fCorrs)
@@ -282,30 +537,22 @@ void PandaLeptonicAnalyzer::Terminate() {
   delete ak4JERReader;
   
   delete hDTotalMCWeight;
-  delete hDDilPtMM;
-  delete hDDilPtEE;
-  delete hDDilLowPtMM;
-  delete hDDilLowPtEE;
-  delete hDDilPt2MM;
-  delete hDDilPt2EE;
-  delete hDDilDRMM;
-  delete hDDilDREE;
-  delete hDDilRapMM;    
-  delete hDDilRapEE;    
-  delete hDDilRapPMM;    
-  delete hDDilRapPEE;    
-  delete hDDilRapMMM;    
-  delete hDDilRapMEE;    
-  delete hDDilPtRap0MM;    
-  delete hDDilPtRap0EE;    
-  delete hDDilPtRap1MM;    
-  delete hDDilPtRap1EE;    
-  delete hDDilPtRap2MM;    
-  delete hDDilPtRap2EE;    
-  delete hDDilPtRap3MM;    
-  delete hDDilPtRap3EE;    
-  delete hDDilPtRap4MM;    
-  delete hDDilPtRap4EE;    
+  delete hDDilPtMM;     delete hDDilPtMM_PDF;	  delete hDDilPtMM_QCD;	    for(int i=0; i<6; i++) delete hDDilPtMM_QCDPart[i];
+  delete hDDilPtEE;     delete hDDilPtEE_PDF;	  delete hDDilPtEE_QCD;	    for(int i=0; i<6; i++) delete hDDilPtEE_QCDPart[i];
+  delete hDDilRapMM;    delete hDDilRapMM_PDF;    delete hDDilRapMM_QCD;    for(int i=0; i<6; i++) delete hDDilRapMM_QCDPart[i];   
+  delete hDDilRapEE;    delete hDDilRapEE_PDF;    delete hDDilRapEE_QCD;    for(int i=0; i<6; i++) delete hDDilRapEE_QCDPart[i];   
+  delete hDDilPhiStarMM;delete hDDilPhiStarMM_PDF;delete hDDilPhiStarMM_QCD;for(int i=0; i<6; i++) delete hDDilPhiStarMM_QCDPart[i];	
+  delete hDDilPhiStarEE;delete hDDilPhiStarEE_PDF;delete hDDilPhiStarEE_QCD;for(int i=0; i<6; i++) delete hDDilPhiStarEE_QCDPart[i];	
+  delete hDDilPtRap0MM; delete hDDilPtRap0MM_PDF; delete hDDilPtRap0MM_QCD; for(int i=0; i<6; i++) delete hDDilPtRap0MM_QCDPart[i];
+  delete hDDilPtRap0EE; delete hDDilPtRap0EE_PDF; delete hDDilPtRap0EE_QCD; for(int i=0; i<6; i++) delete hDDilPtRap0EE_QCDPart[i];
+  delete hDDilPtRap1MM; delete hDDilPtRap1MM_PDF; delete hDDilPtRap1MM_QCD; for(int i=0; i<6; i++) delete hDDilPtRap1MM_QCDPart[i];
+  delete hDDilPtRap1EE; delete hDDilPtRap1EE_PDF; delete hDDilPtRap1EE_QCD; for(int i=0; i<6; i++) delete hDDilPtRap1EE_QCDPart[i];
+  delete hDDilPtRap2MM; delete hDDilPtRap2MM_PDF; delete hDDilPtRap2MM_QCD; for(int i=0; i<6; i++) delete hDDilPtRap2MM_QCDPart[i];
+  delete hDDilPtRap2EE; delete hDDilPtRap2EE_PDF; delete hDDilPtRap2EE_QCD; for(int i=0; i<6; i++) delete hDDilPtRap2EE_QCDPart[i];
+  delete hDDilPtRap3MM; delete hDDilPtRap3MM_PDF; delete hDDilPtRap3MM_QCD; for(int i=0; i<6; i++) delete hDDilPtRap3MM_QCDPart[i];
+  delete hDDilPtRap3EE; delete hDDilPtRap3EE_PDF; delete hDDilPtRap3EE_QCD; for(int i=0; i<6; i++) delete hDDilPtRap3EE_QCDPart[i];
+  delete hDDilPtRap4MM; delete hDDilPtRap4MM_PDF; delete hDDilPtRap4MM_QCD; for(int i=0; i<6; i++) delete hDDilPtRap4MM_QCDPart[i];
+  delete hDDilPtRap4EE; delete hDDilPtRap4EE_PDF; delete hDDilPtRap4EE_QCD; for(int i=0; i<6; i++) delete hDDilPtRap4EE_QCDPart[i];
 
   if (DEBUG) PDebug("PandaLeptonicAnalyzer::Terminate","Finished with output");
 }
@@ -359,8 +606,7 @@ void PandaLeptonicAnalyzer::SetDataDir(const char *s2) {
 
   OpenCorrection(cLooseMuonId  ,dirPath1+"MitAnalysisRunII/data/80x/muon_scalefactors_37ifb.root","scalefactors_MuonLooseId_Muon",2);
 
-  //OpenCorrection(cMediumMuonId ,dirPath1+"MitAnalysisRunII/data/80x/muon_scalefactors_37ifb.root","scalefactors_MuonMediumId_Muon",2);
-  OpenCorrection(cMediumMuonId ,dirPath1+"MitAnalysisRunII/data/80x/scalefactors_80x_dylan_37ifb.root","scalefactors_Medium_Muon",2);
+  OpenCorrection(cMediumMuonId ,dirPath1+"MitAnalysisRunII/data/80x/muon_scalefactors_37ifb.root","scalefactors_MuonMediumId_Muon",2);
 
   OpenCorrection(cTightMuonId  ,dirPath1+"MitAnalysisRunII/data/80x/muon_scalefactors_37ifb.root","scalefactors_TightId_Muon",2);
   OpenCorrection(cLooseMuonIso ,dirPath1+"MitAnalysisRunII/data/80x/muon_scalefactors_37ifb.root","scalefactors_Iso_MuonLooseId",2);
@@ -370,8 +616,7 @@ void PandaLeptonicAnalyzer::SetDataDir(const char *s2) {
 
   OpenCorrection(cLooseElectronId ,dirPath1+"MitAnalysisRunII/data/80x/scalefactors_80x_egpog_37ifb.root","scalefactors_Loose_Electron",2);
 
-  //OpenCorrection(cMediumElectronId,dirPath1+"MitAnalysisRunII/data/80x/scalefactors_80x_egpog_37ifb.root","scalefactors_Medium_Electron",2);
-  OpenCorrection(cMediumElectronId,dirPath1+"MitAnalysisRunII/data/80x/scalefactors_80x_dylan_37ifb.root","scalefactors_Medium_Electron",2);
+  OpenCorrection(cMediumElectronId,dirPath1+"MitAnalysisRunII/data/80x/scalefactors_80x_egpog_37ifb.root","scalefactors_Medium_Electron",2);
 
   OpenCorrection(cTightElectronId ,dirPath1+"MitAnalysisRunII/data/80x/scalefactors_80x_egpog_37ifb.root","scalefactors_Tight_Electron",2);
   OpenCorrection(cTrackingElectron,dirPath1+"MitAnalysisRunII/data/80x/scalefactors_80x_egpog_37ifb.root","scalefactors_Reco_Electron",2);
@@ -982,17 +1227,12 @@ void PandaLeptonicAnalyzer::Run() {
           if(isTight)  gt->looseLep1SelBit |= kTight;
 	  gt->sf_trk1    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose1  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
-/*
 	  gt->sf_medium1 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_tight1  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_unc1 = sqrt(GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
 	               0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())*0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
 			     GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())+
 		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
-*/
-	  gt->sf_medium1 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_tight1  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_unc1 = GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt());
         }
 	else if (lep_counter==2) {
           gt->looseLep2PdgId = mu->charge*-13;
@@ -1002,17 +1242,12 @@ void PandaLeptonicAnalyzer::Run() {
           if(isTight)  gt->looseLep2SelBit |= kTight;
 	  gt->sf_trk2    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose2  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
-/*
 	  gt->sf_medium2 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_tight2  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_unc2 = sqrt(GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
 	               0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())*0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
 			     GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())+
 		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
-*/
-	  gt->sf_medium2 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_tight2  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_unc2 = GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt());
         }
 	else if (lep_counter==3) {
           gt->looseLep3PdgId = mu->charge*-13;
@@ -1022,17 +1257,12 @@ void PandaLeptonicAnalyzer::Run() {
           if(isTight)  gt->looseLep3SelBit |= kTight;
 	  gt->sf_trk3    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose3  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
-/*
 	  gt->sf_medium3 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_tight3  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_unc3 = sqrt(GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
 	               0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())*0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
 			     GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())+
 		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
-*/
-	  gt->sf_medium3 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_tight3  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_unc3 = GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt());
         }
 	else if (lep_counter==4) {
           gt->looseLep4PdgId = mu->charge*-13;
@@ -1042,23 +1272,19 @@ void PandaLeptonicAnalyzer::Run() {
           if(isTight)  gt->looseLep4SelBit |= kTight;
 	  gt->sf_trk4    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose4  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
-/*
 	  gt->sf_medium4 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_tight4  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_unc4 = sqrt(GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
 	               0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())*0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
 			     GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())+
 		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
-*/
-	  gt->sf_medium4 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_tight4  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_unc4 = GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt());
         }
       } else {
         panda::Electron *ele = dynamic_cast<panda::Electron*>(lep);
         bool isFake   = ele->hltsafe;
         bool isMedium = ele->medium;
         bool isTight  = ele->tight;
+	if(TMath::Abs(ele->eta()-ele->superCluster->eta) > 0.2) printf("Potential issue ele/sc: dist: %f - %f/%f/%f vs. %f/%f/%f\n",TMath::Abs(ele->eta()-ele->superCluster->eta),ele->pt(),ele->eta(),ele->phi(),ele->superCluster->rawPt,ele->superCluster->eta,ele->superCluster->phi);
         if      (lep_counter==1) {
           gt->looseLep1Pt *= EGMSCALE;
           gt->looseLep1PdgId = ele->charge*-11;
@@ -1070,9 +1296,8 @@ void PandaLeptonicAnalyzer::Run() {
 	  gt->sf_loose1  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium1 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
 	  gt->sf_tight1  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  //gt->sf_unc1 = GetError(cMediumElectronId,ele->eta(),ele->pt())+0.01;
 	  gt->sf_unc1 = GetError(cMediumElectronId,ele->eta(),ele->pt());
-        } 
+        }
 	else if (lep_counter==2) {
           gt->looseLep2Pt *= EGMSCALE;
           gt->looseLep2PdgId = ele->charge*-11;
@@ -1084,7 +1309,6 @@ void PandaLeptonicAnalyzer::Run() {
 	  gt->sf_loose2  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium2 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
 	  gt->sf_tight2  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  //gt->sf_unc2 = GetError(cMediumElectronId,ele->eta(),ele->pt())+0.01;
 	  gt->sf_unc2 = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
 	else if (lep_counter==3) {
@@ -1098,7 +1322,6 @@ void PandaLeptonicAnalyzer::Run() {
 	  gt->sf_loose3  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium3 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
 	  gt->sf_tight3  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  //gt->sf_unc3 = GetError(cMediumElectronId,ele->eta(),ele->pt())+0.01;
 	  gt->sf_unc3 = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
 	else if (lep_counter==4) {
@@ -1112,7 +1335,6 @@ void PandaLeptonicAnalyzer::Run() {
 	  gt->sf_loose4  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium4 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
 	  gt->sf_tight4  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  //gt->sf_unc4 = GetError(cMediumElectronId,ele->eta(),ele->pt())+0.01;
 	  gt->sf_unc4 = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
       }
@@ -1333,6 +1555,49 @@ void PandaLeptonicAnalyzer::Run() {
 
     tr.TriggerEvent("taus");
 
+    // scale and PDF weights, if they exist
+    gt->pdfUp = 1; gt->pdfDown = 1;
+    if (!isData) {
+      gt->pdfUp = 1 + event.genReweight.pdfDW;
+      gt->pdfDown = 1 - event.genReweight.pdfDW;
+      auto &genReweight = event.genReweight;
+      for (unsigned iS=0; iS!=6; ++iS) {
+        float s=1;
+        switch (iS) {
+          case 0:
+            s = genReweight.r1f2DW; break;
+          case 1:
+            s = genReweight.r1f5DW; break;
+          case 2:
+            s = genReweight.r2f1DW; break;
+          case 3:
+            s = genReweight.r2f2DW; break;
+          case 4:
+            s = genReweight.r5f1DW; break;
+          case 5:
+            s = genReweight.r5f5DW; break;
+          default:
+            break;
+        }
+        gt->scale[iS] = s; 
+      }
+      tr.TriggerEvent("qcd uncertainties");
+
+      unsigned nW = wIDs.size();
+      if (nW) {
+        for (unsigned iW=0; iW!=nW; ++iW) {
+          gt->signal_weights[wIDs[iW]] = event.genReweight.genParam[iW];
+        }
+      }
+    }
+
+    double maxQCDscale = 1.0;
+    if(gt->scale[0] != -1){
+      maxQCDscale = (TMath::Abs(1+gt->scale[0])+TMath::Abs(1+gt->scale[1])+TMath::Abs(1+gt->scale[2])+
+    		     TMath::Abs(1+gt->scale[3])+TMath::Abs(1+gt->scale[4])+TMath::Abs(1+gt->scale[4]))/6.0;
+    }
+
+
     gt->sf_tt = 1;
     gt->genLep1Pt = 0;
     gt->genLep1Eta = -1;
@@ -1508,51 +1773,97 @@ void PandaLeptonicAnalyzer::Run() {
 	if(TMath::Abs(dilep.M()-91.1876) < 15.0) {
           double ZGenPt  = dilep.Pt();
           double ZGenRap = TMath::Abs(dilep.Rapidity());
+	  double the_phi_star_eta = phi_star_eta(genlep1,genlep2,gt->looseLep1PdgId);
+	  if     (the_phi_star_eta <= 0.0001) the_phi_star_eta = 0.0001;
+	  else if(the_phi_star_eta >= 5.0000) the_phi_star_eta = 4.9999;
 	  if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtMM->Fill(ZGenPt,event.weight);
 	  else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtEE->Fill(ZGenPt,event.weight);
-	  if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13 && dilep.Pt() < 50.0) hDDilLowPtMM->Fill(ZGenPt,event.weight);
-	  else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11 && dilep.Pt() < 50.0) hDDilLowPtEE->Fill(ZGenPt,event.weight);
-	  if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPt2MM->Fill(ZGenPt*ZGenPt,event.weight);
-	  else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPt2EE->Fill(ZGenPt*ZGenPt,event.weight);
-	  if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13 && dilep.Pt() > 500.0) hDDilDRMM->Fill(sqrt(DeltaR2(gt->genLep1Eta,gt->genLep1Phi,gt->genLep2Eta,gt->genLep2Phi)),event.weight);
-	  else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11 && dilep.Pt() > 500.0) hDDilDREE->Fill(sqrt(DeltaR2(gt->genLep1Eta,gt->genLep1Phi,gt->genLep2Eta,gt->genLep2Phi)),event.weight);
+	  if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPhiStarMM->Fill(the_phi_star_eta,event.weight);
+	  else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPhiStarEE->Fill(the_phi_star_eta,event.weight);
+
+	  if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtMM_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+	  else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtEE_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+	  if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPhiStarMM_PDF->Fill(the_phi_star_eta,event.weight*gt->pdfUp);
+	  else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPhiStarEE_PDF->Fill(the_phi_star_eta,event.weight*gt->pdfUp);
+
+          for(int i=0; i<6; i++){
+	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtMM_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtEE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPhiStarMM_QCDPart[i]->Fill(the_phi_star_eta,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPhiStarEE_QCDPart[i]->Fill(the_phi_star_eta,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+          }
+
 	  if(ZGenRap < 2.4) {
-	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) {
-	      hDDilRapMM->Fill(ZGenRap,event.weight);
-	      if(gt->genLep1PdgId < 0) {
-	        hDDilRapPMM->Fill(ZGenRap,event.weight);
-	      } else {
-	        hDDilRapMMM->Fill(ZGenRap,event.weight);
-	      }
-	    }
-	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) {
-	      hDDilRapEE->Fill(ZGenRap,event.weight);
-	      if(gt->genLep1PdgId < 0) {
-	        hDDilRapPEE->Fill(ZGenRap,event.weight);
-	      } else {
-	        hDDilRapMEE->Fill(ZGenRap,event.weight);
-	      }
-	    }
+	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilRapMM->Fill(ZGenRap,event.weight);
+	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilRapEE->Fill(ZGenRap,event.weight);
+
+	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilRapMM_PDF->Fill(ZGenRap,event.weight*gt->pdfUp);
+	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilRapEE_PDF->Fill(ZGenRap,event.weight*gt->pdfUp);
+
+            for(int i=0; i<6; i++){
+	      if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilRapMM_QCDPart[i]->Fill(ZGenRap,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilRapEE_QCDPart[i]->Fill(ZGenRap,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+            }
 	  }
 	  if     (ZGenRap < 0.5) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap0MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap0EE->Fill(ZGenPt,event.weight);
+
+	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap0MM_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap0EE_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+
+            for(int i=0; i<6; i++){
+	      if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap0MM_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap0EE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+            }
 	  }
 	  else if(ZGenRap < 1.0) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap1MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap1EE->Fill(ZGenPt,event.weight);
+
+	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap1MM_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap1EE_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+
+            for(int i=0; i<6; i++){
+	      if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap1MM_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap1EE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+            }
 	  }
 	  else if(ZGenRap < 1.5) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap2MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap2EE->Fill(ZGenPt,event.weight);
+
+	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap2MM_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap2EE_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+
+            for(int i=0; i<6; i++){
+	      if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap2MM_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap2EE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+            }
 	  }
 	  else if(ZGenRap < 2.0) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap3MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap3EE->Fill(ZGenPt,event.weight);
+
+	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap3MM_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap3EE_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+
+            for(int i=0; i<6; i++){
+	      if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap3MM_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap3EE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+            }
 	  }
 	  else if(ZGenRap < 2.4) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap4MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap4EE->Fill(ZGenPt,event.weight);
+
+	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap4MM_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap4EE_PDF->Fill(ZGenPt,event.weight*gt->pdfUp);
+
+            for(int i=0; i<6; i++){
+	      if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap4MM_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap4EE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
+            }
 	  }
 	}
       }
@@ -1782,42 +2093,6 @@ void PandaLeptonicAnalyzer::Run() {
     }
 
     tr.TriggerEvent("ak4 gen-matching");
-
-    // scale and PDF weights, if they exist
-    gt->pdfUp = 1; gt->pdfDown = 1;
-    if (!isData) {
-      gt->pdfUp = 1 + event.genReweight.pdfDW;
-      gt->pdfDown = 1 - event.genReweight.pdfDW;
-      auto &genReweight = event.genReweight;
-      for (unsigned iS=0; iS!=6; ++iS) {
-        float s=1;
-        switch (iS) {
-          case 0:
-            s = genReweight.r1f2DW; break;
-          case 1:
-            s = genReweight.r1f5DW; break;
-          case 2:
-            s = genReweight.r2f1DW; break;
-          case 3:
-            s = genReweight.r2f2DW; break;
-          case 4:
-            s = genReweight.r5f1DW; break;
-          case 5:
-            s = genReweight.r5f5DW; break;
-          default:
-            break;
-        }
-        gt->scale[iS] = s; 
-      }
-      tr.TriggerEvent("qcd uncertainties");
-
-      unsigned nW = wIDs.size();
-      if (nW) {
-        for (unsigned iW=0; iW!=nW; ++iW) {
-          gt->signal_weights[wIDs[iW]] = event.genReweight.genParam[iW];
-        }
-      }
-    }
 
     gt->Fill();
 

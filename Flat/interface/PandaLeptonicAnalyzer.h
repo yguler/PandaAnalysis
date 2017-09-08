@@ -86,6 +86,7 @@ public :
     void Run();
     void Terminate();
     void SetDataDir(const char *s2);
+    double phi_star_eta(TLorentzVector lep1, TLorentzVector lep2, int pdgId1);
     void SetPreselectionBit(PreselectionBit b,bool on=true) {
         if (on) 
             preselBits |= b;
@@ -144,6 +145,14 @@ private:
             double eff, sf, sfup, sfdown;
     };
 
+    const int nBinPt = 36;
+    const int nBinRap = 12;
+    const int nBinPhiStar = 32;
+    const int nBinPtRap0 = 35;
+    const int nBinPtRap1 = 35;
+    const int nBinPtRap2 = 35;
+    const int nBinPtRap3 = 35;
+    const int nBinPtRap4 = 35;
     bool PassGoodLumis(int run, int lumi);
     bool PassPreselection();
     void CalcBJetSFs(BTagType bt, int flavor, double eta, double pt, 
@@ -186,30 +195,22 @@ private:
     TTree *tOut;
     GeneralLeptonicTree *gt; // essentially a wrapper around tOut
     TH1F *hDTotalMCWeight=0;
-    TH1D *hDDilPtMM;
-    TH1D *hDDilPtEE;
-    TH1D *hDDilLowPtMM;
-    TH1D *hDDilLowPtEE;
-    TH1D *hDDilPt2MM;
-    TH1D *hDDilPt2EE;
-    TH1D *hDDilDRMM;
-    TH1D *hDDilDREE;
-    TH1D *hDDilRapMM;
-    TH1D *hDDilRapEE;
-    TH1D *hDDilRapPMM;
-    TH1D *hDDilRapPEE;
-    TH1D *hDDilRapMMM;
-    TH1D *hDDilRapMEE;
-    TH1D *hDDilPtRap0MM;
-    TH1D *hDDilPtRap0EE;
-    TH1D *hDDilPtRap1MM;
-    TH1D *hDDilPtRap1EE;
-    TH1D *hDDilPtRap2MM;
-    TH1D *hDDilPtRap2EE;
-    TH1D *hDDilPtRap3MM;
-    TH1D *hDDilPtRap3EE;
-    TH1D *hDDilPtRap4MM;
-    TH1D *hDDilPtRap4EE;
+    TH1D *hDDilPtMM;     TH1D *hDDilPtMM_PDF;	  TH1D *hDDilPtMM_QCD;	   TH1D *hDDilPtMM_QCDPart[6];
+    TH1D *hDDilPtEE;	 TH1D *hDDilPtEE_PDF;	  TH1D *hDDilPtEE_QCD;	   TH1D *hDDilPtEE_QCDPart[6];
+    TH1D *hDDilRapMM;	 TH1D *hDDilRapMM_PDF;	  TH1D *hDDilRapMM_QCD;    TH1D *hDDilRapMM_QCDPart[6];
+    TH1D *hDDilRapEE;	 TH1D *hDDilRapEE_PDF;	  TH1D *hDDilRapEE_QCD;	   TH1D *hDDilRapEE_QCDPart[6];
+    TH1D *hDDilPhiStarMM;TH1D *hDDilPhiStarMM_PDF;TH1D *hDDilPhiStarMM_QCD;TH1D *hDDilPhiStarMM_QCDPart[6];
+    TH1D *hDDilPhiStarEE;TH1D *hDDilPhiStarEE_PDF;TH1D *hDDilPhiStarEE_QCD;TH1D *hDDilPhiStarEE_QCDPart[6];
+    TH1D *hDDilPtRap0MM; TH1D *hDDilPtRap0MM_PDF; TH1D *hDDilPtRap0MM_QCD; TH1D *hDDilPtRap0MM_QCDPart[6];
+    TH1D *hDDilPtRap0EE; TH1D *hDDilPtRap0EE_PDF; TH1D *hDDilPtRap0EE_QCD; TH1D *hDDilPtRap0EE_QCDPart[6];
+    TH1D *hDDilPtRap1MM; TH1D *hDDilPtRap1MM_PDF; TH1D *hDDilPtRap1MM_QCD; TH1D *hDDilPtRap1MM_QCDPart[6];
+    TH1D *hDDilPtRap1EE; TH1D *hDDilPtRap1EE_PDF; TH1D *hDDilPtRap1EE_QCD; TH1D *hDDilPtRap1EE_QCDPart[6];
+    TH1D *hDDilPtRap2MM; TH1D *hDDilPtRap2MM_PDF; TH1D *hDDilPtRap2MM_QCD; TH1D *hDDilPtRap2MM_QCDPart[6];
+    TH1D *hDDilPtRap2EE; TH1D *hDDilPtRap2EE_PDF; TH1D *hDDilPtRap2EE_QCD; TH1D *hDDilPtRap2EE_QCDPart[6];
+    TH1D *hDDilPtRap3MM; TH1D *hDDilPtRap3MM_PDF; TH1D *hDDilPtRap3MM_QCD; TH1D *hDDilPtRap3MM_QCDPart[6];
+    TH1D *hDDilPtRap3EE; TH1D *hDDilPtRap3EE_PDF; TH1D *hDDilPtRap3EE_QCD; TH1D *hDDilPtRap3EE_QCDPart[6];
+    TH1D *hDDilPtRap4MM; TH1D *hDDilPtRap4MM_PDF; TH1D *hDDilPtRap4MM_QCD; TH1D *hDDilPtRap4MM_QCDPart[6];
+    TH1D *hDDilPtRap4EE; TH1D *hDDilPtRap4EE_PDF; TH1D *hDDilPtRap4EE_QCD; TH1D *hDDilPtRap4EE_QCDPart[6];
     TTree *tIn=0;    // input tree to read
     unsigned int preselBits=0;
 

@@ -108,15 +108,15 @@ int PandaLeptonicAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   Float_t xbinsPt[nBinPt+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,800,1500};
   Float_t xbinsRap[nBinRap+1] = {0.0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.2,2.4};
-  Float_t xbinsPhiStar[nBinPhiStar+1] = {0.0001,
-                                         0.001,0.002,0.003,0.004,0.005,0.006,0.007,0.008,0.009,0.010,
-                                         0.020,0.030,0.040,0.050,0.060,0.070,0.080,0.090,0.100,0.200,														  
-                                         0.300,0.400,0.500,0.600,0.700,0.800,0.900,1.000,2.000,3.000,4.000,5.000};
-  Float_t xbinsPtRap0[nBinPtRap0+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
-  Float_t xbinsPtRap1[nBinPtRap1+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
-  Float_t xbinsPtRap2[nBinPtRap2+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
-  Float_t xbinsPtRap3[nBinPtRap3+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
-  Float_t xbinsPtRap4[nBinPtRap4+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,500,1000};
+  Float_t xbinsPhiStar[nBinPhiStar+1] = {1e-3, 2e-3, 3e-3, 4e-3, 5e-3, 6e-3, 7e-3, 8e-3, 9e-3,
+                                         1e-2, 2e-2, 3e-2, 4e-2, 5e-2, 6e-2, 7e-2, 8e-2, 9e-2,
+                                         1e-1, 2e-1, 3e-1, 4e-1, 5e-1, 6e-1, 7e-1, 8e-1, 9e-1,
+                                            1,    3,    5,    7,   10,   20,   30,   50};
+  Float_t xbinsPtRap0[nBinPtRap0+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,1500};
+  Float_t xbinsPtRap1[nBinPtRap1+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,1500};
+  Float_t xbinsPtRap2[nBinPtRap2+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,1500};
+  Float_t xbinsPtRap3[nBinPtRap3+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,1500};
+  Float_t xbinsPtRap4[nBinPtRap4+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,1500};
 
   hDDilPtMM = new TH1D("hDDilPtMM", "hDDilPtMM", nBinPt, xbinsPt);
   hDDilPtEE = new TH1D("hDDilPtEE", "hDDilPtEE", nBinPt, xbinsPt);
@@ -1159,8 +1159,6 @@ void PandaLeptonicAnalyzer::Run() {
         continue;
       if (!ele.veto)
         continue;
-      if (!ElectronIP(ele.eta(),ele.dxy,ele.dz))
-        continue;
       looseLeps.push_back(&ele);
       matchLeps.push_back(&ele);
     }
@@ -1216,15 +1214,18 @@ void PandaLeptonicAnalyzer::Run() {
       // now specialize lepton types
       panda::Muon *mu = dynamic_cast<panda::Muon*>(lep);
       if (mu!=NULL) {
+        bool isLoose  = mu->loose;
         bool isFake   = mu->tight  && mu->combIso()/mu->pt() < 0.4 && mu->chIso/mu->pt() < 0.4;
-        bool isMedium = mu->medium && mu->combIso()/mu->pt() < 0.15;
+        bool isMedium = (mu->medium || mu-> mediumBtoF) && mu->combIso()/mu->pt() < 0.15;
         bool isTight  = mu->tight  && mu->combIso()/mu->pt() < 0.15;
+        bool isDxyz   = MuonIP(mu->dxy,mu->dz);
         if      (lep_counter==1) {
           gt->looseLep1PdgId = mu->charge*-13;
-                       gt->looseLep1SelBit |= kLoose;
+          if(isLoose)  gt->looseLep1SelBit |= kLoose;
           if(isFake)   gt->looseLep1SelBit |= kFake;
           if(isMedium) gt->looseLep1SelBit |= kMedium;
           if(isTight)  gt->looseLep1SelBit |= kTight;
+          if(isDxyz)   gt->looseLep1SelBit |= kDxyz;
 	  gt->sf_trk1    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose1  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_medium1 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
@@ -1236,10 +1237,11 @@ void PandaLeptonicAnalyzer::Run() {
         }
 	else if (lep_counter==2) {
           gt->looseLep2PdgId = mu->charge*-13;
-                       gt->looseLep2SelBit |= kLoose;
+          if(isLoose)  gt->looseLep2SelBit |= kLoose;
           if(isFake)   gt->looseLep2SelBit |= kFake;
           if(isMedium) gt->looseLep2SelBit |= kMedium;
           if(isTight)  gt->looseLep2SelBit |= kTight;
+          if(isDxyz)   gt->looseLep2SelBit |= kDxyz;
 	  gt->sf_trk2    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose2  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_medium2 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
@@ -1251,10 +1253,11 @@ void PandaLeptonicAnalyzer::Run() {
         }
 	else if (lep_counter==3) {
           gt->looseLep3PdgId = mu->charge*-13;
-                       gt->looseLep3SelBit |= kLoose;
+          if(isLoose)  gt->looseLep3SelBit |= kLoose;
           if(isFake)   gt->looseLep3SelBit |= kFake;
           if(isMedium) gt->looseLep3SelBit |= kMedium;
           if(isTight)  gt->looseLep3SelBit |= kTight;
+          if(isDxyz)   gt->looseLep3SelBit |= kDxyz;
 	  gt->sf_trk3    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose3  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_medium3 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
@@ -1266,10 +1269,11 @@ void PandaLeptonicAnalyzer::Run() {
         }
 	else if (lep_counter==4) {
           gt->looseLep4PdgId = mu->charge*-13;
-                       gt->looseLep4SelBit |= kLoose;
+          if(isLoose)  gt->looseLep4SelBit |= kLoose;
           if(isFake)   gt->looseLep4SelBit |= kFake;
           if(isMedium) gt->looseLep4SelBit |= kMedium;
           if(isTight)  gt->looseLep4SelBit |= kTight;
+          if(isDxyz)   gt->looseLep4SelBit |= kDxyz;
 	  gt->sf_trk4    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose4  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_medium4 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
@@ -1281,61 +1285,67 @@ void PandaLeptonicAnalyzer::Run() {
         }
       } else {
         panda::Electron *ele = dynamic_cast<panda::Electron*>(lep);
+        bool isLoose  = ele->loose;
         bool isFake   = ele->hltsafe;
         bool isMedium = ele->medium;
         bool isTight  = ele->tight;
+        bool isDxyz   = ElectronIP(ele->eta(),ele->dxy,ele->dz);
 	if(TMath::Abs(ele->eta()-ele->superCluster->eta) > 0.2) printf("Potential issue ele/sc: dist: %f - %f/%f/%f vs. %f/%f/%f\n",TMath::Abs(ele->eta()-ele->superCluster->eta),ele->pt(),ele->eta(),ele->phi(),ele->superCluster->rawPt,ele->superCluster->eta,ele->superCluster->phi);
         if      (lep_counter==1) {
           gt->looseLep1Pt *= EGMSCALE;
           gt->looseLep1PdgId = ele->charge*-11;
-                       gt->looseLep1SelBit |= kLoose;
+          if(isLoose)  gt->looseLep1SelBit |= kLoose;
           if(isFake)   gt->looseLep1SelBit |= kFake;
           if(isMedium) gt->looseLep1SelBit |= kMedium;
           if(isTight)  gt->looseLep1SelBit |= kTight;
-	  gt->sf_trk1    = GetCorr(cTrackingElectron,ele->eta(),ele->pt());
+          if(isDxyz)   gt->looseLep1SelBit |= kDxyz;
+	  gt->sf_trk1    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
 	  gt->sf_loose1  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium1 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
 	  gt->sf_tight1  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  gt->sf_unc1 = GetError(cMediumElectronId,ele->eta(),ele->pt());
+	  gt->sf_unc1    = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
 	else if (lep_counter==2) {
           gt->looseLep2Pt *= EGMSCALE;
           gt->looseLep2PdgId = ele->charge*-11;
-                       gt->looseLep2SelBit |= kLoose;
+          if(isLoose)  gt->looseLep2SelBit |= kLoose;
           if(isFake)   gt->looseLep2SelBit |= kFake;
           if(isMedium) gt->looseLep2SelBit |= kMedium;
           if(isTight)  gt->looseLep2SelBit |= kTight;
-	  gt->sf_trk2    = GetCorr(cTrackingElectron,ele->eta(),ele->pt());
+          if(isDxyz)   gt->looseLep2SelBit |= kDxyz;
+	  gt->sf_trk2    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
 	  gt->sf_loose2  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium2 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
 	  gt->sf_tight2  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  gt->sf_unc2 = GetError(cMediumElectronId,ele->eta(),ele->pt());
+	  gt->sf_unc2    = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
 	else if (lep_counter==3) {
           gt->looseLep3Pt *= EGMSCALE;
           gt->looseLep3PdgId = ele->charge*-11;
-                       gt->looseLep3SelBit |= kLoose;
+          if(isLoose)  gt->looseLep3SelBit |= kLoose;
           if(isFake)   gt->looseLep3SelBit |= kFake;
           if(isMedium) gt->looseLep3SelBit |= kMedium;
           if(isTight)  gt->looseLep3SelBit |= kTight;
-	  gt->sf_trk3    = GetCorr(cTrackingElectron,ele->eta(),ele->pt());
+          if(isDxyz)   gt->looseLep3SelBit |= kDxyz;
+	  gt->sf_trk3    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
 	  gt->sf_loose3  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium3 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
 	  gt->sf_tight3  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  gt->sf_unc3 = GetError(cMediumElectronId,ele->eta(),ele->pt());
+	  gt->sf_unc3    = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
 	else if (lep_counter==4) {
           gt->looseLep4Pt *= EGMSCALE;
           gt->looseLep4PdgId = ele->charge*-11;
-                       gt->looseLep4SelBit |= kLoose;
+          if(isLoose)  gt->looseLep4SelBit |= kLoose;
           if(isFake)   gt->looseLep4SelBit |= kFake;
           if(isMedium) gt->looseLep4SelBit |= kMedium;
           if(isTight)  gt->looseLep4SelBit |= kTight;
-	  gt->sf_trk4    = GetCorr(cTrackingElectron,ele->eta(),ele->pt());
+          if(isDxyz)   gt->looseLep4SelBit |= kDxyz;
+	  gt->sf_trk4    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
 	  gt->sf_loose4  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium4 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
 	  gt->sf_tight4  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  gt->sf_unc4 = GetError(cMediumElectronId,ele->eta(),ele->pt());
+	  gt->sf_unc4    = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
       }
       ++lep_counter;
@@ -1763,19 +1773,19 @@ void PandaLeptonicAnalyzer::Run() {
       }
       
       // Filling dilepton Pt at gen level
-      if(gt->genLep1Pt > 25 && TMath::Abs(gt->genLep1Eta) < 2.5 && 
-         gt->genLep2Pt > 25 && TMath::Abs(gt->genLep2Eta) < 2.5){
+      if(gt->genLep1Pt > 25 && TMath::Abs(gt->genLep1Eta) < 2.4 && 
+         gt->genLep2Pt > 25 && TMath::Abs(gt->genLep2Eta) < 2.4){
         TLorentzVector genlep1;
         genlep1.SetPtEtaPhiM(gt->genLep1Pt,gt->genLep1Eta,gt->genLep1Phi,0.0);
         TLorentzVector genlep2;
         genlep2.SetPtEtaPhiM(gt->genLep2Pt,gt->genLep2Eta,gt->genLep2Phi,0.0);
 	TLorentzVector dilep = genlep1 + genlep2;
 	if(TMath::Abs(dilep.M()-91.1876) < 15.0) {
-          double ZGenPt  = dilep.Pt();
+          double ZGenPt  = TMath::Min(dilep.Pt(),1499.999);
           double ZGenRap = TMath::Abs(dilep.Rapidity());
-	  double the_phi_star_eta = phi_star_eta(genlep1,genlep2,gt->looseLep1PdgId);
-	  if     (the_phi_star_eta <= 0.0001) the_phi_star_eta = 0.0001;
-	  else if(the_phi_star_eta >= 5.0000) the_phi_star_eta = 4.9999;
+	  double the_phi_star_eta = TMath::Min(phi_star_eta(genlep1,genlep2,gt->looseLep1PdgId),49.999);
+	  if(the_phi_star_eta <= 1e-3) the_phi_star_eta = 1e-3;
+
 	  if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtMM->Fill(ZGenPt,event.weight);
 	  else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtEE->Fill(ZGenPt,event.weight);
 	  if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPhiStarMM->Fill(the_phi_star_eta,event.weight);
@@ -1841,7 +1851,8 @@ void PandaLeptonicAnalyzer::Run() {
 	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap2EE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
             }
 	  }
-	  else if(ZGenRap < 2.0) {
+	  //else if(ZGenRap < 2.0) {
+	  else if(ZGenRap < 2.4) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap3MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap3EE->Fill(ZGenPt,event.weight);
 

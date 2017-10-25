@@ -49,7 +49,8 @@ public :
      kLoose   =(1<<0),
      kFake    =(1<<1),
      kMedium  =(1<<2),
-     kTight   =(1<<3)
+     kTight   =(1<<3),
+     kDxyz    =(1<<4)
     };
 
     enum ProcessType { 
@@ -147,12 +148,12 @@ private:
 
     const int nBinPt = 36;
     const int nBinRap = 12;
-    const int nBinPhiStar = 32;
-    const int nBinPtRap0 = 35;
-    const int nBinPtRap1 = 35;
-    const int nBinPtRap2 = 35;
-    const int nBinPtRap3 = 35;
-    const int nBinPtRap4 = 35;
+    const int nBinPhiStar = 34;
+    const int nBinPtRap0 = 34;
+    const int nBinPtRap1 = 34;
+    const int nBinPtRap2 = 34;
+    const int nBinPtRap3 = 34;
+    const int nBinPtRap4 = 34;
     bool PassGoodLumis(int run, int lumi);
     bool PassPreselection();
     void CalcBJetSFs(BTagType bt, int flavor, double eta, double pt, 

@@ -155,6 +155,7 @@ private:
     const int nBinPtRap3 = 34;
     const int nBinPtRap4 = 34;
     const int nBinWW = 9;
+    const int nBinWWN0JET = 3;
     bool PassGoodLumis(int run, int lumi);
     bool PassPreselection();
     void CalcBJetSFs(BTagType bt, int flavor, double eta, double pt, 
@@ -217,6 +218,7 @@ private:
     TH1D *hDWWPTL1;      TH1D *hDWWPTL1_PDF;	  TH1D *hDWWPTL1_QCD;	   TH1D *hDWWPTL1_QCDPart[6];
     TH1D *hDWWPTL2;      TH1D *hDWWPTL2_PDF;	  TH1D *hDWWPTL2_QCD;	   TH1D *hDWWPTL2_QCDPart[6];
     TH1D *hDWWDPHILL;    TH1D *hDWWDPHILL_PDF;	  TH1D *hDWWDPHILL_QCD;	   TH1D *hDWWDPHILL_QCDPart[6];
+    TH1D *hDWWN0JET;     TH1D *hDWWN0JET_PDF;	  TH1D *hDWWN0JET_QCD;	   TH1D *hDWWN0JET_QCDPart[6];
     TTree *tIn=0;    // input tree to read
     unsigned int preselBits=0;
 

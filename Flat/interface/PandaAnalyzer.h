@@ -32,6 +32,8 @@
 /////////////////////////////////////////////////////////////////////////////
 // some misc definitions
 
+#define NMAXPF 100
+#define NPFPROPS 9
 
 /////////////////////////////////////////////////////////////////////////////
 // PandaAnalyzer definition
@@ -205,6 +207,7 @@ private:
     void QCDUncs();
     void SignalReweights();
     void GenJetsNu();
+    void FillPFTree();
     // templated function needs to be defined here, ugh
     template <typename T> void MatchGenJets(T& genJets) {
       unsigned N = cleanedJets.size();
@@ -280,9 +283,12 @@ private:
     //////////////////////////////////////////////////////////////////////////////////////
 
     // IO for the analyzer
+    TString fOutPath;
     TFile *fOut=0;     // output file is owned by PandaAnalyzer
     TTree *tOut=0;
     GeneralTree *gt=0; // essentially a wrapper around tOut
+    TFile *fPF=0; // temp output files of PF arrays
+    TTree *tPF=0;
     TH1F *hDTotalMCWeight=0;
     TTree *tIn=0;    // input tree to read
     unsigned int preselBits=0;
@@ -319,6 +325,8 @@ private:
     float genBosonPtMin, genBosonPtMax;
     std::vector<TString> wIDs;
 
+    float **pfInfo = NULL;
+    float fjmsd, fjpt;
 };
 
 

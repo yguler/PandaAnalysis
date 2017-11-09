@@ -59,6 +59,7 @@ void PandaAnalyzer::ResetBranches()
 
 void PandaAnalyzer::SetOutputFile(TString fOutName) 
 {
+  fOutPath = fOutName;
   fOut = new TFile(fOutName,"RECREATE");
   fOut->cd();
   tOut = new TTree("events","events");
@@ -68,6 +69,22 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
   gt->monohiggs = analysis->monoh;
   gt->vbf       = analysis->vbf;
   gt->fatjet    = analysis->fatjet;
+
+  if (analysis->deep) {
+    fPF = new TFile(fOutName.ReplaceAll(".root","_pf.root"),"RECREATE");
+    fPF->cd();
+    tPF = new TTree("inputs","inputs");
+
+    pfInfo = new float*[NMAXPF];
+    for (unsigned i = 0; i != NMAXPF; ++i) {
+      pfInfo[i] = new float[NPFPROPS];
+    }
+    tPF->Branch("kinematics",pfInfo,TString::Format("pfInfo[%i][%i]/F",NMAXPF,NPFPROPS).Data());
+    tPF->Branch("msd",&fjmsd,"msd/F");
+    tPF->Branch("pt",&fjpt,"pt/F");
+
+    fOut->cd();
+  }
 
   // fill the signal weights
   for (auto& id : wIDs) 
@@ -174,7 +191,17 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     double radius = 1.5;
     double sdZcut = 0.15;
     double sdBeta = 1.;
-    jetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm,radius);
+    if (analysis->ak8) {
+      radius = 0.8;
+      sdZcut = 0.1;
+      sdBeta = 0.;
+      jetDef = new fastjet::JetDefinition(fastjet::antikt_algorithm,radius);
+    } else {
+      radius = 1.5;
+      sdZcut = 0.15;
+      sdBeta = 1.;
+      jetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm,radius);
+    }
     softDrop = new fastjet::contrib::SoftDrop(sdBeta,sdZcut,radius);
   } else { 
     std::vector<TString> droppable = {"fj1NConst","fj1NSDConst","fj1EFrac100","fj1SDEFrac100"};
@@ -219,6 +246,9 @@ void PandaAnalyzer::Terminate()
   fOut->WriteTObject(tOut);
   fOut->Close();
 
+  fPF->WriteTObject(tPF);
+  fPF->Close();
+
   for (auto *f : fCorrs)
     if (f)
       f->Close();
@@ -262,6 +292,13 @@ void PandaAnalyzer::Terminate()
   delete softDrop;
 
   delete hDTotalMCWeight;
+
+  if (pfInfo) {
+    for (unsigned i = 0; i != NMAXPF; ++i) {
+      delete[] pfInfo[i];
+    }
+    delete[] pfInfo;
+  }
   if (DEBUG) PDebug("PandaAnalyzer::Terminate","Finished with output");
 }
 
@@ -931,6 +968,11 @@ void PandaAnalyzer::Run()
     
     if (analysis->genOnly && !PassPreselection()) // only check gen presel here
       continue;
+
+    if (analysis->deep) {
+      FillPFTree();
+      tPF->Fill();
+    }
 
     gt->Fill();
 

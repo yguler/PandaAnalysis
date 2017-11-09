@@ -178,7 +178,7 @@ void PandaAnalyzer::JetHbbBasics(panda::Jet& jet)
   gt->jetPt[N]=jet.pt();
   gt->jetEta[N]=jet.eta();
   gt->jetPhi[N]=jet.phi();
-  gt->jetE[N]=jet.m();
+  gt->jetE[N]=jet.e();
   gt->jetCSV[N]=csv;
   gt->jetQGL[N]=jet.qgl;
 

@@ -8,7 +8,74 @@
 
 using namespace panda;
 using namespace std;
+using namespace fastjet;
 
+struct JetHistory {
+  int user_idx;
+  int child_idx;
+};
+
+void PandaAnalyzer::FillPFTree() {
+  // this function saves the PF information of the leading fatjet
+  // to a compact 2D array, that is eventually saved to an auxillary
+  // tree/file. this is used as temporary input to the inference step
+  // which then adds a separate tree to the main output. ideally,
+  // this is integrated by use of e.g. lwtnn, but there is a bit of
+  // development needed to support our networks. for the time being
+  // we do it this way. -SN
+  fjpt = -1; fjmsd = -1;
+  for (unsigned i = 0; i != NMAXPF; ++i) {
+    for (unsigned j = 0; j != NPFPROPS; ++j) {
+      pfInfo[i][j] = 0;
+    }
+  }
+
+  if (!fj1)
+    return;
+
+  fjpt = fj1->pt();
+  fjmsd = fj1->mSD;
+
+  VPseudoJet particles = ConvertPFCands(fj1->constituents,analysis->puppi_jets,0.001);
+  fastjet::ClusterSequenceArea seq(particles,*jetDef,*areaDef);
+  VPseudoJet allJets(seq.inclusive_jets(0.));
+
+  auto &history = seq.history();
+  auto &jets = seq.jets();
+  vector<JetHistory> ordered_jets;
+  for (auto &h : history) {
+    if (h.jetp_index >= 0) {
+      auto &j = jets.at(h.jetp_index);
+      if (j.user_index() >= 0) {
+        JetHistory jh;
+        jh.user_idx = j.user_index();
+        jh.child_idx = h.child;
+        ordered_jets.push_back(jh);
+      }
+    }
+  }
+  sort(ordered_jets.begin(), ordered_jets.end(),
+       [](JetHistory x, JetHistory y) { return x.child_idx < y.child_idx; });
+  unsigned idx = 0;
+  for (auto &jh : ordered_jets) {
+    if (idx == NMAXPF)
+      break;
+    const PFCand *cand = fj1->constituents.at(jh.user_idx).get();
+    pfInfo[idx][0] = cand->pt() * cand->puppiW() / fj1->pt();
+    pfInfo[idx][1] = cand->eta() - fj1->eta();
+    pfInfo[idx][2] = SignedDeltaPhi(cand->phi(), fj1->phi());
+    pfInfo[idx][3] = cand->m();
+    pfInfo[idx][4] = cand->e();
+    pfInfo[idx][5] = cand->ptype;
+    pfInfo[idx][6] = cand->puppiW();
+    pfInfo[idx][7] = 0; // zero these out for now
+    pfInfo[idx][8] = 0;
+    idx++;
+  }
+
+  tr->TriggerEvent("pf tree");
+
+}
 
 float PandaAnalyzer::GetMSDCorr(Float_t puppipt, Float_t puppieta) 
 {

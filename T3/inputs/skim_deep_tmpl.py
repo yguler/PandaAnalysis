@@ -17,6 +17,7 @@ from PandaCore.Tools.Load import *
 import PandaCore.Tools.job_management as cb
 import PandaAnalysis.Tagging.cfg_v8 as tagcfg
 import PandaAnalysis.T3.job_utilities as utils
+import PandaAnalysis.T3.job_deep_utilities as deep_utils
 from PandaAnalysis.Flat.analysis import gghbb
 
 Load('PandaAnalyzer')
@@ -28,8 +29,7 @@ def fn(input_name, isData, full_path):
     # now we instantiate and configure the analyzer
     skimmer = root.PandaAnalyzer()
     hbb = gghbb()
-    hbb.reclusterGen = True
-    hbb.bjetRegression = True
+    hbb.deep = True
     hbb.dump()
     skimmer.SetAnalysis(hbb)
     skimmer.isData=isData
@@ -37,7 +37,11 @@ def fn(input_name, isData, full_path):
     skimmer.processType=processType 
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kFatjet)
 
-    return utils.run_PandaAnalyzer(skimmer, isData, input_name)
+    outpath = utils.run_PandaAnalyzer(skimmer, isData, input_name)
+    if not outpath:
+        return False 
+    deep_utils.run_model(outpath.replace('.root','_pf_%i.root'), outpath)
+    return True
 
 
 def add_bdt():
@@ -76,6 +80,9 @@ if __name__ == "__main__":
 
     utils.hadd(processed.keys())
     utils.print_time('hadd')
+
+    # add_bdt()
+    # utils.print_time('bdt')
 
     ret = utils.stageout(outdir,outfilename)
     utils.cleanup('*.root')

@@ -71,19 +71,8 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
   gt->fatjet    = analysis->fatjet;
 
   if (analysis->deep) {
-    fPF = new TFile(fOutName.ReplaceAll(".root","_pf.root"),"RECREATE");
-    fPF->cd();
-    tPF = new TTree("inputs","inputs");
-
-    pfInfo = new float*[NMAXPF];
-    for (unsigned i = 0; i != NMAXPF; ++i) {
-      pfInfo[i] = new float[NPFPROPS];
-    }
-    tPF->Branch("kinematics",pfInfo,TString::Format("pfInfo[%i][%i]/F",NMAXPF,NPFPROPS).Data());
-    tPF->Branch("msd",&fjmsd,"msd/F");
-    tPF->Branch("pt",&fjpt,"pt/F");
-
-    fOut->cd();
+    auxFilePath = fOutName.ReplaceAll(".root","_pf_%u.root");
+    IncrementAuxFile();
   }
 
   // fill the signal weights
@@ -121,7 +110,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   else if (analysis->fatjet) 
     readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
   
-  if (analysis->recluster || analysis->bjetRegression)
+  if (analysis->recluster || analysis->bjetRegression || analysis->deep)
     readlist.push_back("pfCandidates");
 
   if (isData) {
@@ -177,7 +166,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   gt->RemoveBranches({"ak81.*"}); // unused
   
-  if (analysis->recluster || analysis->reclusterGen) {
+  if (analysis->recluster || analysis->reclusterGen || analysis->deep) {
     int activeAreaRepeats = 1;
     double ghostArea = 0.01;
     double ghostEtaMax = 7.0;
@@ -187,7 +176,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   if (!analysis->fatjet && !analysis->ak8) {
     gt->RemoveBranches({"fj1.*"});
-  } else if (analysis->recluster) {
+  } else if (analysis->recluster || analysis->deep) {
     double radius = 1.5;
     double sdZcut = 0.15;
     double sdBeta = 1.;
@@ -245,25 +234,21 @@ void PandaAnalyzer::Terminate()
 {
   fOut->WriteTObject(tOut);
   fOut->Close();
+  fOut = 0; tOut = 0;
 
-  fPF->WriteTObject(tPF);
-  fPF->Close();
+  IncrementAuxFile(true);
 
+  for (unsigned i = 0; i != cN; ++i) {
+    delete h1Corrs[i];
+    h1Corrs[i] = 0;
+  }
+  for (unsigned i = 0; i != cN; ++i) {
+    delete h2Corrs[i];
+    h2Corrs[i] = 0;
+  }
   for (auto *f : fCorrs)
     if (f)
       f->Close();
-//   for (unsigned i = 0; i != cN; ++i) {
-//     delete h1Corrs[i];
-//     printf("1 %i \n", i);
-//   }
-//   for (unsigned i = 0; i != cN; ++i) {
-//     delete h2Corrs[i];
-//     printf("2 %i \n", i);
-//   }
-  for (auto *h : h1Corrs)
-    delete h;
-  for (auto *h : h2Corrs)
-    delete h;
 
   delete btagCalib;
   delete sj_btagCalib;
@@ -279,7 +264,6 @@ void PandaAnalyzer::Terminate()
     delete iter.second;
 
   for (auto& iter : ak4ScaleReader) {
-    printf("trying to delete: |%s| at %p\n",iter.first.Data(),iter.second);
     delete iter.second;
   }
 
@@ -293,12 +277,12 @@ void PandaAnalyzer::Terminate()
 
   delete hDTotalMCWeight;
 
-  if (pfInfo) {
-    for (unsigned i = 0; i != NMAXPF; ++i) {
-      delete[] pfInfo[i];
-    }
-    delete[] pfInfo;
-  }
+  // if (pfInfo) {
+  //   for (unsigned i = 0; i != NMAXPF; ++i) {
+  //     delete[] pfInfo[i];
+  //   }
+  //   delete[] pfInfo;
+  // }
   if (DEBUG) PDebug("PandaAnalyzer::Terminate","Finished with output");
 }
 
@@ -971,7 +955,9 @@ void PandaAnalyzer::Run()
 
     if (analysis->deep) {
       FillPFTree();
-      tPF->Fill();
+      tAux->Fill();
+      if (tAux->GetEntriesFast() == 2500)
+        IncrementAuxFile();
     }
 
     gt->Fill();

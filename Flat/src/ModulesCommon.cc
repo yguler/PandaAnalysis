@@ -9,6 +9,29 @@
 using namespace panda;
 using namespace std;
 
+void PandaAnalyzer::IncrementAuxFile(bool close)
+{
+  if (fAux) {
+    fAux->WriteTObject(tAux, "inputs", "Overwrite");
+    fAux->Close();
+  }
+  if (close)
+    return;
+
+  TString path = TString::Format(auxFilePath.Data(),auxCounter++);
+  fAux = TFile::Open(path.Data(), "RECREATE");
+  if (DEBUG) PDebug("PandaAnalyzer::IncrementAuxFile", "Opening "+path);
+  tAux = new TTree("inputs","inputs");
+  pfInfo.resize(NMAXPF);
+  for (unsigned i = 0; i != NMAXPF; ++i) {
+    pfInfo[i].resize(NPFPROPS);
+  }
+  tAux->Branch("kinematics",&pfInfo);
+  tAux->Branch("msd",&fjmsd,"msd/F");
+  tAux->Branch("pt",&fjpt,"pt/F");
+
+  fOut->cd();
+}
 
 void PandaAnalyzer::RegisterTriggers() 
 {

@@ -46,7 +46,7 @@ def copy_local(long_name):
 
     # if the file is cached locally, why not use it?
     local_path = full_path.replace('root://xrootd.cmsaf.mit.edu/','/mnt/hadoop/cms')
-    PInfo(sname+'.copy_local','Local access is configured to be %s'%('on' if bool(getenv('SUBMIT_LOCALACCESS')) else 'off'))
+    PInfo(sname+'.copy_local','Local access is configured to be %s'%('on' if local_copy else 'off'))
     if local_copy and path.isfile(local_path): 
         # apparently SmartCached files can be corrupted...
         ftest = root.TFile(local_path)
@@ -225,11 +225,10 @@ def run_PandaAnalyzer(skimmer, isData, input_name):
     ret = path.isfile(output_name)
     if ret:
         PInfo(sname+'.run_PandaAnalyzer','Successfully created %s'%(output_name))
-        return True
+        return output_name 
     else:
         PError(sname+'.run_PandaAnalyzer','Failed in creating %s!'%(output_name))
         return False
-
 
 def main(to_run, processed, fn):
     print_time('loading')

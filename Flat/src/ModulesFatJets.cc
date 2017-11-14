@@ -73,6 +73,7 @@ void PandaAnalyzer::FillPFTree() {
     idx++;
   }
 
+
   tr->TriggerEvent("pf tree");
 
 }
@@ -110,6 +111,8 @@ void PandaAnalyzer::FatjetBasics()
     float ptcut = 200;
     if (analysis->monoh)
       ptcut = 200;
+    if (analysis->deep)
+      ptcut = 400;
 
     if (pt<ptcut || fabs(eta)>2.4 || !fj.monojet)
       continue;
@@ -529,59 +532,61 @@ void PandaAnalyzer::FatjetMatching()
     gt->fj1Nbs=bs_inside_cone;
     gt->fj1gbb=has_gluon_splitting;
 
-    // now get the subjet btag SFs
-    vector<btagcand> sj_btagcands;
-    vector<double> sj_sf_cent, sj_sf_bUp, sj_sf_bDown, sj_sf_mUp, sj_sf_mDown;
-    unsigned int nSJ = fj1->subjets.size();
-    for (unsigned int iSJ=0; iSJ!=nSJ; ++iSJ) {
-      auto& subjet = fj1->subjets.objAt(iSJ);
-      int flavor=0;
-      for (auto& gen : event.genParticles) {
-        int apdgid = abs(gen.pdgid);
-        if (apdgid==0 || (apdgid>5 && apdgid!=21)) // light quark or gluon
-          continue;
-        double dr2 = DeltaR2(subjet.eta(),subjet.phi(),gen.eta(),gen.phi());
-        if (dr2<0.09) {
-          if (apdgid==4 || apdgid==5) {
-            flavor=apdgid;
-            break;
-          } else {
-            flavor=0;
+    if (analysis->btagSFs) {
+      // now get the subjet btag SFs
+      vector<btagcand> sj_btagcands;
+      vector<double> sj_sf_cent, sj_sf_bUp, sj_sf_bDown, sj_sf_mUp, sj_sf_mDown;
+      unsigned int nSJ = fj1->subjets.size();
+      for (unsigned int iSJ=0; iSJ!=nSJ; ++iSJ) {
+        auto& subjet = fj1->subjets.objAt(iSJ);
+        int flavor=0;
+        for (auto& gen : event.genParticles) {
+          int apdgid = abs(gen.pdgid);
+          if (apdgid==0 || (apdgid>5 && apdgid!=21)) // light quark or gluon
+            continue;
+          double dr2 = DeltaR2(subjet.eta(),subjet.phi(),gen.eta(),gen.phi());
+          if (dr2<0.09) {
+            if (apdgid==4 || apdgid==5) {
+              flavor=apdgid;
+              break;
+            } else {
+              flavor=0;
+            }
           }
+        } // finding the subjet flavor
+
+        float pt = subjet.pt();
+        float btagUncFactor = 1;
+        float eta = subjet.eta();
+        double eff(1),sf(1),sfUp(1),sfDown(1);
+        unsigned int binpt = btagpt.bin(pt);
+        unsigned int bineta = btageta.bin(fabs(eta));
+        if (flavor==5) {
+          eff = beff[bineta][binpt];
+        } else if (flavor==4) {
+          eff = ceff[bineta][binpt];
+        } else {
+          eff = lfeff[bineta][binpt];
         }
-      } // finding the subjet flavor
+        CalcBJetSFs(bSubJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
+        sj_btagcands.push_back(btagcand(iSJ,flavor,eff,sf,sfUp,sfDown));
+        sj_sf_cent.push_back(sf);
+        if (flavor>0) {
+          sj_sf_bUp.push_back(sfUp); sj_sf_bDown.push_back(sfDown);
+          sj_sf_mUp.push_back(sf); sj_sf_mDown.push_back(sf);
+        } else {
+          sj_sf_bUp.push_back(sf); sj_sf_bDown.push_back(sf);
+          sj_sf_mUp.push_back(sfUp); sj_sf_mDown.push_back(sfDown);
+        }
 
-      float pt = subjet.pt();
-      float btagUncFactor = 1;
-      float eta = subjet.eta();
-      double eff(1),sf(1),sfUp(1),sfDown(1);
-      unsigned int binpt = btagpt.bin(pt);
-      unsigned int bineta = btageta.bin(fabs(eta));
-      if (flavor==5) {
-        eff = beff[bineta][binpt];
-      } else if (flavor==4) {
-        eff = ceff[bineta][binpt];
-      } else {
-        eff = lfeff[bineta][binpt];
-      }
-      CalcBJetSFs(bSubJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
-      sj_btagcands.push_back(btagcand(iSJ,flavor,eff,sf,sfUp,sfDown));
-      sj_sf_cent.push_back(sf);
-      if (flavor>0) {
-        sj_sf_bUp.push_back(sfUp); sj_sf_bDown.push_back(sfDown);
-        sj_sf_mUp.push_back(sf); sj_sf_mDown.push_back(sf);
-      } else {
-        sj_sf_bUp.push_back(sf); sj_sf_bDown.push_back(sf);
-        sj_sf_mUp.push_back(sfUp); sj_sf_mDown.push_back(sfDown);
-      }
+      } // loop over subjets
 
-    } // loop over subjets
-
-    EvalBTagSF(sj_btagcands,sj_sf_cent,GeneralTree::bCent,GeneralTree::bSubJet);
-    EvalBTagSF(sj_btagcands,sj_sf_bUp,GeneralTree::bBUp,GeneralTree::bSubJet);
-    EvalBTagSF(sj_btagcands,sj_sf_bDown,GeneralTree::bBDown,GeneralTree::bSubJet);
-    EvalBTagSF(sj_btagcands,sj_sf_mUp,GeneralTree::bMUp,GeneralTree::bSubJet);
-    EvalBTagSF(sj_btagcands,sj_sf_mDown,GeneralTree::bMDown,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_cent,GeneralTree::bCent,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_bUp,GeneralTree::bBUp,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_bDown,GeneralTree::bBDown,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_mUp,GeneralTree::bMUp,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_mDown,GeneralTree::bMDown,GeneralTree::bSubJet);
+    }
 
   }
 

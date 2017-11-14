@@ -208,6 +208,7 @@ private:
     void SignalReweights();
     void GenJetsNu();
     void FillPFTree();
+    void IncrementAuxFile(bool close=false);
     // templated function needs to be defined here, ugh
     template <typename T> void MatchGenJets(T& genJets) {
       unsigned N = cleanedJets.size();
@@ -287,8 +288,10 @@ private:
     TFile *fOut=0;     // output file is owned by PandaAnalyzer
     TTree *tOut=0;
     GeneralTree *gt=0; // essentially a wrapper around tOut
-    TFile *fPF=0; // temp output files of PF arrays
-    TTree *tPF=0;
+    TString auxFilePath="";
+    unsigned auxCounter=0;
+    TFile *fAux=0; // auxillary file
+    TTree *tAux=0;
     TH1F *hDTotalMCWeight=0;
     TTree *tIn=0;    // input tree to read
     unsigned int preselBits=0;
@@ -325,7 +328,9 @@ private:
     float genBosonPtMin, genBosonPtMax;
     std::vector<TString> wIDs;
 
-    float **pfInfo = NULL;
+    // float **pfInfo = NULL;
+    //float pfInfo[NMAXPF][NPFPROPS];
+    std::vector<std::vector<float>> pfInfo;
     float fjmsd, fjpt;
 };
 

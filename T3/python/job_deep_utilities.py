@@ -4,8 +4,8 @@ import ROOT as root
 import numpy as np
 
 from sys import path, stderr
-for p in path:
-    stderr.write('%s\n'%p)
+# for p in path:
+#     stderr.write('%s\n'%p)
 
 import PandaCore.Tools.root_interface as r
 import json 
@@ -14,6 +14,7 @@ from PandaCore.Tools.Misc import *
 environ['KERAS_BACKEND'] = 'tensorflow'
 from keras.models import Model, load_model
 import job_utilities as utils
+from glob import glob
 
 cmssw_base = getenv('CMSSW_BASE')
 sname = 'T3.job_deep_utilities'
@@ -84,9 +85,9 @@ def run_model(infilepattern, outfilepath):
         utils.print_time('preprocessing')
         pred = infer(data)
         predictions.append(pred)
+        utils.cleanup(infilepath)
         utils.print_time('inference')
     pred = np.concatenate(predictions)
     arrays_to_tree(outfilepath, pred)
-    utils.cleanup(infilepath)
     utils.print_time('saving prediction')
 

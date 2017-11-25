@@ -29,6 +29,7 @@ void PandaAnalyzer::IncrementAuxFile(bool close)
   tAux->Branch("kinematics",&pfInfo);
   tAux->Branch("msd",&fjmsd,"msd/F");
   tAux->Branch("pt",&fjpt,"pt/F");
+  tAux->Branch("eventNumber",&(gt->eventNumber),"eventNumber/l");
 
   fOut->cd();
 }

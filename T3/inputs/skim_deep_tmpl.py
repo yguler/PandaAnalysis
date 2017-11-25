@@ -5,6 +5,7 @@ from sys import argv,exit
 from os import system,getenv,path
 from time import clock,time
 import json
+from glob import glob
 
 which = int(argv[1])
 submit_id = int(argv[2])
@@ -19,6 +20,9 @@ import PandaAnalysis.Tagging.cfg_v8 as tagcfg
 import PandaAnalysis.T3.job_utilities as utils
 import PandaAnalysis.T3.job_deep_utilities as deep_utils
 from PandaAnalysis.Flat.analysis import gghbb
+
+deep_utils.STORE = True
+deep_utils.SAVE = True
 
 Load('PandaAnalyzer')
 data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'
@@ -79,13 +83,23 @@ if __name__ == "__main__":
     utils.main(to_run, processed, fn)
 
     utils.hadd(processed.keys())
+    if deep_utils.STORE:
+        utils.hadd([x.replace('output_','') for x in glob('*pf*.root')], 'arrays.root')
+        utils.cleanup('*pf*.root')
     utils.print_time('hadd')
 
-    # add_bdt()
-    # utils.print_time('bdt')
+    add_bdt()
+    utils.print_time('bdt')
 
     ret = utils.stageout(outdir,outfilename)
+    if deep_utils.STORE:
+        utils.stageout(outdir,outfilename.replace('.root','_arrays.root'),'arrays.root')
     utils.cleanup('*.root')
+    if deep_utils.SAVE:
+        for f in glob('*npz'):
+            utils.stageout(outdir, f, f)
+        #    utils.stageout(outdir,outfilename.replace('.root','.npz'),'arrays.npz')
+        utils.cleanup('*.npz')
     utils.print_time('stageout and cleanup')
     if not ret:
         utils.write_lock(outdir,outfilename,processed)

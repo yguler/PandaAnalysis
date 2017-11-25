@@ -79,9 +79,10 @@ def cleanup(fname):
     return ret
 
 
-def hadd(good_inputs):
+def hadd(good_inputs, output='output.root'):
     good_outputs = ' '.join([input_to_output(x) for x in good_inputs])
-    cmd = 'hadd -f output.root ' + good_outputs
+    cmd = 'hadd -f ' + output + ' ' + good_outputs
+    print cmd
     ret = system(cmd)    
     if not ret:
         PInfo(sname+'.hadd','Merging exited with code %i'%ret)

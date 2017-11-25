@@ -36,11 +36,13 @@ class CatalogSample:
             lines.append('{0:<25} {2:<10} {3:<15} {1}\n'.format(nickname,f,self.dtype,self.xsec)) 
             if smartcache_args is not None:
                 if not path.isfile(f.replace('root://xrootd.cmsaf.mit.edu','/mnt/hadoop/cms')):
-                    smartcache_args.append('--file %s --dataset %s --book %s'%(f_,ds_,book_))
+                    smartcache_args.append('/cms/store/user/paus/%s/%s'%(book_,ds_))
         return lines
 
 def smartcache(arguments):
-    system('/usr/local/DynamicData/SmartCache/Client/addDownloadRequest.py %s >/dev/null'%arguments)
+    cmd = ('/home/bmaier/ddm/smartcache_replace/dynamoCache.py request --datasets %s'%(arguments))
+    PInfo(argv[0], cmd)
+    system(cmd)
 
 def checkDS(nickname,include,exclude):
   included=False
@@ -111,6 +113,8 @@ PInfo(argv[0],'Cataloged %i files for %i datasets'%(len(lines),len(samples)))
 PInfo(argv[0],'Output written to '+args.outfile)
 
 if args.smartcache:
+    smartcache_datasets = list(set(smartcache_args))
     PInfo(argv[0],'Making smartcache requests for files')
-    p = Pool(8)
-    p.map(smartcache,smartcache_args)
+    #p = Pool(8)
+    #p.map(smartcache,smartcache_datasets)
+    map(smartcache, smartcache_datasets)

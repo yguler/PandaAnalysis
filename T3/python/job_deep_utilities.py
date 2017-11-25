@@ -4,8 +4,6 @@ import ROOT as root
 import numpy as np
 
 from sys import path, stderr
-# for p in path:
-#     stderr.write('%s\n'%p)
 
 import PandaCore.Tools.root_interface as r
 import json 
@@ -20,14 +18,16 @@ cmssw_base = getenv('CMSSW_BASE')
 sname = 'T3.job_deep_utilities'
 
 SAVE = False
+STORE = False
 
 def tree_to_arrays(infilepath, treename='inputs'):
     f = root.TFile(infilepath)
     t = f.Get(treename)
     data = {}
-    singletons = r.read_tree(t, branches=['msd','pt'])
+    singletons = r.read_tree(t, branches=['msd','pt', 'eventNumber'])
     data['msd'] = singletons['msd']
     data['pt'] = singletons['pt']
+    data['eventNumber'] = singletons['eventNumber']
 
     arr = r.read_tree(t, branches=['kinematics'])
     data['pf'] = np.array([x[0].tolist() for x in arr])
@@ -35,7 +35,7 @@ def tree_to_arrays(infilepath, treename='inputs'):
     return data 
 
 
-def normalize_arrays(data):
+def normalize_arrays(data, infilepath):
     data['msd'] /= 300
     
     data['pt'] -= 400
@@ -56,7 +56,7 @@ def normalize_arrays(data):
     data['pf'] /= sigma
 
     if SAVE:
-        np.savez('arrays.npz', **data)
+        np.savez(infilepath.replace('.root','npz'), **data)
     
 
 def infer(data):
@@ -71,7 +71,7 @@ def infer(data):
 def arrays_to_tree(outfilepath, prediction, treename='dnn'):
     f = root.TFile(outfilepath, 'UPDATE')
     t = r.array_as_tree(prediction, treename=treename, fcontext=f)
-    f.WriteTObject(t, 'Overwrite')
+    f.WriteTObject(t, treename, 'Overwrite')
     f.Close()
 
 
@@ -81,11 +81,12 @@ def run_model(infilepattern, outfilepath):
     for i in xrange(N):
         infilepath = infilepattern % i
         data = tree_to_arrays(infilepath)
-        normalize_arrays(data)
+        normalize_arrays(data, infilepath)
         utils.print_time('preprocessing')
         pred = infer(data)
         predictions.append(pred)
-        utils.cleanup(infilepath)
+        if not STORE:
+            utils.cleanup(infilepath)
         utils.print_time('inference')
     pred = np.concatenate(predictions)
     arrays_to_tree(outfilepath, pred)

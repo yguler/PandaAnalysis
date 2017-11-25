@@ -11,7 +11,7 @@ def _dump(a):
     for k in dir(a):
         if k[0] == '_':
             continue
-        if type(getattr(a, k)) != bool:
+        if type(getattr(a, k)) != int:
             continue
         PInfo('PandaAnalysis.Flat.analysis','    %20s = %s'%(k, 'True' if getattr(a, k) else 'False'))
 

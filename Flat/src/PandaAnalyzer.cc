@@ -704,7 +704,7 @@ bool PandaAnalyzer::PassPreselection()
   }
   // anded with the rest
   if (preselBits & kPassTrig) {
-    isGood = (!isData) || (gt->trigger != 0);
+    isGood &= (!isData) || (gt->trigger != 0);
   }
 
   tr->TriggerEvent("presel");

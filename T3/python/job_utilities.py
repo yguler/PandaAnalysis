@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 
+import json
+import socket
 from re import sub
 from sys import exit
-from os import system,getenv,path
 from time import clock,time
-import json
+from os import system,getenv,path
 
 import ROOT as root
 from PandaCore.Tools.Misc import *
-from PandaCore.Tools.Load import *
+from PandaCore.Tools.Load import Load
 import PandaCore.Tools.job_management as cb
 
 sname = 'T3.job_utilities'
 data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'
 local_copy = bool(getenv('SUBMIT_LOCALACCESS'))
+host = socket.gethostname()
+IS_T3 = (host[:2] == 't3')
 
 _stopwatch = time() 
 def print_time(label):
@@ -135,7 +138,10 @@ def drop_branches(to_drop=None, to_keep=None):
 
 
 def stageout(outdir,outfilename,infilename='output.root'):
-    mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
+    if IS_T3:
+        mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
+    else:
+        mvargs = 'gfal-copy $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=s/%s'%(infilename,outdir,outfilename)
     PInfo(sname,mvargs)
     ret = system(mvargs)
     if not ret:

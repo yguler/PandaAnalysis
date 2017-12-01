@@ -28,10 +28,9 @@ def fn(input_name, isData, full_path):
     # now we instantiate and configure the analyzer
     skimmer = root.PandaAnalyzer()
     analysis = gghbb(True)
-    processType = utils.classify_sample(full_path, isData)
-    analysis.processType=processType 
+    analysis.processType = utils.classify_sample(full_path, isData)
     skimmer.SetAnalysis(analysis)
-    skimmer.isData=isData
+    skimmer.isData = isData
 
     return utils.run_PandaAnalyzer(skimmer, isData, input_name)
 

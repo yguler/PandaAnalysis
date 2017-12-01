@@ -174,10 +174,11 @@ void GeneralTree::Reset() {
     electronTripleCharge[iL] = -99;
   }
   for (auto iter=signal_weights.begin(); iter!=signal_weights.end(); ++iter) {
-    signal_weights[iter->first] = 1; // does pair::second return a reference?
+    signal_weights[iter->first] = 1; 
   }
 
 //ENDCUSTOMRESET
+    trkmetphi = -1;
     sf_zzUnc = 1;
     sf_zz = 1;
     sf_wz = 1;
@@ -464,10 +465,10 @@ void GeneralTree::Reset() {
     hbbm = -1;
     hbbm_reg = -1;
     hbbpt_reg = -1;
-    scaleUp = -1;
-    scaleDown = -1;
-    pdfUp = -1;
-    pdfDown = -1;
+    scaleUp = 1;
+    scaleDown = 1;
+    pdfUp = 1;
+    pdfDown = 1;
 }
 
 void GeneralTree::WriteTree(TTree *t) {
@@ -671,7 +672,7 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("sf_lepIso",&sf_lepIso,"sf_lepIso/F");
     Book("sf_lepTrack",&sf_lepTrack,"sf_lepTrack/F");
   }
-  if(fatjet) {
+  if (fatjet) {
     Book("fj1Tau32",&fj1Tau32,"fj1Tau32/F");
     Book("fj1Tau21",&fj1Tau21,"fj1Tau21/F");
     Book("fj1Tau32SD",&fj1Tau32SD,"fj1Tau32SD/F");
@@ -735,17 +736,19 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("nFatjet",&nFatjet,"nFatjet/I");
     Book("nIsoJet",&nIsoJet,"nIsoJet/I");
   }
-  if(fatjet || genPartonStudy) {
+  if (fatjet || hfCounting) {
     Book("nHF",&nHF,"nHF/I");
     Book("nB",&nB,"nB/I");
   }
-  if (btagWeights) { for (unsigned iShift=0; iShift<nCsvShifts; iShift++) {
+  if (btagWeights) { 
+    for (unsigned iShift=0; iShift<nCsvShifts; iShift++) {
       csvShift theShift = csvShifts[iShift];
       TString theCsvWeightString = makeCsvWeightString(theShift, useCMVA);
       Book(theCsvWeightString, &(sf_csvWeights[theShift]), theCsvWeightString+"/F");
     }
   }
 //ENDCUSTOMWRITE
+    Book("trkmetphi",&trkmetphi,"trkmetphi/F");
     Book("whichRecoil",&whichRecoil,"whichRecoil/I");
     Book("genJet1Pt",&genJet1Pt,"genJet1Pt/F");
     Book("genJet2Pt",&genJet2Pt,"genJet2Pt/F");

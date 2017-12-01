@@ -135,7 +135,7 @@ void PandaAnalyzer::Recoil()
     tr->TriggerEvent("recoils");
 }
 
-void PandaAnalyzer::GenPartonStudy() 
+void PandaAnalyzer::HeavyFlavorCounting() 
 {
   // For now, simple B and C counting
   for (auto& gen : event.genParticles) {

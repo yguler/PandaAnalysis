@@ -72,7 +72,7 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
   gt->vbf            = analysis->vbf;
   gt->fatjet         = analysis->fatjet;
   gt->leptonic       = analysis->complicatedLeptons;
-  gt->genPartonStudy = analysis->genPartonStudy;
+  gt->hfCounting     = analysis->hfCounting;
   gt->btagWeights    = analysis->btagWeights;
   gt->useCMVA        = analysis->useCMVA;
 
@@ -144,7 +144,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
       weightNames->GetEntry(iW);
       wIDs.push_back(*id);
     }
-  } else if (processType==kSignal) {
+  } else if (analysis->processType==kSignal) {
     PError("PandaAnalyzer::Init","This is a signal file, but the weights are missing!");
     return 2;
   }
@@ -229,14 +229,6 @@ void PandaAnalyzer::Terminate()
   for (auto *f : fCorrs)
     if (f)
       f->Close();
-//   for (unsigned i = 0; i != cN; ++i) {
-//     delete h1Corrs[i];
-//     printf("1 %i \n", i);
-//   }
-//   for (unsigned i = 0; i != cN; ++i) {
-//     delete h2Corrs[i];
-//     printf("2 %i \n", i);
-//   }
   for (auto *h : h1Corrs)
     delete h;
   for (auto *h : h2Corrs)
@@ -297,7 +289,9 @@ double PandaAnalyzer::GetCorr(CorrectionType ct, double x, double y)
     return 1;
   }
 }
-double PandaAnalyzer::GetError(CorrectionType ct, double x, double y) {
+
+double PandaAnalyzer::GetError(CorrectionType ct, double x, double y) 
+{
   if (h1Corrs[ct]!=0) {
     return h1Corrs[ct]->Error(x); 
   } else if (h2Corrs[ct]!=0) {
@@ -308,6 +302,7 @@ double PandaAnalyzer::GetError(CorrectionType ct, double x, double y) {
     return 1;
   }
 }
+
 void PandaAnalyzer::SetDataDir(const char *s) 
 {
   TString dirPath(s);
@@ -470,7 +465,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded btag SFs");
   } 
-  if(analysis->btagWeights) {
+  if (analysis->btagWeights) {
     if (analysis->useCMVA) 
       cmvaReweighter = new CSVHelper("PandaAnalysis/data/csvweights/cmva_rwt_fit_hf_v0_final_2017_3_29.root"   , "PandaAnalysis/data/csvweights/cmva_rwt_fit_lf_v0_final_2017_3_29.root"   , 5);
     else
@@ -666,7 +661,7 @@ bool PandaAnalyzer::PassPreselection()
     }
   }
 
-  if(preselBits & kVHBB) {
+  if (preselBits & kVHBB) {
     // ZnnHbb
     if (
       gt->pfmet>150 && 
@@ -980,6 +975,8 @@ void PandaAnalyzer::Run()
     gt->sumETRaw = event.pfMet.sumETRaw;
     gt->puppimet = event.puppiMet.pt;
     gt->puppimetphi = event.puppiMet.phi;
+    gt->trkmet = event.trkMet.pt;
+    gt->trkmetphi = event.trkMet.phi;
     GetMETSignificance();
     vPFMET.SetPtEtaPhiM(gt->pfmet,0,gt->pfmetphi,0);
     vPuppiMET.SetPtEtaPhiM(gt->puppimet,0,gt->puppimetphi,0);
@@ -995,7 +992,9 @@ void PandaAnalyzer::Run()
     if (analysis->complicatedLeptons) {
       ComplicatedLeptons();
       GenStudyEWK();
-    } else SimpleLeptons();
+    } else {
+      SimpleLeptons();
+    }
     
     // photons
     Photons();
@@ -1025,31 +1024,15 @@ void PandaAnalyzer::Run()
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
 
-    gt->sf_tt = 1; gt->sf_tt_ext = 1; gt->sf_tt_bound = 1;
-    gt->sf_tt8TeV = 1; gt->sf_tt8TeV_ext = 1; gt->sf_tt8TeV_bound = 1;
-    gt->sf_qcdTT = 1;
-    gt->sf_qcdV=1; gt->sf_ewkV=1;
-    gt->sf_qcdV_VBF=1;
-    gt->sf_qcdV_VBFTight=1;
-    gt->sf_qcdV_VBF2l=1;
-    gt->sf_qcdV_VBF2lTight=1;
-    gt->sf_eleTrig=1; gt->sf_metTrig=1; gt->sf_phoTrig=1; gt->sf_metTrigZmm=1;
-    gt->sf_metTrigVBF=1; gt->sf_metTrigZmmVBF=1;
-    gt->sf_metTrigVBF=1; gt->sf_metTrigZmmVBF=1;
-    gt->sf_lepID=1; gt->sf_lepIso=1; gt->sf_lepTrack=1;
-    gt->sf_pho=1;
-    gt->scaleUp = 1; gt->scaleDown = 1;
-    gt->pdfUp = 1; gt->pdfDown = 1;
-
     if (!isData) {
       if (analysis->fatjet)
         FatjetMatching();
-      else if(analysis->genPartonStudy)
-        GenPartonStudy();
+      else if (analysis->hfCounting)
+        HeavyFlavorCounting();
 
       if (analysis->btagSFs)
         JetBtagSFs();
-      if(analysis->btagWeights)
+      if (analysis->btagWeights)
         JetCMVAWeights();
       
       TopPTReweight();
@@ -1062,7 +1045,7 @@ void PandaAnalyzer::Run()
 
       SignalInfo();
 
-      if(!analysis->complicatedLeptons) LeptonSFs();
+      if (!analysis->complicatedLeptons) LeptonSFs();
 
       PhotonSFs();
 

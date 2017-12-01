@@ -195,7 +195,7 @@ class GeneralTree : public genericTree {
       std::vector<int> get_orders() const { return orders; }
         
       // public config
-      bool monohiggs=false, vbf=false, fatjet=true, leptonic=false, genPartonStudy=false;
+      bool monohiggs=false, vbf=false, fatjet=true, leptonic=false, hfCounting=false;
       bool btagWeights=false, useCMVA=false;
 
 //STARTCUSTOMDEF
@@ -290,6 +290,7 @@ class GeneralTree : public genericTree {
       int electronTripleCharge[NLEP];
 
 //ENDCUSTOMDEF
+    float trkmetphi = -1;
     float sf_zzUnc = -1;
     float sf_zz = -1;
     float sf_wz = -1;

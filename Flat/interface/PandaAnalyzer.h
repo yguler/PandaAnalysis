@@ -194,9 +194,9 @@ private:
     void FatjetMatching();
     void FatjetRecluster();
     void GenJetsNu();
-    void GenPartonStudy();
     void GenStudyEWK();
     float GetMSDCorr(Float_t puppipt, Float_t puppieta); // @bmaier: please refactor this
+    void HeavyFlavorCounting();
     void IsoJet(panda::Jet&);
     void JetBRegressionInfo(panda::Jet&);
     void JetBasics();

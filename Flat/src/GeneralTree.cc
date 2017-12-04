@@ -300,6 +300,7 @@ void GeneralTree::Reset() {
     sf_lepTrack = 1;
     sf_pho = 1;
     sf_eleTrig = 1;
+    sf_muTrig = 1;
     sf_phoTrig = 1;
     sf_metTrig = 1;
     sf_pu = 1;
@@ -779,6 +780,7 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("sf_qcdTT",&sf_qcdTT,"sf_qcdTT/F");
     Book("sf_pho",&sf_pho,"sf_pho/F");
     Book("sf_eleTrig",&sf_eleTrig,"sf_eleTrig/F");
+    Book("sf_muTrig",&sf_muTrig,"sf_muTrig/F");
     Book("sf_phoTrig",&sf_phoTrig,"sf_phoTrig/F");
     Book("sf_metTrig",&sf_metTrig,"sf_metTrig/F");
     Book("sf_pu",&sf_pu,"sf_pu/F");

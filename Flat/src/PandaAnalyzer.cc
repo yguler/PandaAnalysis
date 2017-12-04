@@ -360,6 +360,8 @@ void PandaAnalyzer::SetDataDir(const char *s)
   OpenCorrection(cTrigMET,dirPath+"moriond17/metTriggerEfficiency_recoil_monojet_TH1F.root",
                  "hden_monojet_recoil_clone_passed",1);
   OpenCorrection(cTrigEle,dirPath+"moriond17/eleTrig.root","hEffEtaPt",2);
+  OpenCorrection(cTrigMu,dirPath+"trigger_eff/muon_trig_Run2016BtoF.root",
+		 "IsoMu24_OR_IsoTkMu24_PtEtaBins/efficienciesDATA/abseta_pt_DATA",2);
   OpenCorrection(cTrigPho,dirPath+"moriond17/photonTriggerEfficiency_photon_TH1F.root",
                  "hden_photonpt_clone_passed",1);
   OpenCorrection(cTrigMETZmm,dirPath+"moriond17/metTriggerEfficiency_zmm_recoil_monojet_TH1F.root",

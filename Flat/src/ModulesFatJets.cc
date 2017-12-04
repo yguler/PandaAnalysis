@@ -432,11 +432,13 @@ void PandaAnalyzer::FatjetMatching()
       if (apdgid!=5 && apdgid!=4) 
         continue;
 
-      if (gen.pt()>5) {
+      /*
+	if (gen.pt()>5) {
         gt->nHF++;
         if (apdgid==5)
           gt->nB++;
       }
+      */
 
       if (DeltaR2(gen.eta(),gen.phi(),fj1->eta(),fj1->phi())<FATJETMATCHDR2) {
         gt->fj1NHF++;

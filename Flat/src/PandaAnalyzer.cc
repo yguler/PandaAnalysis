@@ -1044,7 +1044,7 @@ void PandaAnalyzer::Run()
     if (!isData) {
       if (analysis->fatjet)
         FatjetMatching();
-      else if(analysis->genPartonStudy)
+      if(analysis->genPartonStudy)
         GenPartonStudy();
 
       if (analysis->btagSFs)

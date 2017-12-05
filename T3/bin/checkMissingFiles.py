@@ -35,11 +35,12 @@ else:
     WIDTH = args.width
 header = ('%%-%is'%(WIDTH))%('Sample')
 header += ('%%-%is'%(WIDTH+2))%('Progress')
-header += ' %10s %10s %10s %10s %10s'%('Total','Running','Idle','Missing','Done')
+header += ' %10s %10s %10s %10s %10s %10s'%('Total','T3', 'T2','Idle','Missing','Done')
 
 colors = {
     'green' : 42,
     'blue' : 44,
+    'cyan' : 46,
     'grey' : 47, 
     'red' : 41,
     }
@@ -53,38 +54,36 @@ class Output:
     self.total = 0
     self.done = 0
     self.idle = 0
-    self.running = 0
+    self.t2 = 0
+    self.t3 = 0
     self.missing = 0
   def add(self,state):
     self.total += 1
-    if state=='done':
-        self.done += 1
-    elif state=='running':
-        self.running += 1
-    elif state=='idle':
-        self.idle += 1
-    elif state=='missing':
-        self.missing += 1
+    setattr(self, state, getattr(self,state) + 1)
   def __str__(self):
     if self.total==0:
       return ''
     s = ('%%-%is '%(WIDTH-1))%self.name[:(WIDTH-1)]
-    d_frac = 1.*WIDTH*self.done/self.total
-    r_frac = 1.*WIDTH*(self.done+self.running)/self.total
-    i_frac = 1.*WIDTH*(self.idle+self.done+self.running)/self.total
+    d_frac  = 1.*WIDTH*(self.done)/self.total
+    t3_frac = 1.*WIDTH*(self.done+self.t3)/self.total
+    t2_frac = 1.*WIDTH*(self.done+self.t3+self.t2)/self.total
+    i_frac  = 1.*WIDTH*(self.done+self.t3+self.t2+self.idle)/self.total
     s += '[\033[0;%im'%colors['green']
     state = 0
     for i in xrange(WIDTH):
         if i>=d_frac:
             s += '\033[0;%im'%colors['blue']
-        if i>=r_frac:
+        if i>=t3_frac:
+            s += '\033[0;%im'%colors['cyan']
+        if i>=t2_frac:
             s += '\033[0;%im'%colors['grey']
         if i>=i_frac:
             s += '\033[0;%im'%colors['red']
         s += ' '
     s += '\033[0m] '
     s += '%10i '%self.total
-    s += '%10i '%self.running
+    s += '%10i '%self.t3
+    s += '%10i '%self.t2
     s += '%10i '%self.idle
     s += '%10i '%self.missing
     s += '%10i '%self.done
@@ -111,7 +110,8 @@ print 'Checking jobs...                 \r',
 sys.stdout.flush()
 
 # determine what samples from previous resubmissions are still running
-running_samples = []
+t2_samples = []
+t3_samples = []
 idle_samples = []
 if path.isfile(workdir+'/submission.pkl'): 
     with open(workdir+'/submission.pkl','rb') as fpkl:
@@ -120,10 +120,12 @@ else:
     submissions = []
 for s in submissions:
     results = s.query_status()
-    running_samples += results['running']
+    t3_samples += results['T3']
+    t2_samples += results['T2']
     idle_samples += results['idle']
 
-running_files = list(chain.from_iterable([x.files for x in running_samples]))
+t2_files = list(chain.from_iterable([x.files for x in t2_samples]))
+t3_files = list(chain.from_iterable([x.files for x in t3_samples]))
 idle_files = list(chain.from_iterable([x.files for x in idle_samples]))
 
 
@@ -156,8 +158,10 @@ for name in sorted(all_samples):
         state = 'missing'
         if f in processedfiles:
             state = 'done'
-        elif f in running_files:
-            state = 'running'
+        elif f in t3_files:
+            state = 't3'
+        elif f in t2_files:
+            state = 't2'
         elif f in idle_files:
             state = 'idle'
 
@@ -207,7 +211,7 @@ if not args.silent:
 sys.stdout.write(str(data))
 sys.stdout.write(str(mc))
 print
-print 'Legend: Done=\033[0;%im    \033[0m, Running=\033[0;%im    \033[0m, Idle=\033[0;%im    \033[0m, Missing=\033[0;%im    \033[0m, '%(colors['green'],colors['blue'],colors['grey'],colors['red'])
+print 'Legend: Done=\033[0;%im    \033[0m, T3=\033[0;%im    \033[0m, T2=\033[0;%im    \033[0m, Idle=\033[0;%im    \033[0m, Missing=\033[0;%im    \033[0m, '%(colors['green'],colors['blue'],colors['cyan'],colors['grey'],colors['red'])
 
 outfile.close()
 

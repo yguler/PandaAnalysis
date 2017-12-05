@@ -351,7 +351,6 @@ double PandaAnalyzer::WeightZHEWKCorr(float baseCorr) {
   return (baseCorr+0.31+0.11)/((1-0.053)+0.31+0.11);
 }
 void PandaAnalyzer::GenStudyEWK() {
-  //gt->sf_tt = 1; // handled already by TopPTReweight
   gt->genLep1Pt = 0;
   gt->genLep1Eta = -1;
   gt->genLep1Phi = -1;
@@ -394,13 +393,13 @@ void PandaAnalyzer::GenStudyEWK() {
     auto& part(event.genParticles.at(iG));
     int pdgid = part.pdgid;
     unsigned int abspdgid = abs(pdgid);
-    if ((abspdgid == 11 || abspdgid == 13) &&
-    (part.statusFlags == GenParticle::kIsPrompt || 
-     part.statusFlags == GenParticle::kIsTauDecayProduct || part.statusFlags == GenParticle::kIsPromptTauDecayProduct || 
-     part.statusFlags == GenParticle::kIsDirectTauDecayProduct || part.statusFlags == GenParticle::kIsDirectPromptTauDecayProduct ))
+    if ((abspdgid == 11 || abspdgid == 13) && (part.finalState) && 
+        (part.statusFlags == GenParticle::kIsPrompt || 
+         part.statusFlags == GenParticle::kIsTauDecayProduct || part.statusFlags == GenParticle::kIsPromptTauDecayProduct || 
+         part.statusFlags == GenParticle::kIsDirectTauDecayProduct || part.statusFlags == GenParticle::kIsDirectPromptTauDecayProduct ))
       targetsLepton.push_back(iG);
 
-    if (abspdgid == 22)
+    if (abspdgid == 22 && part.finalState)
       targetsPhoton.push_back(iG);
 
     if (abspdgid == 23 || abspdgid == 24)
@@ -414,6 +413,8 @@ void PandaAnalyzer::GenStudyEWK() {
 
   } //looking for targets
 
+  tr->TriggerSubEvent("check gen infos");
+
   TLorentzVector the_rhoP4(0,0,0,0);
   double bosonPtMin = 1000000000;
   for (int iG : targetsLepton) {
@@ -421,31 +422,31 @@ void PandaAnalyzer::GenStudyEWK() {
     TLorentzVector dressedLepton;
     dressedLepton.SetPtEtaPhiM(part.pt(),part.eta(),part.phi(),part.m());
 
-    // check there is no further copy:
-    bool isLastCopy=true;
-    for (int kG : targetsLepton) {
-      if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &part) {
-        isLastCopy=false;
-        break;
-      }
-    }
-    if (!isLastCopy) continue;
+//     // check there is no further copy:
+//     bool isLastCopy=true;
+//     for (int kG : targetsLepton) {
+//       if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &part) {
+//         isLastCopy=false;
+//         break;
+//       }
+//     }
+//     if (!isLastCopy) continue;
   
     the_rhoP4 = the_rhoP4 + dressedLepton;
     for (int jG : targetsPhoton) {
       auto& partj(event.genParticles.at(jG));
 
-      // check there is no further copy:
-      bool isLastCopy=true;
-      for (int kG : targetsPhoton) {
-        if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &part) {
-          isLastCopy=false;
-          break;
-        }
-      }
-      if (!isLastCopy)
-        continue;
-      if (abs(partj.pdgid) == 22 && DeltaR2(part.eta(),part.phi(),partj.eta(),partj.phi()) < 0.1*0.1) {
+//       // check there is no further copy:
+//       bool isLastCopy=true;
+//       for (int kG : targetsPhoton) {
+//         if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &part) {
+//           isLastCopy=false;
+//           break;
+//         }
+//       }
+//       if (!isLastCopy)
+//         continue;
+      if (DeltaR2(part.eta(),part.phi(),partj.eta(),partj.phi()) < 0.01) {
         TLorentzVector photonV;
         photonV.SetPtEtaPhiM(partj.pt(),partj.eta(),partj.phi(),partj.m());
         dressedLepton += photonV;
@@ -468,20 +469,20 @@ void PandaAnalyzer::GenStudyEWK() {
       gt->genLep2PdgId = part.pdgid; 
     }
     panda::Muon *mu; panda::Electron *ele;
-    if (v1.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v1.Eta(),v1.Phi()) < 0.1*0.1) {
+    if (v1.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v1.Eta(),v1.Phi()) < 0.01) {
       if (part.statusFlags == GenParticle::kIsTauDecayProduct || part.statusFlags == GenParticle::kIsPromptTauDecayProduct || 
          part.statusFlags == GenParticle::kIsDirectTauDecayProduct || part.statusFlags == GenParticle::kIsDirectPromptTauDecayProduct) gt->looseGenLep1PdgId = 2;
       else if (part.statusFlags == GenParticle::kIsPrompt) gt->looseGenLep1PdgId = 1;
       if (part.pdgid != looseLep1PdgId) gt->looseGenLep1PdgId = -1 * gt->looseGenLep1PdgId;
     }
 
-    if (v2.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v2.Eta(),v2.Phi()) < 0.1*0.1) {
+    if (v2.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v2.Eta(),v2.Phi()) < 0.01) {
       if     (part.statusFlags == GenParticle::kIsTauDecayProduct || part.statusFlags == GenParticle::kIsPromptTauDecayProduct || 
               part.statusFlags == GenParticle::kIsDirectTauDecayProduct || part.statusFlags == GenParticle::kIsDirectPromptTauDecayProduct) gt->looseGenLep2PdgId = 2;
       else if (part.statusFlags == GenParticle::kIsPrompt) gt->looseGenLep2PdgId = 1;
       if (part.pdgid != looseLep2PdgId) gt->looseGenLep2PdgId = -1 * gt->looseGenLep2PdgId;
     }
-    if (v3.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v3.Eta(),v3.Phi()) < 0.1*0.1) {
+    if (v3.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v3.Eta(),v3.Phi()) < 0.01) {
       mu = dynamic_cast<panda::Muon*>(looseLeps[2]);
       ele = dynamic_cast<panda::Electron*>(looseLeps[2]);
       int looseLep3PdgId = mu? mu->charge*-13 : (ele? ele->charge*-13 : 0);
@@ -490,7 +491,7 @@ void PandaAnalyzer::GenStudyEWK() {
       else if (part.statusFlags == GenParticle::kIsPrompt) gt->looseGenLep3PdgId = 1;
       if (part.pdgid != looseLep3PdgId) gt->looseGenLep3PdgId = -1 * gt->looseGenLep3PdgId;
     }
-    if (v4.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v4.Eta(),v4.Phi()) < 0.1*0.1) {
+    if (v4.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v4.Eta(),v4.Phi()) < 0.01) {
       mu = dynamic_cast<panda::Muon*>(looseLeps[3]);
       ele = dynamic_cast<panda::Electron*>(looseLeps[3]);
       int looseLep4PdgId = mu? mu->charge*-13 : (ele? ele->charge*-13 : 0);
@@ -501,6 +502,8 @@ void PandaAnalyzer::GenStudyEWK() {
     }
   }
   
+  tr->TriggerSubEvent("gen leptons 2");
+
   for (int iG : targetsN) {
     auto& part(event.genParticles.at(iG));
     TLorentzVector neutrino;
@@ -517,6 +520,8 @@ void PandaAnalyzer::GenStudyEWK() {
       continue;
     the_rhoP4 = the_rhoP4 + neutrino;
   }
+
+  tr->TriggerSubEvent("gen neutrinos");
 
   TLorentzVector theZBosons(0,0,0,0);
   TLorentzVector theWBosons(0,0,0,0);
@@ -575,35 +580,7 @@ void PandaAnalyzer::GenStudyEWK() {
     gt->sf_zhDown = 1.0;
   }
 
-  // ttbar pT weight - already handled in TopPTReweight
-  /*
-  TLorentzVector vT,vTbar;
-  float pt_t=0, pt_tbar=0;
-  for (int iG : targetsTop) {
-    auto& part(event.genParticles.at(iG));
+  tr->TriggerSubEvent("boson corrections");
 
-    // check there is no further copy:
-    bool isLastCopy=true;
-    for (int kG : targetsTop) {
-      if (event.genParticles.at(kG).parent.isValid() 
-          && event.genParticles.at(kG).parent.get() == &part) {
-        isLastCopy=false;
-        break;
-      }
-    }
-    if (!isLastCopy)
-      continue;
-
-    if (part.pdgid>0) {
-     pt_t = part.pt();
-    } else {
-     pt_tbar = part.pt();
-    }
-  }
-  if (pt_t>0 && pt_tbar>0) {
-    gt->sf_tt = TMath::Sqrt(TMath::Exp(0.0615-0.0005*TMath::Min((float)400.,pt_t)) *
-                              TMath::Exp(0.0615-0.0005*TMath::Min((float)400.,pt_tbar)));
-  }*/
-  
-  // end gen study
+  tr->TriggerEvent("EWK gen study");
 }

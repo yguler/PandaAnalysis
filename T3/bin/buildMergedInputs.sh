@@ -41,7 +41,7 @@ fi
 
 PInfo -n "$0" "Creating executable..."
 cd ${CMSSW_BASE}/src/PandaAnalysis/T3/inputs/
-cp -v skim.py ${WD}
+cp -v ${SUBMIT_TMPL} ${WD}/skim.py
 chmod 775 ${WD}/skim.py
 
 PInfo -n "$0" "Finalizing work area..."

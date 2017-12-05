@@ -978,7 +978,6 @@ void PandaAnalyzer::Run()
     gt->puppimetphi = event.puppiMet.phi;
     gt->trkmet = event.trkMet.pt;
     gt->trkmetphi = event.trkMet.phi;
-    GetMETSignificance();
     vPFMET.SetPtEtaPhiM(gt->pfmet,0,gt->pfmetphi,0);
     vPuppiMET.SetPtEtaPhiM(gt->puppimet,0,gt->puppimetphi,0);
     vMETNoMu.SetMagPhi(gt->pfmet,gt->pfmetphi); //       for trigger eff
@@ -989,10 +988,11 @@ void PandaAnalyzer::Run()
 
     tr->TriggerEvent("met");
 
+    GetMETSignificance();
+
     // electrons and muons
     if (analysis->complicatedLeptons) {
       ComplicatedLeptons();
-      GenStudyEWK();
     } else {
       SimpleLeptons();
     }
@@ -1046,7 +1046,10 @@ void PandaAnalyzer::Run()
 
       SignalInfo();
 
-      if (!analysis->complicatedLeptons) LeptonSFs();
+      if (analysis->complicatedLeptons) 
+	GenStudyEWK();
+      else
+	LeptonSFs();
 
       PhotonSFs();
 

@@ -389,10 +389,10 @@ void PandaAnalyzer::JetHbbReco()
   gt->hbbjtidx[1] = tmp_hbbjtidx2;
 
   
-  if (analysis->bjetRegression && gt->hbbm>0.){
+  if (analysis->bjetRegression && gt->hbbm>0.) {
     TLorentzVector hbbdaughters_corr[2];
     
-    for (unsigned i = 0; i<2; i++){
+    for (unsigned i = 0; i<2; i++) {
       bjetreg_vars[0] = gt->jetPt[gt->hbbjtidx[i]];
       bjetreg_vars[1] = gt->nJot;
       bjetreg_vars[2] = gt->jetEta[gt->hbbjtidx[i]];

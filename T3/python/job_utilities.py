@@ -14,9 +14,9 @@ import PandaCore.Tools.job_config as cb
 
 sname = 'T3.job_utilities'
 data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'
-local_copy = bool(getenv('SUBMIT_LOCALACCESS'))
 host = socket.gethostname()
 IS_T3 = (host[:2] == 't3')
+local_copy = bool(smart_getenv('SUBMIT_LOCALACCESS', True))
 
 _stopwatch = time() 
 def print_time(label):
@@ -49,7 +49,7 @@ def copy_local(long_name):
 
     # if the file is cached locally, why not use it?
     local_path = full_path.replace('root://xrootd.cmsaf.mit.edu/','/mnt/hadoop/cms')
-    PInfo(sname+'.copy_local','Local access is configured to be %s'%('on' if bool(getenv('SUBMIT_LOCALACCESS')) else 'off'))
+    PInfo(sname+'.copy_local','Local access is configured to be %s'%('on' if local_copy else 'off'))
     if local_copy and path.isfile(local_path): 
         # apparently SmartCached files can be corrupted...
         ftest = root.TFile(local_path)

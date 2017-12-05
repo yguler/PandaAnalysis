@@ -127,6 +127,7 @@ private:
         cTrigMET,     //!< MET trigger eff        
         cTrigMETZmm,  //!< Zmumu MET trigger eff
         cTrigEle,     //!< Ele trigger eff        
+        cTrigMu,     //!< Ele trigger eff        
         cTrigPho,     //!< Pho trigger eff        
         cZNLO,        //!< NLO weights for QCD Z,W,A,A+2j
         cWNLO,

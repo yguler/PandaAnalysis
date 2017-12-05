@@ -54,6 +54,26 @@ void PandaAnalyzer::TriggerEffs()
         gt->sf_eleTrig = 1 - (1-eff1)*(1-eff2);
       }
     } // done with ele trig SF
+    if (gt->nLooseMuon>0) {
+      panda::Muon *mu1=0, *mu2=0;
+      if (gt->nLooseLep>0) mu1 = dynamic_cast<panda::Muon*>(looseLeps[0]);
+      if (gt->nLooseLep>1) mu2 = dynamic_cast<panda::Muon*>(looseLeps[1]);
+      float eff1=0, eff2=0;
+      if (mu1 && mu1->tight) {
+	eff1 = GetCorr(
+		       cTrigMu,
+		       fabs(mu1->eta()),
+		       TMath::Max((float)26.,TMath::Min((float)499.99,(float)mu1->pt()))
+		       );
+	if (mu2 && mu2->tight)
+	  eff2 = GetCorr(
+			 cTrigMu,
+			 fabs(mu2->eta()),
+			 TMath::Max((float)26.,TMath::Min((float)499.99,(float)mu2->pt()))
+			 );
+	gt->sf_muTrig = 1 - (1-eff1)*(1-eff2);
+      }
+    } // done with mu trig SF
 
     if (gt->nLoosePhoton>0 && gt->loosePho1IsTight)
       gt->sf_phoTrig = GetCorr(cTrigPho,gt->loosePho1Pt);

@@ -413,6 +413,7 @@ class GeneralTree : public genericTree {
     float sf_lepTrack = -1;
     float sf_pho = -1;
     float sf_eleTrig = -1;
+    float sf_muTrig = -1;
     float sf_phoTrig = -1;
     float sf_metTrig = -1;
     float sf_pu = -1;

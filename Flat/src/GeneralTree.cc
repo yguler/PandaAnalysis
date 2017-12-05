@@ -324,6 +324,7 @@ void GeneralTree::Reset() {
     pfcalobalance = -1;
     sumET = -1;
     trkmet = -1;
+    trkmetphi = -1;
     puppiUWmag = -1;
     puppiUWphi = -1;
     puppiUZmag = -1;
@@ -804,6 +805,7 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("pfcalobalance",&pfcalobalance,"pfcalobalance/F");
     Book("sumET",&sumET,"sumET/F");
     Book("trkmet",&trkmet,"trkmet/F");
+    Book("trkmetphi",&trkmetphi,"trkmetphi/F");
     Book("puppiUWmag",&puppiUWmag,"puppiUWmag/F");
     Book("puppiUWphi",&puppiUWphi,"puppiUWphi/F");
     Book("puppiUZmag",&puppiUZmag,"puppiUZmag/F");

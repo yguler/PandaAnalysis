@@ -677,7 +677,6 @@ bool PandaAnalyzer::PassPreselection()
     ) isGood=true;
     // WlnHbb
     else if (
-      gt->pfmet>30 &&
       gt->nJet>=2 && gt->jetPt[0]>25 && gt->jetPt[1]>25 &&
       (
        (gt->nTightElectron >0 && gt->electronPt[0]>25) ||
@@ -982,6 +981,8 @@ void PandaAnalyzer::Run()
     gt->sumETRaw = event.pfMet.sumETRaw;
     gt->puppimet = event.puppiMet.pt;
     gt->puppimetphi = event.puppiMet.phi;
+    gt->trkmet = event.trkMet.pt;
+    gt->trkmetphi = event.trkMet.phi;
     GetMETSignificance();
     vPFMET.SetPtEtaPhiM(gt->pfmet,0,gt->pfmetphi,0);
     vPuppiMET.SetPtEtaPhiM(gt->puppimet,0,gt->puppimetphi,0);

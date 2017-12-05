@@ -10,7 +10,7 @@ from os import system,getenv,path
 import ROOT as root
 from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import Load
-import PandaCore.Tools.job_management as cb
+import PandaCore.Tools.job_config as cb
 
 sname = 'T3.job_utilities'
 data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'
@@ -141,17 +141,25 @@ def stageout(outdir,outfilename,infilename='output.root'):
     if IS_T3:
         mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
     else:
-        mvargs = 'gfal-copy $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=s/%s'%(infilename,outdir,outfilename)
-    PInfo(sname,mvargs)
+        mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
+        #mvargs = 'gfal-copy $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
+    PInfo(sname+'.stageout',mvargs)
     ret = system(mvargs)
     if not ret:
         PInfo(sname+'.stageout','Move exited with code %i'%ret)
     else:
         PError(sname+'.stageout','Move exited with code %i'%ret)
         return ret
-    if not path.isfile('%s/%s'%(outdir,outfilename)):
-        PError(sname+'.stageout','Output file is missing!')
-        ret = 1
+    if IS_T3:
+        if not path.isfile('%s/%s'%(outdir,outfilename)):
+            PError(sname+'.stageout','Output file is missing!')
+            ret = 1
+    else:
+        lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+        PInfo(sname+'.stageout',lsargs)
+        ret = system(lsargs)
+        if ret:
+            PError(sname+'.stageout','Output file is missing!')
     return ret
 
 

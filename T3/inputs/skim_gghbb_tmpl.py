@@ -14,7 +14,7 @@ argv=[]
 import ROOT as root
 from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import *
-import PandaCore.Tools.job_management as cb
+import PandaCore.Tools.job_config as cb
 import PandaAnalysis.Tagging.cfg_v8 as tagcfg
 import PandaAnalysis.T3.job_utilities as utils
 from PandaAnalysis.Flat.analysis import gghbb

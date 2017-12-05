@@ -23,6 +23,9 @@ cd -
 echo -n "file length "
 wc -l local.cfg
 
+python -c "import sys; import socket; sys.stderr.write('hostname = '+socket.gethostname()+'\n');"
+hostname 
+
 python skim.py $@
 
 ls

@@ -891,7 +891,7 @@ void PandaAnalyzer::Run()
   // set up reporters
   unsigned int iE=0;
   ProgressReporter pr("PandaAnalyzer::Run",&iE,&nEvents,10);
-  tr = new TimeReporter("PandaAnalyzer::Run",DEBUG);
+  tr = new TimeReporter("PandaAnalyzer::Run",DEBUG+1);
 
 
   // EVENTLOOP --------------------------------------------------------------------------
@@ -1065,6 +1065,8 @@ void PandaAnalyzer::Run()
     gt->Fill();
 
   } // entry loop
+
+  tr->Summary();
 
   if (DEBUG) { PDebug("PandaAnalyzer::Run","Done with entry loop"); }
 

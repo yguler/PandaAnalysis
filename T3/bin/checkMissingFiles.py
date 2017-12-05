@@ -10,18 +10,18 @@ from re import sub
 import cPickle as pickle
 from itertools import chain 
 
-outdir = getenv('SUBMIT_OUTDIR')
+lockdir = getenv('SUBMIT_LOCKDIR')
 workdir = getenv('SUBMIT_WORKDIR')
 parser = argparse.ArgumentParser(description='check missing files')
 parser.add_argument('--infile',type=str,default=None)
 parser.add_argument('--outfile',type=str,default=None)
-parser.add_argument('--outdir',type=str,default=outdir)
+parser.add_argument('--lockdir',type=str,default=lockdir)
 parser.add_argument('--force',action='store_true')
 parser.add_argument('--nfiles',type=int,default=-1)
 parser.add_argument('--width',type=int,default=None)
 parser.add_argument('--silent',action='store_true')
 args = parser.parse_args()
-outdir = args.outdir
+lockdir = args.lockdir
 
 if not args.infile:
     args.infile = workdir+'/local_all.cfg'
@@ -30,7 +30,7 @@ if not args.outfile:
 
 if not args.width:
     columns = int(popen('stty size', 'r').read().split()[-1])
-    WIDTH = (columns-80)/2
+    WIDTH = (columns-90)/2
 else:
     WIDTH = args.width
 header = ('%%-%is'%(WIDTH))%('Sample')
@@ -95,7 +95,7 @@ class Output:
 processedfiles = []
 print 'Finding locks...                      \r',
 sys.stdout.flush()
-locks = glob(outdir+'/locks/*lock')
+locks = glob(lockdir+'/*lock')
 nl = len(locks)
 il = 1
 for lock in locks:

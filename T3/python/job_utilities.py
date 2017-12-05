@@ -12,40 +12,44 @@ from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import Load
 import PandaCore.Tools.job_config as cb
 
-sname = 'T3.job_utilities'
-data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'
-host = socket.gethostname()
-IS_T3 = (host[:2] == 't3')
-local_copy = bool(smart_getenv('SUBMIT_LOCALACCESS', True))
+sname = 'T3.job_utilities'                                     # name of this module
+data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'   # data directory
+host = socket.gethostname()                                    # where we're running
+IS_T3 = (host[:2] == 't3')                                     # are we on the T3?
+REMOTE_READ = True                                             # should we read from hadoop or copy locally?
+local_copy = bool(smart_getenv('SUBMIT_LOCALACCESS', True))    # should we always xrdcp from T2?
 
+
+# global to keep track of how long things take
 _stopwatch = time() 
 def print_time(label):
     global _stopwatch
     now_ = time()
-    PDebug(sname+'.print_time:'+str(time()),
+    PDebug(sname+'.print_time:',
            '%.1f s elapsed performing "%s"'%((now_-_stopwatch),label))
     _stopwatch = now_
 
+
+# convert an input name to an output name
 def input_to_output(name):
     if 'input' in name:
         return name.replace('input','output')
     else:
         return 'output_' + name.split('/')[-1]
 
+
+# find data and bring it into the job somehow 
+#  - if local_copy and it exists locally, then:
+#    - if REMOTE_READ, read from hadoop
+#    - else copy it locally
+#  - else xrdcp it locally
 def copy_local(long_name):
-    replacements = {
-                r'\${EOS}':'root://eoscms.cern.ch//store/user/snarayan',
-                r'\${EOS2}':'root://eoscms.cern.ch//store/group/phys_exotica',
-                r'\${CERNBOX}':'root://eosuser//eos/user/s/snarayan',
-                r'\${CERNBOXB}':'root://eosuser//eos/user/b/bmaier',
-            }
     full_path = long_name
-    for k,v in replacements.iteritems():
-        full_path = sub(k,v,full_path)
     PInfo(sname,full_path)
 
     panda_id = long_name.split('/')[-1].split('_')[-1].replace('.root','')
     input_name = 'input_%s.root'%panda_id
+    copied = False
 
     # if the file is cached locally, why not use it?
     local_path = full_path.replace('root://xrootd.cmsaf.mit.edu/','/mnt/hadoop/cms')
@@ -55,15 +59,19 @@ def copy_local(long_name):
         ftest = root.TFile(local_path)
         if ftest and not(ftest.IsZombie()):
             PInfo(sname+'.copy_local','Opting to read locally')
-            return local_path
+            if REMOTE_READ:
+                return local_path
+            else:
+                cmd = 'cp %s %s'%(local_path, input_name)
+                PInfo(sname+'.copy_local',cmd)
+                system(cmd)
+                copied = True
 
-    # rely on pxrdcp for local and remote copies
-    # default behavior: drop PF candidates
-    # cmd = "pxrdcp %s %s '!pfCandidates'"%(full_path,input_name)
-    # now use direct xrdcp; seems to be faster
-    cmd = "xrdcp %s %s"%(full_path,input_name)
-    PInfo(sname+'.copy_local',cmd)
-    system(cmd)
+    if not copied:
+        cmd = "xrdcp %s %s"%(full_path,input_name)
+        PInfo(sname+'.copy_local',cmd)
+        system(cmd)
+        copied = True
             
     if path.isfile(input_name):
         PInfo(sname+'.copy_local','Successfully copied to %s'%(input_name))
@@ -73,6 +81,7 @@ def copy_local(long_name):
         return None
 
 
+# wrapper around rm -f. be careful!
 def cleanup(fname):
     ret = system('rm -f %s'%(fname))
     if ret:
@@ -82,6 +91,7 @@ def cleanup(fname):
     return ret
 
 
+# wrapper around hadd
 def hadd(good_inputs):
     good_outputs = ' '.join([input_to_output(x) for x in good_inputs])
     cmd = 'hadd -f output.root ' + good_outputs
@@ -92,11 +102,10 @@ def hadd(good_inputs):
         PError(sname+'.hadd','Merging exited with code %i'%ret)
 
 
+# remove any irrelevant branches from the final tree.
+# this MUST be the last step before stageout or you 
+# run the risk of breaking something
 def drop_branches(to_drop=None, to_keep=None):
-    # remove any irrelevant branches from the final tree.
-    # this MUST be the last step before stageout or you 
-    # run the risk of breaking something
-    
     if not to_drop and not to_keep:
         return 0
 
@@ -137,6 +146,12 @@ def drop_branches(to_drop=None, to_keep=None):
         return 2
 
 
+# stageout a file (e.g. output or lock)
+#  - if IS_T3, execute a simple mv
+#  - else, use lcg-cp
+# then, check if the file exists:
+#  - if IS_T3, use os.path.isfile
+#  - else, use lcg-ls
 def stageout(outdir,outfilename,infilename='output.root'):
     if IS_T3:
         mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
@@ -163,15 +178,18 @@ def stageout(outdir,outfilename,infilename='output.root'):
     return ret
 
 
+# write a lock file, based on what succeeded,
+# and then stage it out to a lock directory
 def write_lock(outdir,outfilename,processed):
     outfilename = outfilename.replace('.root','.lock')
     flock = open(outfilename,'w')
     for k,v in processed.iteritems():
         flock.write(v+'\n')
     flock.close()
-    stageout(outdir+'/locks/',outfilename,outfilename)
+    stageout(outdir,outfilename,outfilename)
 
 
+# classify a sample based on its name
 def classify_sample(full_path, isData):
     if not isData:
         if any([x in full_path for x in ['Vector_','Scalar_']]):
@@ -193,6 +211,7 @@ def classify_sample(full_path, isData):
     return root.kNoProcess
 
 
+# read a CERT json and add it to the skimmer
 def add_json(skimmer, json_path):
     with open(json_path) as jsonFile:
         payload = json.load(jsonFile)
@@ -201,8 +220,9 @@ def add_json(skimmer, json_path):
             for l in lumis:
                 skimmer.AddGoodLumiRange(run,l[0],l[1])
 
+
+# some common stuff that doesn't need to be configured
 def run_PandaAnalyzer(skimmer, isData, input_name):
-    # some common stuff that doesn't need to be configured
     # read the inputs
     try:
         fin = root.TFile.Open(input_name)
@@ -245,6 +265,8 @@ def run_PandaAnalyzer(skimmer, isData, input_name):
         return False
 
 
+# main function to run a skimmer, customizable info 
+# can be put in fn
 def main(to_run, processed, fn):
     print_time('loading')
     for f in to_run.files:

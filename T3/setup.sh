@@ -9,10 +9,11 @@ mkdir -p $PANDA_FLATDIR
 
 export SUBMIT_TMPL="skim_gghbb_tmpl.py"
 export SUBMIT_NAME="v_008_v0"
-export SUBMIT_WORKDIR="/data/t3home000/snarayan/panda/"${SUBMIT_NAME}"/work/"
-export SUBMIT_LOGDIR="/data/t3home000/snarayan/panda/panda/"${SUBMIT_NAME}"/logs/"
+export SUBMIT_WORKDIR="/scratch/snarayan/jobs/"${SUBMIT_NAME}"/work/"
+export SUBMIT_LOGDIR="/scratch/snarayan/jobs/"${SUBMIT_NAME}"/logs/"
+export SUBMIT_LOCKDIR="/scratch/snarayan/jobs/"${SUBMIT_NAME}"/locks/"
 export SUBMIT_OUTDIR="/mnt/hadoop/scratch/snarayan/panda/"${SUBMIT_NAME}"/batch/"
-mkdir -p $SUBMIT_WORKDIR $SUBMIT_OUTDIR/locks/ $SUBMIT_LOGDIR
+mkdir -p $SUBMIT_WORKDIR $SUBMIT_OUTDIR $SUBMIT_LOGDIR $SUBMIT_LOCKDIR
 
 
 # testing

@@ -63,7 +63,8 @@ if __name__ == "__main__":
         PError(sname,'Could not find a job for PROCID=%i'%(which))
         exit(3)
 
-    outdir = 'XXXX' # will be replaced when building the job
+    outdir = getenv('SUBMIT_OUTDIR')
+    lockdir = getenv('SUBMIT_LOCKDIR')
     outfilename = to_run.name+'_%i.root'%(submit_id)
     processed = {}
     
@@ -76,7 +77,7 @@ if __name__ == "__main__":
     utils.cleanup('*.root')
     utils.print_time('stageout and cleanup')
     if not ret:
-        utils.write_lock(outdir,outfilename,processed)
+        utils.write_lock(lockdir,outfilename,processed)
         utils.cleanup('*.lock')
         utils.print_time('create lock')
     else:

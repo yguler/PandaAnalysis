@@ -389,6 +389,14 @@ void GeneralTree::Reset() {
     jet2Eta = -1;
     jet2CSV = -1;
     jet2CMVA = -1;
+    jet2EtaUp = -1;
+    jet2EtaDown = -1;
+    jet1EtaUp = -1;
+    jet1EtaDown = -1;
+    jet1PtUp = -1;
+    jet1PtDown = -1;
+    jet2PtUp = -1;
+    jet2PtDown = -1;
     isojet1Pt = -1;
     isojet1CSV = -1;
     isojet1Flav = 0;
@@ -529,6 +537,14 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("hbbpt_reg",&hbbpt_reg,"hbbpt_reg/F");
     Book("hbbjtidx",hbbjtidx,"hbbjtidx[2]/I");
     Book("jetRegFac",jetRegFac,"jetRegFac[2]/F");
+    Book("jet1EtaUp",&jet1EtaUp,"jet1EtaUp/F");
+    Book("jet1EtaDown",&jet1EtaDown,"jet1EtaDown/F");
+    Book("jet1PtUp",&jet1PtUp,"jet1PtUp/F");
+    Book("jet1PtDown",&jet1PtDown,"jet1PtDown/F");
+    Book("jet2EtaUp",&jet2EtaUp,"jet2EtaUp/F");
+    Book("jet2EtaDown",&jet2EtaDown,"jet2EtaDown/F");
+    Book("jet2PtUp",&jet2PtUp,"jet2PtUp/F");
+    Book("jet2PtDown",&jet2PtDown,"jet2PtDown/F");
   }
 
   if (vbf) { 
@@ -557,6 +573,8 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("jot1EtaDown",&jot1EtaDown,"jot1EtaDown/F");
     Book("jot1PtUp",&jot1PtUp,"jot1PtUp/F");
     Book("jot1PtDown",&jot1PtDown,"jot1PtDown/F");
+    Book("jot2EtaUp",&jot2EtaUp,"jot2EtaUp/F");
+    Book("jot2EtaDown",&jot2EtaDown,"jot2EtaDown/F");
     Book("jot2PtUp",&jot2PtUp,"jot2PtUp/F");
     Book("jot2PtDown",&jot2PtDown,"jot2PtDown/F");
     Book("jot12MassUp",&jot12MassUp,"jot12MassUp/F");
@@ -565,8 +583,6 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("jot12MassDown",&jot12MassDown,"jot12MassDown/F");
     Book("jot12DEtaDown",&jot12DEtaDown,"jot12DEtaDown/F");
     Book("jot12DPhiDown",&jot12DPhiDown,"jot12DPhiDown/F");
-    Book("jot2EtaUp",&jot2EtaUp,"jot2EtaUp/F");
-    Book("jot2EtaDown",&jot2EtaDown,"jot2EtaDown/F");
     Book("jot1VBFID",&jot1VBFID,"jot1VBFID/I");
     Book("sf_qcdV_VBF2lTight",&sf_qcdV_VBF2lTight,"sf_qcdV_VBF2lTight/F");
     Book("sf_qcdV_VBF2l",&sf_qcdV_VBF2l,"sf_qcdV_VBF2l/F");

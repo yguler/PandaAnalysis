@@ -448,6 +448,6 @@ void PandaAnalyzer::GenJetsNu()
     }
     genJetsNu.back().pdgid = flavor;
   }
-
+  tr->TriggerEvent("gen jets nu");
 }
 

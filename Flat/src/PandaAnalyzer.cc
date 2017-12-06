@@ -993,8 +993,6 @@ void PandaAnalyzer::Run()
 
     tr->TriggerEvent("met");
 
-    GetMETSignificance();
-
     // electrons and muons
     if (analysis->complicatedLeptons) {
       ComplicatedLeptons();
@@ -1029,6 +1027,9 @@ void PandaAnalyzer::Run()
 
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
+
+    if (analysis->monoh)
+      GetMETSignificance();
 
     if (!isData) {
       if (analysis->fatjet)

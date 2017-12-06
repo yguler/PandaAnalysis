@@ -18,7 +18,7 @@ The above command will do the following things:
 
 - It will only check datasets that contain `TT` and do not contain `TTbarDM` in the dataset's nickname
 
-- If a dataset is not found in `PandaCore.Tools.process`, it will guess the nickname of the dataset, give it a xsec of 1, and write it to the catalog (`--smartcache`)
+- If a dataset is not found in `PandaCore.Tools.process`, it will guess the nickname of the dataset, give it a xsec of 1, and write it to the catalog (`--force`)
 
 - If the file does not exist locally on the T3, a smartcache request will be made
 
@@ -39,7 +39,6 @@ export PANDA_FLATDIR="${HOME}/home000/store/panda/v_8024_2_0/"   # merged output
 ```
 
 `T3/inputs/$SUBMIT_TMPL` should be the skimming configuration you wish to run your files through. 
-Make sure somewhere in the configuration there is an expression `XXXX`.
 This will be replaced by a `sed` with the output directory path before submission.
 
 The inputs are then built by doing:
@@ -64,7 +63,7 @@ To check the status of your jobs, simply do:
 Note that the above command overwrites `$SUBMIT_WORKDIR/local.cfg`, with the intention of preparing it for resubmission.
 The file will be recreated as a configuration to rerun files that are not present in the output and not running.
 The option `--silent` will skip the per-sample breakdown.
-The option `--niles` will repackage `local.cfg` into a different number of files per job.
+The option `--nfiles` will repackage `local.cfg` into a different number of files per job.
 The option `--force` will re-catalog files that are incomplete, not just missing.
 
 To resubmit missing files, simply do
@@ -85,4 +84,4 @@ To merge en-masse (e.g. many many signal outputs), you can do something like:
 ```bash
 submit --exec merge.py --arglist list_of_signals.txt
 ```
-This assumse that you have `PandaCore/bin` in your `$PATH`
+This assumes that you have `PandaCore/bin` in your `$PATH`

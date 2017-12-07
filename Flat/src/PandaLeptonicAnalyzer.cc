@@ -1551,8 +1551,8 @@ void PandaLeptonicAnalyzer::Run() {
 	the_rhoP4 = the_rhoP4 + neutrino;
       }
 
-      TLorentzVector theZBosons(0,0,0,0);
-      TLorentzVector theWBosons(0,0,0,0);
+      TLorentzVector zBosons(0,0,0,0);
+      TLorentzVector wBosons(0,0,0,0);
       int nZBosons = 0; int nWBosons = 0;
       for (int iG : targetsV) {
         auto& part(event.genParticles.at(iG));
@@ -1573,36 +1573,36 @@ void PandaLeptonicAnalyzer::Run() {
 	
 	if(boson.Pt() < bosonPtMin) bosonPtMin = boson.Pt();
 	
-	if(abs(part.pdgid) == 23) {theZBosons = theZBosons + boson; nZBosons++;}
-	if(abs(part.pdgid) == 24) {theWBosons = theWBosons + boson; nWBosons++;}
+	if(abs(part.pdgid) == 23) {zBosons = zBosons + boson; nZBosons++;}
+	if(abs(part.pdgid) == 24) {wBosons = wBosons + boson; nWBosons++;}
       }
       if(nZBosons+nWBosons == 0) bosonPtMin = 0;
 
       if(nZBosons >= 2) {
         double the_rho = 0.0; if(the_rhoP4.P() > 0) the_rho = the_rhoP4.Pt()/the_rhoP4.P();
-        double theZZCorr[2] {1,1};
-        theZZCorr[0] = weightEWKCorr(bosonPtMin,1);
-        float GENmZZ = theZBosons.M();
-        theZZCorr[1] = GetCorr(cqqZZQcdCorr,2,GENmZZ); // final state = 2 is fixed
-        gt->sf_zz = theZZCorr[0]*theZZCorr[1];
-        if(the_rho <= 0.3) gt->sf_zzUnc = (1.0+TMath::Abs((theZZCorr[0]-1)*(15.99/9.89-1)));
-	else               gt->sf_zzUnc = (1.0+TMath::Abs((theZZCorr[0]-1)               ));
+        double zZCorr[2] {1,1};
+        zZCorr[0] = weightEWKCorr(bosonPtMin,1);
+        float GENmZZ = zBosons.M();
+        zZCorr[1] = GetCorr(cqqZZQcdCorr,2,GENmZZ); // final state = 2 is fixed
+        gt->sf_zz = zZCorr[0]*zZCorr[1];
+        if(the_rho <= 0.3) gt->sf_zzUnc = (1.0+TMath::Abs((zZCorr[0]-1)*(15.99/9.89-1)));
+	else               gt->sf_zzUnc = (1.0+TMath::Abs((zZCorr[0]-1)               ));
       } else {
         gt->sf_zz    = 1.0;
 	gt->sf_zzUnc = 1.0;
       }
 
       if(nWBosons == 1 && nZBosons == 1) {
-        TLorentzVector theWZBoson = theWBosons + theZBosons;
-        gt->sf_wz = GetCorr(cWZEwkCorr,theWZBoson.M());
+        TLorentzVector wZBoson = wBosons + zBosons;
+        gt->sf_wz = GetCorr(cWZEwkCorr,wZBoson.M());
       } else {
         gt->sf_wz = 1.0;
       }
       
       if(nZBosons == 1) {
-        gt->sf_zh     = weightZHEWKCorr(GetCorr(cZHEwkCorr,bound(theZBosons.Pt(),0,499.999)));
-        gt->sf_zhUp   = weightZHEWKCorr(GetCorr(cZHEwkCorrUp,bound(theZBosons.Pt(),0,499.999)));
-        gt->sf_zhDown = weightZHEWKCorr(GetCorr(cZHEwkCorrDown,bound(theZBosons.Pt(),0,499.999)));
+        gt->sf_zh     = weightZHEWKCorr(GetCorr(cZHEwkCorr,bound(zBosons.Pt(),0,499.999)));
+        gt->sf_zhUp   = weightZHEWKCorr(GetCorr(cZHEwkCorrUp,bound(zBosons.Pt(),0,499.999)));
+        gt->sf_zhDown = weightZHEWKCorr(GetCorr(cZHEwkCorrDown,bound(zBosons.Pt(),0,499.999)));
       }
       else {
         gt->sf_zh     = 1.0;

@@ -666,18 +666,18 @@ bool PandaAnalyzer::PassPreselection()
   }
 
   if (preselBits & kVHBB) {
-    double theBestMet = TMath::Max(TMath::Max(gt->pfmetUp, gt->pfmetDown), gt->pfmet);
-    double theBestLeadingJet = TMath::Max(TMath::Max(gt->jet1PtUp, gt->jet1PtDown), gt->jet1Pt);
-    double theBestSubLeadingJet = TMath::Max(TMath::Max(gt->jet2PtUp, gt->jet2PtDown), gt->jet2Pt);
+    double bestMet = TMath::Max(TMath::Max(gt->pfmetUp, gt->pfmetDown), gt->pfmet);
+    double bestLeadingJet = TMath::Max(TMath::Max(gt->jet1PtUp, gt->jet1PtDown), gt->jet1Pt);
+    double bestSubLeadingJet = TMath::Max(TMath::Max(gt->jet2PtUp, gt->jet2PtDown), gt->jet2Pt);
     // ZnnHbb
     if (
-      theBestMet>150 && 
-      theBestLeadingJet>50 && theBestSubLeadingJet>25 &&
+      bestMet>150 && 
+      bestLeadingJet>50 && bestSubLeadingJet>25 &&
       (gt->hbbpt>50 || (gt->nFatjet>0 && gt->fj1Pt>200))
     ) isGood=true;
     // WlnHbb
     else if (
-      theBestLeadingJet>25 && theBestSubLeadingJet>25 &&
+      bestLeadingJet>25 && bestSubLeadingJet>25 &&
       (
        (gt->nTightElectron >0 && gt->electronPt[0]>25) ||
        (gt->nTightMuon > 0 && gt->muonPt[0]>25)
@@ -686,7 +686,7 @@ bool PandaAnalyzer::PassPreselection()
     ) isGood=true;
     // ZllHbb
     else if (
-      theBestLeadingJet>25 && theBestSubLeadingJet>25 &&
+      bestLeadingJet>25 && bestSubLeadingJet>25 &&
       (
        (
         gt->nTightElectron>0 && 

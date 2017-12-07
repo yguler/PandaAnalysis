@@ -37,8 +37,8 @@ GeneralTree::GeneralTree() {
   }
   
   for (unsigned iShift=0; iShift<nCsvShifts; iShift++) {
-    csvShift theShift = csvShifts[iShift];
-    sf_csvWeights[theShift] = 1;
+    csvShift shift = csvShifts[iShift];
+    sf_csvWeights[shift] = 1;
   }
 
   for (unsigned int iSJ=0; iSJ!=NSUBJET; ++iSJ) {
@@ -88,8 +88,8 @@ void GeneralTree::Reset() {
     sf_btags[p] = 1;
   }
   for (unsigned iShift=0; iShift<nCsvShifts; iShift++) {
-    csvShift theShift = csvShifts[iShift];
-    sf_csvWeights[theShift] = -1;
+    csvShift shift = csvShifts[iShift];
+    sf_csvWeights[shift] = -1;
   }
   for (unsigned int iSJ=0; iSJ!=NSUBJET; ++iSJ) {
     fj1sjPt[iSJ] = -99;
@@ -759,9 +759,9 @@ void GeneralTree::WriteTree(TTree *t) {
   }
   if (btagWeights) { 
     for (unsigned iShift=0; iShift<nCsvShifts; iShift++) {
-      csvShift theShift = csvShifts[iShift];
-      TString theCsvWeightString = makeCsvWeightString(theShift, useCMVA);
-      Book(theCsvWeightString, &(sf_csvWeights[theShift]), theCsvWeightString+"/F");
+      csvShift shift = csvShifts[iShift];
+      TString csvWeightString = makeCsvWeightString(shift, useCMVA);
+      Book(csvWeightString, &(sf_csvWeights[shift]), csvWeightString+"/F");
     }
   }
 //ENDCUSTOMWRITE

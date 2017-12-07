@@ -154,9 +154,9 @@ class GeneralTree : public genericTree {
           }
           return s;
         }
-        TString makeCsvWeightString(csvShift theShift, bool isCMVA=false) { 
+        TString makeCsvWeightString(csvShift shift, bool isCMVA=false) { 
           TString s = isCMVA? "sf_cmvaWeight_" : "sf_csvWeight_";
-          switch (theShift) {
+          switch (shift) {
             case csvCent         :  s += "Cent"         ; break;
             case csvLFup         :  s += "LFup"         ; break;
             case csvLFdown       :  s += "LFdown"       ; break;

@@ -128,6 +128,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   if (DEBUG) PDebug("PandaAnalyzer::Init","Set addresses");
 
   hDTotalMCWeight = new TH1F("hDTotalMCWeight","hDTotalMCWeight",1,0,2);
+  hDTotalMCWeight->SetDirectory(0);
   hDTotalMCWeight->SetBinContent(1,hweights->GetBinContent(1));
 
   if (weightNames) {
@@ -250,7 +251,6 @@ void PandaAnalyzer::Terminate()
     delete iter.second;
 
   for (auto& iter : ak4ScaleReader) {
-    printf("trying to delete: |%s| at %p\n",iter.first.Data(),iter.second);
     delete iter.second;
   }
 
@@ -1015,15 +1015,16 @@ void PandaAnalyzer::Run()
       tr->TriggerEvent("fatjet");
     }
 
-    // first identify interesting jets
-    JetBasics();
+      // first identify interesting jets
+      JetBasics();
 
-    if (analysis->monoh) {
-      // Higgs reconstruction for resolved analysis - highest pt pair of b jets
-      JetHbbReco();
+      if (analysis->monoh) {
+	// Higgs reconstruction for resolved analysis - highest pt pair of b jets
+	JetHbbReco();
+      }
+
+      Taus();
     }
-
-    Taus();
 
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
@@ -1032,23 +1033,30 @@ void PandaAnalyzer::Run()
       GetMETSignificance();
 
     if (!isData) {
-      if (analysis->fatjet)
-        FatjetMatching();
-      if (analysis->hfCounting)
-        HeavyFlavorCounting();
+      if (!analysis->genOnly) {
+	if (analysis->fatjet)
+	  FatjetMatching();
 
-      if (analysis->btagSFs)
-        JetBtagSFs();
-      if (analysis->btagWeights)
-        JetCMVAWeights();
-      
-      TopPTReweight();
-      VJetsReweight();
+	if (analysis->btagSFs)
+	  JetBtagSFs();
+	if (analysis->btagWeights)
+	  JetCMVAWeights();
+	
+	TriggerEffs();
+
+	if (analysis->complicatedLeptons) 
+	  GenStudyEWK();
+	else
+	  LeptonSFs();
+
+	PhotonSFs();
+      }
+
+      QCDUncs();
+      SignalReweights();
 
       if (analysis->vbf)
         SaveGenLeptons();
-
-      TriggerEffs();
 
       SignalInfo();
 
@@ -1066,6 +1074,12 @@ void PandaAnalyzer::Run()
         GenJetsNu();
         MatchGenJets(genJetsNu);
       }
+
+      if (analysis->hfCounting)
+        HeavyFlavorCounting();
+
+      TopPTReweight();
+      VJetsReweight();
     }
 
     

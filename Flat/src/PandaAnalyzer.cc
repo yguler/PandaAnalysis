@@ -993,34 +993,35 @@ void PandaAnalyzer::Run()
 
     tr->TriggerEvent("met");
 
-    // electrons and muons
-    if (analysis->complicatedLeptons) {
-      ComplicatedLeptons();
-    } else {
-      SimpleLeptons();
-    }
-    
-    // photons
-    Photons();
+    if (!analysis->genOnly) {
+      // electrons and muons
+      if (analysis->complicatedLeptons) {
+        ComplicatedLeptons();
+      } else {
+        SimpleLeptons();
+      }
+      
+      // photons
+      Photons();
 
-    // recoil!
-    if (analysis->recoil)
-      Recoil();
+      // recoil!
+      if (analysis->recoil)
+        Recoil();
 
-    // fatjets
-    if (analysis->fatjet) {
-      FatjetBasics();
-      if (analysis->recluster)
-        FatjetRecluster();
-      tr->TriggerEvent("fatjet");
-    }
+      // fatjets
+      if (analysis->fatjet) {
+        FatjetBasics();
+        if (analysis->recluster)
+          FatjetRecluster();
+        tr->TriggerEvent("fatjet");
+      }
 
       // first identify interesting jets
       JetBasics();
 
       if (analysis->monoh) {
-	// Higgs reconstruction for resolved analysis - highest pt pair of b jets
-	JetHbbReco();
+        // Higgs reconstruction for resolved analysis - highest pt pair of b jets
+        JetHbbReco();
       }
 
       Taus();
@@ -1029,27 +1030,27 @@ void PandaAnalyzer::Run()
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
 
-    if (analysis->monoh)
+    if (analysis->monoh && !analysis->genOnly)
       GetMETSignificance();
 
     if (!isData) {
       if (!analysis->genOnly) {
-	if (analysis->fatjet)
-	  FatjetMatching();
+        if (analysis->fatjet)
+          FatjetMatching();
 
-	if (analysis->btagSFs)
-	  JetBtagSFs();
-	if (analysis->btagWeights)
-	  JetCMVAWeights();
-	
-	TriggerEffs();
+        if (analysis->btagSFs)
+          JetBtagSFs();
+        if (analysis->btagWeights)
+          JetCMVAWeights();
+        
+        TriggerEffs();
 
-	if (analysis->complicatedLeptons) 
-	  GenStudyEWK();
-	else
-	  LeptonSFs();
+        if (analysis->complicatedLeptons) 
+          GenStudyEWK();
+        else
+          LeptonSFs();
 
-	PhotonSFs();
+        PhotonSFs();
       }
 
       QCDUncs();

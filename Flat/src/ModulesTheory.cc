@@ -90,17 +90,38 @@ void PandaAnalyzer::VJetsReweight()
 {
       // calculate the mjj 
       TLorentzVector vGenJet;
-      if (analysis->vbf && event.ak4GenJets.size() > 0) {
-        auto &gj = event.ak4GenJets.at(0);
+      if (analysis->vbf) {
+        // first find high pT leptons
+        std::vector<GenParticle*> genLeptons;
+        for (auto &gp : event.genParticles) {
+          if (!gp.finalState)
+            continue;
+          unsigned id = abs(gp.pdgid);
+          if ((id == 11 || id == 13) &&
+              (gp.pt() > 20 && fabs(gp.eta()) < 4.7))
+            genLeptons.push_back(&gp);
+        }
+        unsigned nGenJet = 0;
         TLorentzVector v;
-        v.SetPtEtaPhiM(gj.pt(), gj.eta(), gj.phi(), gj.m());
-        gt->genJet1Pt = gj.pt(); gt->genJet1Eta = gj.eta();
-        vGenJet += v;
-        if (event.ak4GenJets.size() > 1) {
-          gj = event.ak4GenJets.at(1);
+        for (auto &gj : event.ak4GenJets) {
+          bool matchesLep = false;
+          for (auto *gl : genLeptons) {
+            if (DeltaR2(gj.eta(), gj.phi(), gl->eta(), gl->phi()) < 0.16) {
+              matchesLep = true;
+              break;
+            }
+          }
+          if (matchesLep)
+            continue;
+
           v.SetPtEtaPhiM(gj.pt(), gj.eta(), gj.phi(), gj.m());
-          gt->genJet2Pt = gj.pt(); gt->genJet2Eta = gj.eta();
+          if (nGenJet == 0) { gt->genJet1Pt = gj.pt(); gt->genJet1Eta = gj.eta(); }
+          else if (nGenJet == 1) { gt->genJet2Pt = gj.pt(); gt->genJet2Eta = gj.eta(); }
+
           vGenJet += v;
+          nGenJet++;
+          if (nGenJet == 2)
+            break;
         }
       }
       gt->genMjj = vGenJet.M();

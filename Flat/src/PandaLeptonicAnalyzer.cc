@@ -1580,21 +1580,21 @@ void PandaLeptonicAnalyzer::Run() {
 
       if(nZBosons >= 2) {
         double the_rho = 0.0; if(the_rhoP4.P() > 0) the_rho = the_rhoP4.Pt()/the_rhoP4.P();
-        double zZCorr[2] {1,1};
-        zZCorr[0] = weightEWKCorr(bosonPtMin,1);
+        double ZZCorr[2] {1,1};
+        ZZCorr[0] = weightEWKCorr(bosonPtMin,1);
         float GENmZZ = zBosons.M();
-        zZCorr[1] = GetCorr(cqqZZQcdCorr,2,GENmZZ); // final state = 2 is fixed
-        gt->sf_zz = zZCorr[0]*zZCorr[1];
-        if(the_rho <= 0.3) gt->sf_zzUnc = (1.0+TMath::Abs((zZCorr[0]-1)*(15.99/9.89-1)));
-	else               gt->sf_zzUnc = (1.0+TMath::Abs((zZCorr[0]-1)               ));
+        ZZCorr[1] = GetCorr(cqqZZQcdCorr,2,GENmZZ); // final state = 2 is fixed
+        gt->sf_zz = ZZCorr[0]*ZZCorr[1];
+        if(the_rho <= 0.3) gt->sf_zzUnc = (1.0+TMath::Abs((ZZCorr[0]-1)*(15.99/9.89-1)));
+	else               gt->sf_zzUnc = (1.0+TMath::Abs((ZZCorr[0]-1)               ));
       } else {
         gt->sf_zz    = 1.0;
 	gt->sf_zzUnc = 1.0;
       }
 
       if(nWBosons == 1 && nZBosons == 1) {
-        TLorentzVector wZBoson = wBosons + zBosons;
-        gt->sf_wz = GetCorr(cWZEwkCorr,wZBoson.M());
+        TLorentzVector WZBoson = wBosons + zBosons;
+        gt->sf_wz = GetCorr(cWZEwkCorr,WZBoson.M());
       } else {
         gt->sf_wz = 1.0;
       }

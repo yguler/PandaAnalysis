@@ -14,7 +14,7 @@ argv=[]
 import ROOT as root
 from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import *
-import PandaCore.Tools.job_management as cb
+import PandaCore.Tools.job_config as cb
 import PandaAnalysis.Tagging.cfg_v8 as tagcfg
 import PandaAnalysis.T3.job_utilities as utils
 from PandaAnalysis.Flat.analysis import gghbb
@@ -27,15 +27,11 @@ def fn(input_name, isData, full_path):
     PInfo(sname+'.fn','Starting to process '+input_name)
     # now we instantiate and configure the analyzer
     skimmer = root.PandaAnalyzer()
-    hbb = gghbb()
-    hbb.reclusterGen = True
-    hbb.bjetRegression = True
-    hbb.dump()
-    skimmer.SetAnalysis(hbb)
-    skimmer.isData=isData
-    processType = utils.classify_sample(full_path, isData)
-    skimmer.processType=processType 
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kFatjet)
+    analysis = gghbb(True)
+    analysis.processType = utils.classify_sample(full_path, isData)
+    skimmer.SetAnalysis(analysis)
+    skimmer.isData = isData
 
     return utils.run_PandaAnalyzer(skimmer, isData, input_name)
 
@@ -68,7 +64,8 @@ if __name__ == "__main__":
         PError(sname,'Could not find a job for PROCID=%i'%(which))
         exit(3)
 
-    outdir = 'XXXX' # will be replaced when building the job
+    outdir = getenv('SUBMIT_OUTDIR')
+    lockdir = getenv('SUBMIT_LOCKDIR')
     outfilename = to_run.name+'_%i.root'%(submit_id)
     processed = {}
     
@@ -81,7 +78,7 @@ if __name__ == "__main__":
     utils.cleanup('*.root')
     utils.print_time('stageout and cleanup')
     if not ret:
-        utils.write_lock(outdir,outfilename,processed)
+        utils.write_lock(lockdir,outfilename,processed)
         utils.cleanup('*.lock')
         utils.print_time('create lock')
     else:

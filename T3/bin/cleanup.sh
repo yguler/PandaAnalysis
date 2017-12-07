@@ -1,9 +1,10 @@
 #!/bin/bash
 
-cd $SUBMIT_OUTDIR
-pwd
+echo 'Cleaning up!'
+echo $SUBMIT_OUTDIR
+echo $SUBMIT_LOCKDIR
 
 sleep 2
-rm -f *root *npz locks/* &
 
-cd -
+rm -rf $SUBMIT_OUTDIR/* &
+rm -rf $SUBMIT_LOCKDIR/*

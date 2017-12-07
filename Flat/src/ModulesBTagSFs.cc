@@ -3,6 +3,7 @@
 #include "TMath.h"
 #include <algorithm>
 #include <vector>
+#include <iostream>
 
 #define EGMSCALE 1
 
@@ -179,3 +180,45 @@ void PandaAnalyzer::JetBtagSFs()
     tr->TriggerEvent("ak4 gen-matching");
 }
 
+void PandaAnalyzer::JetCMVAWeights() 
+{
+  for (unsigned iShift=0; iShift<GeneralTree::nCsvShifts; iShift++) {
+    GeneralTree::csvShift shift = gt->csvShifts[iShift];
+    gt->sf_csvWeights[shift] = 1;
+  }
+  if (centralJets.size() < 1) return;
+
+  //get vectors of jet properties
+  std::vector<double> jetPts, jetEtas, jetCSVs, jetCMVAs;
+  std::vector<int> jetFlavors;
+  jetPts.reserve(centralJets.size());
+  jetEtas.reserve(centralJets.size());
+  jetCSVs.reserve(centralJets.size());
+  jetCMVAs.reserve(centralJets.size());
+  jetFlavors.reserve(centralJets.size());
+  for (auto *jet : centralJets) {
+    jetPts.push_back(jet->pt());
+    jetEtas.push_back(jet->eta());
+    jetCSVs.push_back(jet->csv);
+    jetCMVAs.push_back(jet->cmva);
+    int flavor = 0;
+    for (auto &gen : event.ak4GenJets) {
+      if (DeltaR2(gen.eta(), gen.phi(), jet->eta(), jet->phi()) < 0.09) {
+        flavor=gen.pdgid;
+        break;
+      }
+    }
+    jetFlavors.push_back(flavor);
+  }
+  // throwaway addresses
+  double csvWgtHF, csvWgtLF, csvWgtCF, cmvaWgtHF, cmvaWgtLF, cmvaWgtCF;
+  for (unsigned iShift=0; iShift<GeneralTree::nCsvShifts; iShift++) {
+    GeneralTree::csvShift shift = gt->csvShifts[iShift];
+    if (analysis->useCMVA) {
+      gt->sf_csvWeights[shift] = cmvaReweighter->getCSVWeight(jetPts,jetEtas,jetCMVAs,jetFlavors, shift, cmvaWgtHF, cmvaWgtLF, cmvaWgtCF);
+    }
+    else 
+      gt->sf_csvWeights[shift] = csvReweighter->getCSVWeight(jetPts,jetEtas,jetCSVs,jetFlavors, shift, csvWgtHF, csvWgtLF, csvWgtCF);
+  }
+
+}

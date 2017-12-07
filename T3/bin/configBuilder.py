@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-from os import getenv
-import subprocess
 import sys
 import argparse
+import subprocess
 from re import sub
-from PandaCore.Tools.job_management import DataSample,convert_catalog
+from os import getenv
 from PandaCore.Tools.Misc import PInfo
+from PandaCore.Tools.job_management import DataSample,convert_catalog
 
 workdir = getenv('SUBMIT_WORKDIR')
 parser = argparse.ArgumentParser(description='convert configuration')

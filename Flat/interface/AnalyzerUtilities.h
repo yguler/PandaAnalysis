@@ -68,28 +68,46 @@ inline double TTNLOToNNLO(double pt) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
+enum ProcessType { 
+    kNoProcess,
+    kZ,
+    kW,
+    kA,
+    kZEWK,
+    kWEWK,
+    kTT,
+    kTop, // used for non-ttbar top
+    kV, // used for non V+jets W or Z
+    kH,
+    kSignal,
+};
 
 class Analysis {
 public:
   Analysis(TString name_ = "") { name = name_; }
   ~Analysis() {}
   TString name;
-  bool rerunJES = false;
-  bool varyJES = false;
-  bool complicatedLeptons = false;
-  bool vbf = false;
-  bool recoil = true;
-  bool fatjet = true;
-  bool monoh = false;
-  bool recluster = false;
-  bool genOnly = false;
-  bool btagSFs = true;
-  bool firstGen = true;
-  bool puppi_jets = true;
+  ProcessType processType=kNoProcess;
   bool ak8 = false;
-  bool reclusterGen = false;
   bool bjetRegression = false;
+  bool btagSFs = true;
+  bool btagWeights = false;
+  bool complicatedLeptons = false;
   bool deep = false;
+  bool fatjet = true;
+  bool firstGen = true;
+  bool genOnly = false;
+  bool hbb = false;
+  bool hfCounting = false;
+  bool monoh = false;
+  bool puppi_jets = true;
+  bool recluster = false;
+  bool reclusterGen = false;
+  bool recoil = true;
+  bool rerunJES = false;
+  bool useCMVA = false;
+  bool varyJES = false;
+  bool vbf = false;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -113,8 +131,8 @@ class TriggerHandler {
 public:
   TriggerHandler() {};
   ~TriggerHandler() {};
-  void addTriggers(std::vector<TString> paths) { 
-    for (auto &path : paths) {
+  void addTriggers(std::vector<TString> paths_) { 
+    for (auto &path : paths_) {
       paths.push_back(path); 
       indices.push_back(-1); 
     }

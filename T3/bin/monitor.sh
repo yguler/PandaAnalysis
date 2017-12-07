@@ -1,15 +1,15 @@
 #!/bin/bash
 
-LASTMODIFIED=1
+LAST=1
 
 while true
 do
-    RECENTLYMODIFIED=$(stat -c%Z $(ls -ltr $SUBMIT_LOCKDIR/* | tail -n1 | awk '{ print $9; }'))
-    if [[ $RECENTLYMODIFIED > $LASTMODIFIED ]]; 
+    RECENT=$(stat -c%Z $(ls -ltr $SUBMIT_LOCKDIR/* | tail -n1 | awk '{ print $9; }'))
+    if [[ $RECENT > $LAST ]]; 
     then
         clear
         ${CMSSW_BASE}/src/PandaAnalysis/T3/bin/checkMissingFiles.py
-        LASTMODIFIED=$RECENTLYMODIFIED
+        LAST=$RECENT
     fi
     sleep 5
 done

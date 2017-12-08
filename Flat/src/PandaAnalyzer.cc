@@ -102,8 +102,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber", "rho", 
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
-                                     "pfMet", "caloMet", "trkMet", "puppiMet", "rawMet", 
-                                     "recoil","metFilters"});
+                                     "pfMet", "caloMet", "puppiMet", "rawMet", 
+                                     "recoil","metFilters","trkMet"});
   readlist.setVerbosity(0);
 
   if (analysis->ak8)
@@ -130,6 +130,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   if (DEBUG) PDebug("PandaAnalyzer::Init","Set addresses");
 
   hDTotalMCWeight = new TH1F("hDTotalMCWeight","hDTotalMCWeight",1,0,2);
+  hDTotalMCWeight->SetDirectory(0);
   hDTotalMCWeight->SetBinContent(1,hweights->GetBinContent(1));
 
   if (weightNames) {
@@ -195,6 +196,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     jetDefGen = new fastjet::JetDefinition(fastjet::antikt_algorithm,radius);
   }
 
+  // Custom jet pt threshold
+  if (analysis->hbb) jetPtThreshold=20;
 
   if (DEBUG) PDebug("PandaAnalyzer::Init","Finished configuration");
 
@@ -250,7 +253,6 @@ void PandaAnalyzer::Terminate()
     delete iter.second;
 
   for (auto& iter : ak4ScaleReader) {
-    printf("trying to delete: |%s| at %p\n",iter.first.Data(),iter.second);
     delete iter.second;
   }
 
@@ -358,7 +360,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
                  "hden_monojet_recoil_clone_passed",1);
   OpenCorrection(cTrigEle,dirPath+"moriond17/eleTrig.root","hEffEtaPt",2);
   OpenCorrection(cTrigMu,dirPath+"trigger_eff/muon_trig_Run2016BtoF.root",
-		 "IsoMu24_OR_IsoTkMu24_PtEtaBins/efficienciesDATA/abseta_pt_DATA",2);
+                 "IsoMu24_OR_IsoTkMu24_PtEtaBins/efficienciesDATA/abseta_pt_DATA",2);
   OpenCorrection(cTrigPho,dirPath+"moriond17/photonTriggerEfficiency_photon_TH1F.root",
                  "hden_photonpt_clone_passed",1);
   OpenCorrection(cTrigMETZmm,dirPath+"moriond17/metTriggerEfficiency_zmm_recoil_monojet_TH1F.root",
@@ -666,15 +668,18 @@ bool PandaAnalyzer::PassPreselection()
   }
 
   if (preselBits & kVHBB) {
+    double bestMet = TMath::Max(TMath::Max(gt->pfmetUp, gt->pfmetDown), gt->pfmet);
+    double bestLeadingJet = TMath::Max(TMath::Max(gt->jet1PtUp, gt->jet1PtDown), gt->jet1Pt);
+    double bestSubLeadingJet = TMath::Max(TMath::Max(gt->jet2PtUp, gt->jet2PtDown), gt->jet2Pt);
     // ZnnHbb
     if (
-      gt->pfmet>150 && 
-      gt->nJet>=2 && gt->jetPt[0]>50 && gt->jetPt[1]>50 &&
+      bestMet>150 && 
+      bestLeadingJet>50 && bestSubLeadingJet>25 &&
       (gt->hbbpt>50 || (gt->nFatjet>0 && gt->fj1Pt>200))
     ) isGood=true;
     // WlnHbb
     else if (
-      gt->nJet>=2 && gt->jetPt[0]>25 && gt->jetPt[1]>25 &&
+      bestLeadingJet>25 && bestSubLeadingJet>25 &&
       (
        (gt->nTightElectron >0 && gt->electronPt[0]>25) ||
        (gt->nTightMuon > 0 && gt->muonPt[0]>25)
@@ -683,7 +688,7 @@ bool PandaAnalyzer::PassPreselection()
     ) isGood=true;
     // ZllHbb
     else if (
-      gt->nJet>=2 && gt->jetPt[0]>25 && gt->jetPt[1]>25 &&
+      bestLeadingJet>25 && bestSubLeadingJet>25 &&
       (
        (
         gt->nTightElectron>0 && 
@@ -823,27 +828,27 @@ void PandaAnalyzer::Run()
     triggerHandlers[kSingleEleTrig].addTriggers(paths);
     
     paths = {
-	      "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL",
-	      "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL",
-	      "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
-	      "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ"
+          "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL",
+          "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL",
+          "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
+          "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ"
     };
     triggerHandlers[kDoubleMuTrig].addTriggers(paths);
     paths = {
-	      "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
-	      "HLT_DoubleEle24_22_eta2p1_WPLoose_Gsf"
+          "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_DoubleEle24_22_eta2p1_WPLoose_Gsf"
     };
     triggerHandlers[kDoubleEleTrig].addTriggers(paths);
     
     paths = {
-	      "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
-	      "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL",
-	      "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
-	      "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL",
-	      "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL_DZ",
-	      "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL",
-	      "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
-	      "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL"
+          "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL",
+          "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL",
+          "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL",
+          "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL"
     };
     triggerHandlers[kEMuTrig].addTriggers(paths);
 
@@ -990,68 +995,78 @@ void PandaAnalyzer::Run()
 
     tr->TriggerEvent("met");
 
-    GetMETSignificance();
+    if (!analysis->genOnly) {
+      // electrons and muons
+      if (analysis->complicatedLeptons) {
+        ComplicatedLeptons();
+      } else {
+        SimpleLeptons();
+      }
+      
+      // photons
+      Photons();
 
-    // electrons and muons
-    if (analysis->complicatedLeptons) {
-      ComplicatedLeptons();
-    } else {
-      SimpleLeptons();
+      // recoil!
+      if (analysis->recoil)
+        Recoil();
+
+      // fatjets
+      if (analysis->fatjet) {
+        FatjetBasics();
+        if (analysis->recluster)
+          FatjetRecluster();
+        tr->TriggerEvent("fatjet");
+      }
+
+      // first identify interesting jets
+      JetBasics();
+
+      if (analysis->monoh) {
+        // Higgs reconstruction for resolved analysis - highest pt pair of b jets
+        JetHbbReco();
+      }
+
+      Taus();
     }
-    
-    // photons
-    Photons();
-
-    // recoil!
-    if (analysis->recoil)
-      Recoil();
-
-    // fatjets
-    if (analysis->fatjet) {
-      FatjetBasics();
-      if (analysis->recluster)
-        FatjetRecluster();
-      tr->TriggerEvent("fatjet");
-    }
-
-    // first identify interesting jets
-    JetBasics();
-
-    if (analysis->monoh) {
-      // Higgs reconstruction for resolved analysis - highest pt pair of b jets
-      JetHbbReco();
-    }
-
-    Taus();
 
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
 
-    if (!isData) {
-      if (analysis->fatjet)
-        FatjetMatching();
-      if (analysis->hfCounting)
-        HeavyFlavorCounting();
+    if (analysis->monoh && !analysis->genOnly)
+      GetMETSignificance();
 
-      if (analysis->btagSFs)
-        JetBtagSFs();
-      if (analysis->btagWeights)
-        JetCMVAWeights();
-      
-      TopPTReweight();
-      VJetsReweight();
+    if (!isData) {
+      if (!analysis->genOnly) {
+        if (analysis->fatjet)
+          FatjetMatching();
+
+        if (analysis->btagSFs)
+          JetBtagSFs();
+        if (analysis->btagWeights)
+          JetCMVAWeights();
+        
+        TriggerEffs();
+
+        if (analysis->complicatedLeptons) 
+          GenStudyEWK();
+        else
+          LeptonSFs();
+
+        PhotonSFs();
+      }
+
+      QCDUncs();
+      SignalReweights();
 
       if (analysis->vbf)
         SaveGenLeptons();
 
-      TriggerEffs();
-
       SignalInfo();
 
       if (analysis->complicatedLeptons) 
-	GenStudyEWK();
+        GenStudyEWK();
       else
-	LeptonSFs();
+        LeptonSFs();
 
       PhotonSFs();
 
@@ -1062,6 +1077,12 @@ void PandaAnalyzer::Run()
         GenJetsNu();
         MatchGenJets(genJetsNu);
       }
+
+      if (analysis->hfCounting)
+        HeavyFlavorCounting();
+
+      TopPTReweight();
+      VJetsReweight();
     }
 
     

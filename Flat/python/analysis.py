@@ -71,7 +71,7 @@ wlnhbb = lambda v=False : _analysis(
         btagWeights = True,
         useCMVA = True,
         complicatedLeptons = True,
-        genPartonStudy = True,
-        reclusterGen = True,
+        hfCounting = True,
+        reclusterGen = False,
         bjetRegression = True
     )

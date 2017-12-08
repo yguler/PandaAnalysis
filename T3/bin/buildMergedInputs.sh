@@ -28,7 +28,7 @@ done
 
 PInfo -n "$0" "Acquiring configuration..."
 wget -O ${WD}/list.cfg $PANDA_CFG
-${CMSSW_BASE}/src/PandaAnalysis/T3/bin/buildConfig.py --infile ${WD}/list.cfg --outfile ${WD}/local.cfg --nfiles $filesetSize
+${CMSSW_BASE}/src/PandaAnalysis/T3/bin/configBuilder.py --infile ${WD}/list.cfg --outfile ${WD}/local.cfg --nfiles $filesetSize
 cp -v ${WD}/list.cfg ${WD}/list_all.cfg 
 cp -v ${WD}/local.cfg ${WD}/local_all.cfg 
 
@@ -41,8 +41,7 @@ fi
 
 PInfo -n "$0" "Creating executable..."
 cd ${CMSSW_BASE}/src/PandaAnalysis/T3/inputs/
-sed "s?XXXX?${SUBMIT_OUTDIR}?g" ${SUBMIT_TMPL} > skim.py
-cp -v skim.py ${WD}
+cp -v ${SUBMIT_TMPL} ${WD}/skim.py
 chmod 775 ${WD}/skim.py
 
 PInfo -n "$0" "Finalizing work area..."

@@ -103,7 +103,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
                                      "pfMet", "caloMet", "puppiMet", "rawMet", 
-                                     "recoil","metFilters"});
+                                     "recoil","metFilters","trkMet"});
   readlist.setVerbosity(0);
 
   if (analysis->ak8)

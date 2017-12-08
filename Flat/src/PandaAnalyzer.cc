@@ -102,7 +102,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber", "rho", 
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
-                                     "pfMet", "caloMet", "puppiMet", "rawMet", 
+                                     "pfMet", "caloMet", "trkMet", "puppiMet", "rawMet", 
                                      "recoil","metFilters"});
   readlist.setVerbosity(0);
 

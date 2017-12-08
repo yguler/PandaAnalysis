@@ -114,7 +114,7 @@ class GeneralLeptonicTree : public genericTree {
     float mcWeight = 1;
     int trigger = 0;
     int metFilter = 0;
-    int egmFilter = 0;
+    float zPos = 0;
 
     int nLooseLep = 0;
     int looseGenLep1PdgId = 0;
@@ -141,6 +141,18 @@ class GeneralLeptonicTree : public genericTree {
     float looseLep2Phi = -1;
     float looseLep3Phi = -1;
     float looseLep4Phi = -1;
+    float looseLep1RegPt = -1;
+    float looseLep2RegPt = -1;
+    float looseLep3RegPt = -1;
+    float looseLep4RegPt = -1;
+    float looseLep1SmePt = -1;
+    float looseLep2SmePt = -1;
+    float looseLep3SmePt = -1;
+    float looseLep4SmePt = -1;
+    float looseLep1SCEta = -1;
+    float looseLep2SCEta = -1;
+    float looseLep3SCEta = -1;
+    float looseLep4SCEta = -1;
 
     int nJet = 0;
     int jetNLBtags = 0;

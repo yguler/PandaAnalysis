@@ -5,7 +5,7 @@ from sys import argv,exit
 from os import system,getenv
 import json
 
-debug_level = 2
+debug_level = 0
 torun = argv[1]
 output = 'testskim.root'
 if len(argv)>2:
@@ -23,7 +23,7 @@ Load('PandaLeptonicAnalyzer')
 skimmer = root.PandaLeptonicAnalyzer(debug_level)
 
 skimmer.firstEvent=0
-skimmer.lastEvent=1000
+skimmer.lastEvent=20000
 skimmer.isData=False
 skimmer.SetFlag('firstGen',True)
 skimmer.SetFlag('applyEGCorr',False)

@@ -47,7 +47,7 @@ void GeneralLeptonicTree::Reset() {
     mcWeight = 1;
     trigger = 0;
     metFilter = 0;
-    egmFilter = 0;
+    zPos = 0;
 
     nLooseLep = 0;
     looseGenLep1PdgId = 0;
@@ -74,6 +74,18 @@ void GeneralLeptonicTree::Reset() {
     looseLep2Phi = -1;
     looseLep3Phi = -1;
     looseLep4Phi = -1;
+    looseLep1RegPt = -1;
+    looseLep2RegPt = -1;
+    looseLep3RegPt = -1;
+    looseLep4RegPt = -1;
+    looseLep1SmePt = -1;
+    looseLep2SmePt = -1;
+    looseLep3SmePt = -1;
+    looseLep4SmePt = -1;
+    looseLep1SCEta = -1;
+    looseLep2SCEta = -1;
+    looseLep3SCEta = -1;
+    looseLep4SCEta = -1;
 
     nJet = 0;
     jetNLBtags = 0;
@@ -216,7 +228,7 @@ void GeneralLeptonicTree::WriteTree(TTree *t) {
   Book("mcWeight",&mcWeight,"mcWeight/F");
   Book("trigger",&trigger,"trigger/I");
   Book("metFilter",&metFilter,"metFilter/I");
-  Book("egmFilter",&egmFilter,"egmFilter/I");
+  Book("zPos",&zPos,"zPos/F");
 
   Book("nLooseLep",&nLooseLep,"nLooseLep/I");
   Book("looseGenLep1PdgId",&looseGenLep1PdgId,"looseGenLep1PdgId/I");
@@ -243,6 +255,18 @@ void GeneralLeptonicTree::WriteTree(TTree *t) {
   Book("looseLep2Phi",&looseLep2Phi,"looseLep2Phi/F");
   Book("looseLep3Phi",&looseLep3Phi,"looseLep3Phi/F");
   Book("looseLep4Phi",&looseLep4Phi,"looseLep4Phi/F");
+  Book("looseLep1RegPt",&looseLep1RegPt,"looseLep1RegPt/F");
+  Book("looseLep2RegPt",&looseLep2RegPt,"looseLep2RegPt/F");
+  Book("looseLep3RegPt",&looseLep3RegPt,"looseLep3RegPt/F");
+  Book("looseLep4RegPt",&looseLep4RegPt,"looseLep4RegPt/F");
+  Book("looseLep1SmePt",&looseLep1SmePt,"looseLep1SmePt/F");
+  Book("looseLep2SmePt",&looseLep2SmePt,"looseLep2SmePt/F");
+  Book("looseLep3SmePt",&looseLep3SmePt,"looseLep3SmePt/F");
+  Book("looseLep4SmePt",&looseLep4SmePt,"looseLep4SmePt/F");
+  Book("looseLep1SCEta",&looseLep1SCEta,"looseLep1SCEta/F");
+  Book("looseLep2SCEta",&looseLep2SCEta,"looseLep2SCEta/F");
+  Book("looseLep3SCEta",&looseLep3SCEta,"looseLep3SCEta/F");
+  Book("looseLep4SCEta",&looseLep4SCEta,"looseLep4SCEta/F");
 
   Book("nJet",&nJet,"nJet/I");
   Book("jetNLBtags",&jetNLBtags,"jetNLBtags/I");

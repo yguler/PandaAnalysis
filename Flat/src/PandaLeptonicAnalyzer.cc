@@ -88,7 +88,7 @@ int PandaLeptonicAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
                                      "pfMet", "caloMet", "puppiMet", "rawMet", 
-                                     "recoil","metFilters","genMet","superClusters"});
+                                     "recoil","metFilters","genMet","superClusters", "vertices", "triggerObjects"});
   readlist.setVerbosity(0);
 
   readlist.push_back("triggers");
@@ -118,21 +118,22 @@ int PandaLeptonicAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   Float_t xbinsPtRap2[nBinPtRap2+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,1500};
   Float_t xbinsPtRap3[nBinPtRap3+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,1500};
   Float_t xbinsPtRap4[nBinPtRap4+1] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,16,18,20,22,25,28,32,37,43,52,65,85,120,160,190,220,250,300,400,1500};
+
   Float_t xbinsWWMLL[nBinWW+1];
-    xbinsWWMLL[ 0] =  20;      xbinsWWMLL[ 1] =  50;      xbinsWWMLL[ 2] = 100;      xbinsWWMLL[ 3] = 150;      xbinsWWMLL[ 4] = 200;
-    xbinsWWMLL[ 5] = 300;      xbinsWWMLL[ 6] = 400;      xbinsWWMLL[ 7] = 500;      xbinsWWMLL[ 8] = 600;      xbinsWWMLL[ 9] = 800;
+    xbinsWWMLL[ 0] =  20;      xbinsWWMLL[ 1] =  40;      xbinsWWMLL[ 2] =  55;      xbinsWWMLL[ 3] =  70;      xbinsWWMLL[ 4] =  85;
+    xbinsWWMLL[ 5] = 100;      xbinsWWMLL[ 6] = 120;      xbinsWWMLL[ 7] = 150;      xbinsWWMLL[ 8] = 200;      xbinsWWMLL[ 9] = 800;
 
   Float_t xbinsWWPTL1[nBinWW+1];
     xbinsWWPTL1[ 0] =  25;      xbinsWWPTL1[ 1] =  35;      xbinsWWPTL1[ 2] =  40;      xbinsWWPTL1[ 3] =  45;      xbinsWWPTL1[ 4] =  50;
-    xbinsWWPTL1[ 5] =  60;      xbinsWWPTL1[ 6] =  80;      xbinsWWPTL1[ 7] = 100;      xbinsWWPTL1[ 8] = 125;      xbinsWWPTL1[ 9] = 150;
+    xbinsWWPTL1[ 5] =  60;      xbinsWWPTL1[ 6] =  70;      xbinsWWPTL1[ 7] =  80;      xbinsWWPTL1[ 8] = 110;      xbinsWWPTL1[ 9] = 150;
 
   Float_t xbinsWWPTL2[nBinWW+1];
     xbinsWWPTL2[ 0] =  20;      xbinsWWPTL2[ 1] =  25;      xbinsWWPTL2[ 2] =  30;      xbinsWWPTL2[ 3] =  35;      xbinsWWPTL2[ 4] =  40;
     xbinsWWPTL2[ 5] =  45;      xbinsWWPTL2[ 6] =  50;      xbinsWWPTL2[ 7] =  75;      xbinsWWPTL2[ 8] = 100;      xbinsWWPTL2[ 9] = 150;
 
   Float_t xbinsWWDPHILL[nBinWW+1];
-    xbinsWWDPHILL[ 0] =   0;      xbinsWWDPHILL[ 1] =  20;      xbinsWWDPHILL[ 2] =  40;      xbinsWWDPHILL[ 3] =  60;      xbinsWWDPHILL[ 4] =  80;
-    xbinsWWDPHILL[ 5] = 100;      xbinsWWDPHILL[ 6] = 120;      xbinsWWDPHILL[ 7] = 140;      xbinsWWDPHILL[ 8] = 160;      xbinsWWDPHILL[ 9] = 180;
+    xbinsWWDPHILL[ 0] =   0*TMath::Pi()/180.;      xbinsWWDPHILL[ 1] =  20*TMath::Pi()/180.;      xbinsWWDPHILL[ 2] =  40*TMath::Pi()/180.;      xbinsWWDPHILL[ 3] =  60*TMath::Pi()/180.;      xbinsWWDPHILL[ 4] =  80*TMath::Pi()/180.;
+    xbinsWWDPHILL[ 5] = 100*TMath::Pi()/180.;      xbinsWWDPHILL[ 6] = 120*TMath::Pi()/180.;      xbinsWWDPHILL[ 7] = 140*TMath::Pi()/180.;      xbinsWWDPHILL[ 8] = 160*TMath::Pi()/180.;      xbinsWWDPHILL[ 9] = 180*TMath::Pi()/180.;
 
   Float_t xbinsWWN0JET[nBinWWN0JET+1];
     xbinsWWN0JET[ 0] =-0.5;      xbinsWWN0JET[ 1] = 0.5;      xbinsWWN0JET[ 2] = 1.5;      xbinsWWN0JET[ 3] = 2.5;
@@ -857,11 +858,7 @@ bool PandaLeptonicAnalyzer::PassPreselection() {
   bool isGood=false;
 
   if (preselBits & kLepton) {
-    bool passTrigger = (gt->trigger & kMuEGTrig) == kMuEGTrig || (gt->trigger & kMuMuTrig) == kMuMuTrig ||
-    		       (gt->trigger & kMuTrig)   == kMuTrig   || (gt->trigger & kEGEGTrig) == kEGEGTrig ||
-    		       (gt->trigger & kEGTrig)   == kEGTrig;
-    if     (gt->nLooseLep>1 && gt->looseLep1Pt > 20 && gt->looseLep2Pt > 20) isGood = true;
-    //else if(gt->nLooseLep>0 && gt->looseLep1Pt > 20 && passTrigger == true) isGood = true;
+    if     (gt->nLooseLep >= 2 && gt->looseLep1Pt > 20 && gt->looseLep2Pt > 20) isGood = true;
   }
 
   return isGood;
@@ -1008,8 +1005,10 @@ void PandaLeptonicAnalyzer::Run() {
   std::vector<unsigned int> muegTriggers;
   std::vector<unsigned int> mumuTriggers;
   std::vector<unsigned int> muTriggers;
+  std::vector<unsigned int> muTagTriggers;
   std::vector<unsigned int> egegTriggers;
   std::vector<unsigned int> egTriggers;
+  std::vector<unsigned int> egTagTriggers;
 
   if (1) {
     std::vector<TString> metTriggerPaths = {
@@ -1036,7 +1035,6 @@ void PandaLeptonicAnalyzer::Run() {
           "HLT_Photon120_R9Id90_HE10_IsoM",
           "HLT_Photon165_R9Id90_HE10_IsoM",
           "HLT_Photon300_NoHE",
-
           "HLT_ECALHT800"
     };
 
@@ -1056,7 +1054,6 @@ void PandaLeptonicAnalyzer::Run() {
 	  "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL",
 	  "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
 	  "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ"
-
     };
 
     std::vector<TString> muTriggerPaths = {
@@ -1066,7 +1063,14 @@ void PandaLeptonicAnalyzer::Run() {
 	  "HLT_IsoTkMu22",
 	  "HLT_Mu45_eta2p1",
 	  "HLT_Mu50"
+    };
 
+    std::vector<TString> muTagTriggerPaths = {
+	  "HLT_IsoMu24",
+	  "HLT_IsoTkMu24"
+	  "HLT_IsoMu22",
+	  "HLT_IsoTkMu22",
+	  "HLT_Mu50"
     };
 
     std::vector<TString> egegTriggerPaths = {
@@ -1083,9 +1087,19 @@ void PandaLeptonicAnalyzer::Run() {
           "HLT_Ele27_WP85_Gsf",
           "HLT_Ele27_WPLoose_Gsf",
           "HLT_Ele105_CaloIdVT_GsfTrkIdT",
+          "HLT_Ele115_CaloIdVT_GsfTrkIdT",
           "HLT_Ele27_eta2p1_WPTight_Gsf",
           "HLT_Ele32_eta2p1_WPTight_Gsf",
           "HLT_ECALHT800"
+    };
+
+    std::vector<TString> egTagTriggerPaths = {
+          "HLT_Ele105_CaloIdVT_GsfTrkIdT",
+          "HLT_Ele115_CaloIdVT_GsfTrkIdT",
+          "HLT_Ele25_eta2p1_WPTight_Gsf",
+	  "HLT_Ele27_WPTight_Gsf",
+          "HLT_Ele27_eta2p1_WPTight_Gsf",
+	  "HLT_Ele27_eta2p1_WPLoose_Gsf"
     };
 
     if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading MET triggers");
@@ -1108,6 +1122,10 @@ void PandaLeptonicAnalyzer::Run() {
     for (auto path : muTriggerPaths) {
       RegisterTrigger(path,muTriggers);
     }
+    if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading MuTag triggers");
+    for (auto path : muTagTriggerPaths) {
+      RegisterTrigger(path,muTagTriggers);
+    }
     if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading EGEG triggers");
     for (auto path : egegTriggerPaths) {
       RegisterTrigger(path,egegTriggers);
@@ -1115,6 +1133,10 @@ void PandaLeptonicAnalyzer::Run() {
     if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading EG triggers");
     for (auto path : egTriggerPaths) {
       RegisterTrigger(path,egTriggers);
+    }
+    if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading EGTag triggers");
+    for (auto path : egTagTriggerPaths) {
+      RegisterTrigger(path,egTagTriggers);
     }
 
   }
@@ -1173,6 +1195,9 @@ void PandaLeptonicAnalyzer::Run() {
     // gt->metFilter = (gt->metFilter==1 && !event.metFilters.duplicateMuons) ? 1 : 0;
     gt->metFilter = (gt->metFilter==1 && !event.metFilters.badPFMuons) ? 1 : 0;
     gt->metFilter = (gt->metFilter==1 && !event.metFilters.badChargedHadrons) ? 1 : 0;
+    
+    if(event.vertices.size() >= 1) gt->zPos = event.vertices[0].z;
+    else                           gt->zPos = 0.0;
 
     // save triggers
     for (auto iT : metTriggers) {
@@ -1205,6 +1230,12 @@ void PandaLeptonicAnalyzer::Run() {
       break;
      }
     }
+    for (auto iT : muTagTriggers) {
+     if (event.triggerFired(iT)) {
+      gt->trigger |= kMuTagTrig;
+      break;
+     }
+    }
     for (auto iT : egegTriggers) {
      if (event.triggerFired(iT)) {
       gt->trigger |= kEGEGTrig;
@@ -1214,6 +1245,12 @@ void PandaLeptonicAnalyzer::Run() {
     for (auto iT : egTriggers) {
      if (event.triggerFired(iT)) {
       gt->trigger |= kEGTrig;
+      break;
+     }
+    }
+    for (auto iT : egTagTriggers) {
+     if (event.triggerFired(iT)) {
+      gt->trigger |= kEGTagTrig;
       break;
      }
     }
@@ -1338,13 +1375,45 @@ void PandaLeptonicAnalyzer::Run() {
         bool isMedium = (mu->medium || mu-> mediumBtoF) && mu->combIso()/mu->pt() < 0.15;
         bool isTight  = mu->tight  && mu->combIso()/mu->pt() < 0.15;
         bool isDxyz   = MuonIP(mu->dxy,mu->dz);
+	bool isTrigger = false;
+
+        for (auto& trigObj : event.triggerObjects.filterObjects("hltL3crIsoL1sMu22L1f0L2f10QL3f24QL3trkIsoFiltered0p09")) { // HLT_IsoMu24
+         if (trigObj->pt() > 0 && mu->pt() > 0 && trigObj->dR(*mu) < 0.1) isTrigger = true;
+        }
+	if(isTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltL3fL1sMu22L1f0Tkf24QL3trkIsoFiltered0p09")) { // HLT_IsoTkMu24
+           if (trigObj->pt() > 0 && mu->pt() > 0 && trigObj->dR(*mu) < 0.1) isTrigger = true;
+          }
+	}
+	if(isTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltL3crIsoL1sMu20L1f0L2f10QL3f22QL3trkIsoFiltered0p09")) { // HLT_IsoMu22
+           if (trigObj->pt() > 0 && mu->pt() > 0 && trigObj->dR(*mu) < 0.1) isTrigger = true;
+          }
+	}
+	if(isTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltL3fL1sMu20L1f0Tkf22QL3trkIsoFiltered0p09")) { // HLT_IsoTkMu22
+           if (trigObj->pt() > 0 && mu->pt() > 0 && trigObj->dR(*mu) < 0.1) isTrigger = true;
+          }
+	}
+	if(isTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q")) { // HLT_Mu50
+           if (trigObj->pt() > 0 && mu->pt() > 0 && trigObj->dR(*mu) < 0.1) isTrigger = true;
+          }
+	}
+
+        isTrigger = isTrigger || mu->triggerMatch[panda::Muon::fIsoMu24] || mu->triggerMatch[panda::Muon::fIsoTkMu24] || mu->triggerMatch[panda::Muon::fIsoMu22er] || mu->triggerMatch[panda::Muon::fIsoTkMu22er] || mu->triggerMatch[panda::Muon::fMu50];
+
         if      (lep_counter==1) {
+          gt->looseLep1SCEta = mu->pfPt; // sure, it is a hack!
+          gt->looseLep1RegPt = mu->trkLayersWithMmt; // sure, it is a hack!
+          gt->looseLep1SmePt = mu->pt();
           gt->looseLep1PdgId = mu->charge*-13;
           if(isLoose)  gt->looseLep1SelBit |= kLoose;
           if(isFake)   gt->looseLep1SelBit |= kFake;
           if(isMedium) gt->looseLep1SelBit |= kMedium;
           if(isTight)  gt->looseLep1SelBit |= kTight;
           if(isDxyz)   gt->looseLep1SelBit |= kDxyz;
+          if(isTrigger)gt->looseLep1SelBit |= kTrigger;
 	  gt->sf_trk1    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose1  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_medium1 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
@@ -1355,12 +1424,16 @@ void PandaLeptonicAnalyzer::Run() {
 		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
         }
 	else if (lep_counter==2) {
+          gt->looseLep2SCEta = mu->pfPt; // sure, it is a hack!
+          gt->looseLep2RegPt = mu->trkLayersWithMmt; // sure, it is a hack!
+          gt->looseLep2SmePt = mu->pt();
           gt->looseLep2PdgId = mu->charge*-13;
           if(isLoose)  gt->looseLep2SelBit |= kLoose;
           if(isFake)   gt->looseLep2SelBit |= kFake;
           if(isMedium) gt->looseLep2SelBit |= kMedium;
           if(isTight)  gt->looseLep2SelBit |= kTight;
           if(isDxyz)   gt->looseLep2SelBit |= kDxyz;
+          if(isTrigger)gt->looseLep2SelBit |= kTrigger;
 	  gt->sf_trk2    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose2  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_medium2 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
@@ -1371,12 +1444,16 @@ void PandaLeptonicAnalyzer::Run() {
 		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
         }
 	else if (lep_counter==3) {
+          gt->looseLep3SCEta = mu->pfPt; // sure, it is a hack!
+          gt->looseLep3RegPt = mu->trkLayersWithMmt; // sure, it is a hack!
+          gt->looseLep3SmePt = mu->pt();
           gt->looseLep3PdgId = mu->charge*-13;
           if(isLoose)  gt->looseLep3SelBit |= kLoose;
           if(isFake)   gt->looseLep3SelBit |= kFake;
           if(isMedium) gt->looseLep3SelBit |= kMedium;
           if(isTight)  gt->looseLep3SelBit |= kTight;
           if(isDxyz)   gt->looseLep3SelBit |= kDxyz;
+          if(isTrigger)gt->looseLep3SelBit |= kTrigger;
 	  gt->sf_trk3    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose3  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_medium3 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
@@ -1387,12 +1464,16 @@ void PandaLeptonicAnalyzer::Run() {
 		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
         }
 	else if (lep_counter==4) {
+          gt->looseLep4SCEta = mu->pfPt; // sure, it is a hack!
+          gt->looseLep4RegPt = mu->trkLayersWithMmt; // sure, it is a hack!
+          gt->looseLep4SmePt = mu->pt();
           gt->looseLep4PdgId = mu->charge*-13;
           if(isLoose)  gt->looseLep4SelBit |= kLoose;
           if(isFake)   gt->looseLep4SelBit |= kFake;
           if(isMedium) gt->looseLep4SelBit |= kMedium;
           if(isTight)  gt->looseLep4SelBit |= kTight;
           if(isDxyz)   gt->looseLep4SelBit |= kDxyz;
+          if(isTrigger)gt->looseLep4SelBit |= kTrigger;
 	  gt->sf_trk4    = GetCorr(cTrackingMuon,mu->eta());
 	  gt->sf_loose4  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
 	  gt->sf_medium4 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
@@ -1409,8 +1490,44 @@ void PandaLeptonicAnalyzer::Run() {
         bool isMedium = ele->medium;
         bool isTight  = ele->tight;
         bool isDxyz   = ElectronIP(ele->eta(),ele->dxy,ele->dz);
+	bool isTrigger = false;
+
+        for (auto& trigObj : event.triggerObjects.filterObjects("hltEle105CaloIdVTGsfTrkIdTGsfDphiFilter")) { // HLT_Ele105_CaloIdVT_GsfTrkIdT
+         if (trigObj->pt() > 0 && ele->pt() > 0 && trigObj->dR(*ele) < 0.1) isTrigger = true;
+        }
+	if(isTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltEle115CaloIdVTGsfTrkIdTGsfDphiFilter")) { // HLT_Ele115_CaloIdVT_GsfTrkIdT
+           if (trigObj->pt() > 0 && ele->pt() > 0 && trigObj->dR(*ele) < 0.1) isTrigger = true;
+          }
+	}
+	if(isTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltEle25erWPTightGsfTrackIsoFilter")) { // HLT_Ele25_eta2p1_WPTight_Gsf
+           if (trigObj->pt() > 0 && ele->pt() > 0 && trigObj->dR(*ele) < 0.1) isTrigger = true;
+          }
+	}
+	if(isTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltEle27WPTightGsfTrackIsoFilter")) { // HLT_Ele27_WPTight_Gsf
+           if (trigObj->pt() > 0 && ele->pt() > 0 && trigObj->dR(*ele) < 0.1) isTrigger = true;
+          }
+	}
+	if(isTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltEle27erWPTightGsfTrackIsoFilter")) { // HLT_Ele27_eta2p1_WPTight_Gsf
+           if (trigObj->pt() > 0 && ele->pt() > 0 && trigObj->dR(*ele) < 0.1) isTrigger = true;
+          }
+	}
+	if(isTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltEle27erWPLooseGsfTrackIsoFilter")) { // HLT_Ele27_eta2p1_WPLoose_Gsf
+           if (trigObj->pt() > 0 && ele->pt() > 0 && trigObj->dR(*ele) < 0.1) isTrigger = true;
+          }
+	}
+
+        isTrigger = isTrigger || ele->triggerMatch[panda::Electron::fEl25Tight] || ele->triggerMatch[panda::Electron::fEl27Tight] || ele->triggerMatch[panda::Electron::fEl27Loose];
+
 	if(TMath::Abs(ele->eta()-ele->superCluster->eta) > 0.2) printf("Potential issue ele/sc: dist: %f - %f/%f/%f vs. %f/%f/%f\n",TMath::Abs(ele->eta()-ele->superCluster->eta),ele->pt(),ele->eta(),ele->phi(),ele->superCluster->rawPt,ele->superCluster->eta,ele->superCluster->phi);
         if      (lep_counter==1) {
+          gt->looseLep1SCEta = ele->superCluster->eta;
+          gt->looseLep1RegPt = ele->regPt;
+          gt->looseLep1SmePt = ele->smearedPt;
           gt->looseLep1Pt *= EGMSCALE;
           gt->looseLep1PdgId = ele->charge*-11;
           if(isLoose)  gt->looseLep1SelBit |= kLoose;
@@ -1418,6 +1535,7 @@ void PandaLeptonicAnalyzer::Run() {
           if(isMedium) gt->looseLep1SelBit |= kMedium;
           if(isTight)  gt->looseLep1SelBit |= kTight;
           if(isDxyz)   gt->looseLep1SelBit |= kDxyz;
+          if(isTrigger)gt->looseLep1SelBit |= kTrigger;
 	  gt->sf_trk1    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
 	  gt->sf_loose1  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium1 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
@@ -1425,6 +1543,9 @@ void PandaLeptonicAnalyzer::Run() {
 	  gt->sf_unc1    = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
 	else if (lep_counter==2) {
+          gt->looseLep2SCEta = ele->superCluster->eta;
+          gt->looseLep2RegPt = ele->regPt;
+          gt->looseLep2SmePt = ele->smearedPt;
           gt->looseLep2Pt *= EGMSCALE;
           gt->looseLep2PdgId = ele->charge*-11;
           if(isLoose)  gt->looseLep2SelBit |= kLoose;
@@ -1432,6 +1553,7 @@ void PandaLeptonicAnalyzer::Run() {
           if(isMedium) gt->looseLep2SelBit |= kMedium;
           if(isTight)  gt->looseLep2SelBit |= kTight;
           if(isDxyz)   gt->looseLep2SelBit |= kDxyz;
+          if(isTrigger)gt->looseLep2SelBit |= kTrigger;
 	  gt->sf_trk2    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
 	  gt->sf_loose2  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium2 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
@@ -1439,6 +1561,9 @@ void PandaLeptonicAnalyzer::Run() {
 	  gt->sf_unc2    = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
 	else if (lep_counter==3) {
+          gt->looseLep3SCEta = ele->superCluster->eta;
+          gt->looseLep3RegPt = ele->regPt;
+          gt->looseLep3SmePt = ele->smearedPt;
           gt->looseLep3Pt *= EGMSCALE;
           gt->looseLep3PdgId = ele->charge*-11;
           if(isLoose)  gt->looseLep3SelBit |= kLoose;
@@ -1446,6 +1571,7 @@ void PandaLeptonicAnalyzer::Run() {
           if(isMedium) gt->looseLep3SelBit |= kMedium;
           if(isTight)  gt->looseLep3SelBit |= kTight;
           if(isDxyz)   gt->looseLep3SelBit |= kDxyz;
+          if(isTrigger)gt->looseLep3SelBit |= kTrigger;
 	  gt->sf_trk3    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
 	  gt->sf_loose3  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium3 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
@@ -1453,6 +1579,9 @@ void PandaLeptonicAnalyzer::Run() {
 	  gt->sf_unc3    = GetError(cMediumElectronId,ele->eta(),ele->pt());
         }
 	else if (lep_counter==4) {
+          gt->looseLep4SCEta = ele->superCluster->eta;
+          gt->looseLep4RegPt = ele->regPt;
+          gt->looseLep4SmePt = ele->smearedPt;
           gt->looseLep4Pt *= EGMSCALE;
           gt->looseLep4PdgId = ele->charge*-11;
           if(isLoose)  gt->looseLep4SelBit |= kLoose;
@@ -1460,6 +1589,7 @@ void PandaLeptonicAnalyzer::Run() {
           if(isMedium) gt->looseLep4SelBit |= kMedium;
           if(isTight)  gt->looseLep4SelBit |= kTight;
           if(isDxyz)   gt->looseLep4SelBit |= kDxyz;
+          if(isTrigger)gt->looseLep4SelBit |= kTrigger;
 	  gt->sf_trk4    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
 	  gt->sf_loose4  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
 	  gt->sf_medium4 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
@@ -1976,7 +2106,7 @@ void PandaLeptonicAnalyzer::Run() {
 	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilRapEE_QCDPart[i]->Fill(ZGenRap,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
             }
 	  }
-	  if     (ZGenRap < 0.5) {
+	  if     (ZGenRap < 0.4) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap0MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap0EE->Fill(ZGenPt,event.weight);
 
@@ -1988,7 +2118,7 @@ void PandaLeptonicAnalyzer::Run() {
 	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap0EE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
             }
 	  }
-	  else if(ZGenRap < 1.0) {
+	  else if(ZGenRap < 0.8) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap1MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap1EE->Fill(ZGenPt,event.weight);
 
@@ -2000,7 +2130,7 @@ void PandaLeptonicAnalyzer::Run() {
 	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap1EE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
             }
 	  }
-	  else if(ZGenRap < 1.5) {
+	  else if(ZGenRap < 1.2) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap2MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap2EE->Fill(ZGenPt,event.weight);
 
@@ -2012,8 +2142,7 @@ void PandaLeptonicAnalyzer::Run() {
 	      else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap2EE_QCDPart[i]->Fill(ZGenPt,event.weight*TMath::Abs(1+gt->scale[i])/maxQCDscale);
             }
 	  }
-	  //else if(ZGenRap < 2.0) {
-	  else if(ZGenRap < 2.4) {
+	  else if(ZGenRap < 1.6) {
 	    if     (TMath::Abs(gt->genLep1PdgId) == 13 && TMath::Abs(gt->genLep2PdgId) == 13) hDDilPtRap3MM->Fill(ZGenPt,event.weight);
 	    else if(TMath::Abs(gt->genLep1PdgId) == 11 && TMath::Abs(gt->genLep2PdgId) == 11) hDDilPtRap3EE->Fill(ZGenPt,event.weight);
 
@@ -2053,7 +2182,7 @@ void PandaLeptonicAnalyzer::Run() {
 	double mll    = TMath::Min((double)dilep.M(),799.999);
 	double ptl1   = TMath::Min((double)gt->genLep1Pt,149.999);
 	double ptl2   = TMath::Min((double)gt->genLep2Pt,149.999);
-	double dphill = TMath::Abs(genlep1.DeltaPhi(genlep2))*180/TMath::Pi();
+	double dphill = TMath::Abs(genlep1.DeltaPhi(genlep2));
 	if(mll > 20.0) {
           hDWWMLL    ->Fill(mll,event.weight);
 	  hDWWMLL_PDF->Fill(mll,event.weight*gt->pdfUp);

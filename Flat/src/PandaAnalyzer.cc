@@ -111,10 +111,11 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   else if (analysis->fatjet) 
     readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
   
-  if (analysis->recluster || analysis->bjetRegression) {
+  if (analysis->recluster || analysis->bjetRegression)
     readlist.push_back("pfCandidates");
+
+  if (analysis->bjetRegression)
     readlist.push_back("secondaryVertices");
-  }
 
   if (isData) {
     readlist.push_back("triggers");

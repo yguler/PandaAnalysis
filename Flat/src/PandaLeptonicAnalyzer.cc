@@ -1914,14 +1914,14 @@ void PandaLeptonicAnalyzer::Run() {
         auto& part(event.genParticles.at(iG));
         int pdgid = part.pdgid;
         unsigned int abspdgid = abs(pdgid);
-        if ((abspdgid == 11 || abspdgid == 13) &&
+        if ((abspdgid == 11 || abspdgid == 13) && part.finalState &&
 	    (part.testFlag(GenParticle::kIsPrompt) || part.statusFlags == GenParticle::kIsPrompt ||
 	     part.testFlag(GenParticle::kIsTauDecayProduct) || part.testFlag(GenParticle::kIsPromptTauDecayProduct) || 
 	     part.testFlag(GenParticle::kIsDirectTauDecayProduct) || part.testFlag(GenParticle::kIsDirectPromptTauDecayProduct) ||
 	     (part.parent.isValid() && abs(part.parent->pdgid) == 15)))
           targetsLepton.push_back(iG);
 
-        if (abspdgid == 22)
+        if (abspdgid == 22 && part.finalState)
           targetsPhoton.push_back(iG);
 
         if (abspdgid == 23 || abspdgid == 24)
@@ -1947,18 +1947,18 @@ void PandaLeptonicAnalyzer::Run() {
           if(TMath::Abs(partl.eta()) >= 2.5) continue;
 	  if(partl.pt() <= 20) continue;
 
-          // check there is no further copy:
-          bool isLastCopy=true;
-          for (int kG : targetsLepton) {
-            if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &partl) {
-              isLastCopy=false;
-              break;
-            }
-          }
-          if (!isLastCopy)
-            continue;
+//           // check there is no further copy:
+//           bool isLastCopy=true;
+//           for (int kG : targetsLepton) {
+//             if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &partl) {
+//               isLastCopy=false;
+//               break;
+//             }
+//           }
+//           if (!isLastCopy)
+//             continue;
 
-	  if(DeltaR2(partj.eta(),partj.phi(),partl.eta(),partl.phi()) < 0.3*0.3){
+	  if(DeltaR2(partj.eta(),partj.phi(),partl.eta(),partl.phi()) < 0.09){
 	     isLepton = kTRUE;
           }
 	}
@@ -1975,34 +1975,34 @@ void PandaLeptonicAnalyzer::Run() {
         TLorentzVector dressedLepton;
         dressedLepton.SetPtEtaPhiM(part.pt(),part.eta(),part.phi(),part.m());
 
-        // check there is no further copy:
-        bool isLastCopy=true;
-        for (int kG : targetsLepton) {
-          if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &part) {
-            isLastCopy=false;
-            break;
-          }
-        }
-        if (!isLastCopy)
-          continue;
+//         // check there is no further copy:
+//         bool isLastCopy=true;
+//         for (int kG : targetsLepton) {
+//           if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &part) {
+//             isLastCopy=false;
+//             break;
+//           }
+//         }
+//         if (!isLastCopy)
+//           continue;
 	
 	the_rhoP4 = the_rhoP4 + dressedLepton;
 	
         for (int jG : targetsPhoton) {
           auto& partj(event.genParticles.at(jG));
 
-          // check there is no further copy:
-          bool isLastCopy=true;
-          for (int kG : targetsPhoton) {
-            if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &part) {
-              isLastCopy=false;
-              break;
-            }
-          }
-          if (!isLastCopy)
-            continue;
+//           // check there is no further copy:
+//           bool isLastCopy=true;
+//           for (int kG : targetsPhoton) {
+//             if (event.genParticles.at(kG).parent.isValid() && event.genParticles.at(kG).parent.get() == &part) {
+//               isLastCopy=false;
+//               break;
+//             }
+//           }
+//           if (!isLastCopy)
+//             continue;
 
-	  if(abs(partj.pdgid) == 22 && DeltaR2(part.eta(),part.phi(),partj.eta(),partj.phi()) < 0.1*0.1) {
+	  if(abs(partj.pdgid) == 22 && DeltaR2(part.eta(),part.phi(),partj.eta(),partj.phi()) < 0.01) {
             TLorentzVector photonV;
             photonV.SetPtEtaPhiM(partj.pt(),partj.eta(),partj.phi(),partj.m());
 	    dressedLepton += photonV;
@@ -2030,7 +2030,7 @@ void PandaLeptonicAnalyzer::Run() {
           gt->genLep2PdgId = thePdgId; 
         }
  
-        if(v1.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v1.Eta(),v1.Phi()) < 0.1*0.1) {
+        if(v1.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v1.Eta(),v1.Phi()) < 0.01) {
 	  if     (part.testFlag(GenParticle::kIsTauDecayProduct) || part.testFlag(GenParticle::kIsPromptTauDecayProduct) || 
 	          part.testFlag(GenParticle::kIsDirectTauDecayProduct) || part.testFlag(GenParticle::kIsDirectPromptTauDecayProduct) ||
 		  (part.parent.isValid() && abs(part.parent->pdgid) == 15)) gt->looseGenLep1PdgId = 2;
@@ -2038,7 +2038,7 @@ void PandaLeptonicAnalyzer::Run() {
 	  if(part.pdgid != gt->looseLep1PdgId) gt->looseGenLep1PdgId = -1 * gt->looseGenLep1PdgId;
 	}
 
-        if(v2.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v2.Eta(),v2.Phi()) < 0.1*0.1) {
+        if(v2.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v2.Eta(),v2.Phi()) < 0.01) {
 	  if     (part.testFlag(GenParticle::kIsTauDecayProduct) || part.testFlag(GenParticle::kIsPromptTauDecayProduct) || 
 	          part.testFlag(GenParticle::kIsDirectTauDecayProduct) || part.testFlag(GenParticle::kIsDirectPromptTauDecayProduct) ||
 		  (part.parent.isValid() && abs(part.parent->pdgid) == 15)) gt->looseGenLep2PdgId = 2;
@@ -2046,7 +2046,7 @@ void PandaLeptonicAnalyzer::Run() {
 	  if(part.pdgid != gt->looseLep2PdgId) gt->looseGenLep2PdgId = -1 * gt->looseGenLep2PdgId;
 	}
 
-        if(v3.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v3.Eta(),v3.Phi()) < 0.1*0.1) {
+        if(v3.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v3.Eta(),v3.Phi()) < 0.01) {
 	  if     (part.testFlag(GenParticle::kIsTauDecayProduct) || part.testFlag(GenParticle::kIsPromptTauDecayProduct) || 
 	          part.testFlag(GenParticle::kIsDirectTauDecayProduct) || part.testFlag(GenParticle::kIsDirectPromptTauDecayProduct) ||
 		  (part.parent.isValid() && abs(part.parent->pdgid) == 15)) gt->looseGenLep3PdgId = 2;
@@ -2054,7 +2054,7 @@ void PandaLeptonicAnalyzer::Run() {
 	  if(part.pdgid != gt->looseLep3PdgId) gt->looseGenLep3PdgId = -1 * gt->looseGenLep3PdgId;
 	}
 
-        if(v4.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v4.Eta(),v4.Phi()) < 0.1*0.1) {
+        if(v4.Pt() > 0 && DeltaR2(part.eta(),part.phi(),v4.Eta(),v4.Phi()) < 0.01) {
 	  if     (part.testFlag(GenParticle::kIsTauDecayProduct) || part.testFlag(GenParticle::kIsPromptTauDecayProduct) || 
 	          part.testFlag(GenParticle::kIsDirectTauDecayProduct) || part.testFlag(GenParticle::kIsDirectPromptTauDecayProduct) ||
 		  (part.parent.isValid() && abs(part.parent->pdgid) == 15)) gt->looseGenLep4PdgId = 2;

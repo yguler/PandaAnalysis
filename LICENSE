@@ -19,3 +19,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+The author feels the need to amend the license: a user of the Software agrees
+not to complain to the author in the event that the Software does not reproduce
+what is in the user's head. The Software was written to serve the analysis 
+interests of the author and does so very well; any other usage is at-your-own-risk.
+Do not open issues and definitely do not assign them to the author. Open pull 
+requests, and they will be merged if they do not conflict with the author's physics 
+goals.

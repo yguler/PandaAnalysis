@@ -209,9 +209,11 @@ void PandaAnalyzer::JetBRegressionInfo(panda::Jet& jet)
       unsigned pdgid = abs(pf->pdgId());
       if (pdgid == 11 || pdgid == 13) {
         gt->jetNLep[N]++;
-        gt->jetLeadingLepPt[N] = max(pt, gt->jetLeadingLepPt[N]);
-        gt->jetLeadingLepPtRel[N] = pf->p4().Perp(jet.p4().Vect());
-        gt->jetLeadingLepDeltaR[N] = sqrt(DeltaR2(pf->eta(), pf->phi(), jet.eta(), jet.phi()));
+        if (pt > gt->jetLeadingLepPt[N]) {
+          gt->jetLeadingLepPt[N] = pt;
+          gt->jetLeadingLepPtRel[N] = pf->p4().Perp(jet.p4().Vect());
+          gt->jetLeadingLepDeltaR[N] = sqrt(DeltaR2(pf->eta(), pf->phi(), jet.eta(), jet.phi()));
+        }
       }
     }
   }

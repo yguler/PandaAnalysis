@@ -181,6 +181,8 @@ void PandaAnalyzer::JetHbbBasics(panda::Jet& jet)
   float cmva = (fabs(jet.eta())<2.5) ? jet.cmva : -1;
   unsigned N = cleanedJets.size()-1;
   gt->jetPt[N]=jet.pt();
+  gt->jetPtUp[N]=jet.ptCorrUp;
+  gt->jetPtDown[N]=jet.ptCorrDown;
   gt->jetEta[N]=jet.eta();
   gt->jetPhi[N]=jet.phi();
   gt->jetE[N]=jet.e();
@@ -401,36 +403,49 @@ void PandaAnalyzer::JetHbbReco()
     for (unsigned i = 0; i != cleanedJets.size(); ++i) 
       order[cleanedJets[i]] = i;
 
+    // the 2 best b-tagged central jets
     panda::Jet *jet_1 = btagSortedJets.at(0);
-    TLorentzVector hbbdaughter1;
-    hbbdaughter1.SetPtEtaPhiM(jet_1->pt(),jet_1->eta(),jet_1->phi(),jet_1->m());
-
     panda::Jet *jet_2 = btagSortedJets.at(1);
-    TLorentzVector hbbdaughter2;
-    hbbdaughter2.SetPtEtaPhiM(jet_2->pt(),jet_2->eta(),jet_2->phi(),jet_2->m());
-
-    TLorentzVector hbbsystem = hbbdaughter1 + hbbdaughter2;
-
-    tmp_hbbpt = hbbsystem.Pt();
-    tmp_hbbeta = hbbsystem.Eta();
-    tmp_hbbphi = hbbsystem.Phi();
-    tmp_hbbm = hbbsystem.M();
-    tmp_hbbjtidx1 = order[jet_1];
-    tmp_hbbjtidx2 = order[jet_2];
+    gt->hbbjtidx[0] = order[jet_1];
+    gt->hbbjtidx[1] = order[jet_2];
+    
+    // Form the Higgs dijet system with the two daughters
+    TLorentzVector hbbdaughter1, hbbdaughter2, hbbsystem;
+    
+    // Central value for the jet energy
+    hbbdaughter1.SetPtEtaPhiE(jet_1->pt(),jet_1->eta(),jet_1->phi(),jet_1->e());
+    hbbdaughter2.SetPtEtaPhiE(jet_2->pt(),jet_2->eta(),jet_2->phi(),jet_2->e());
+    hbbsystem = hbbdaughter1 + hbbdaughter2;
+    gt->hbbpt = hbbsystem.Pt();
+    gt->hbbeta = hbbsystem.Eta();
+    gt->hbbphi = hbbsystem.Phi();
+    gt->hbbm = hbbsystem.M();
+    
+    // Daughter jet energies varied Up
+    hbbdaughter1.SetPtEtaPhiE(jet_1->ptCorrUp,jet_1->eta(),jet_1->phi(),jet_1->e()*jet_1->pt()/jet_1->ptCorrUp);
+    hbbdaughter2.SetPtEtaPhiE(jet_2->ptCorrUp,jet_2->eta(),jet_2->phi(),jet_2->e()*jet_2->pt()/jet_2->ptCorrUp);
+    hbbsystem = hbbdaughter1 + hbbdaughter2;
+    gt->hbbpt_jesUp = hbbsystem.Pt();
+    gt->hbbeta_jesUp = hbbsystem.Eta();
+    gt->hbbphi_jesUp = hbbsystem.Phi();
+    gt->hbbm_jesUp = hbbsystem.M();
+    
+    // Daughter jet energies varied Up
+    hbbdaughter1.SetPtEtaPhiE(jet_1->ptCorrDown,jet_1->eta(),jet_1->phi(),jet_1->e()*jet_1->pt()/jet_1->ptCorrDown);
+    hbbdaughter2.SetPtEtaPhiE(jet_2->ptCorrDown,jet_2->eta(),jet_2->phi(),jet_2->e()*jet_2->pt()/jet_2->ptCorrDown);
+    hbbsystem = hbbdaughter1 + hbbdaughter2;
+    gt->hbbpt_jesDown = hbbsystem.Pt();
+    gt->hbbeta_jesDown = hbbsystem.Eta();
+    gt->hbbphi_jesDown = hbbsystem.Phi();
+    gt->hbbm_jesDown = hbbsystem.M();
     
   }
-  gt->hbbpt = tmp_hbbpt;
-  gt->hbbeta = tmp_hbbeta;
-  gt->hbbphi = tmp_hbbphi;
-  gt->hbbm = tmp_hbbm;
-  gt->hbbjtidx[0] = tmp_hbbjtidx1;
-  gt->hbbjtidx[1] = tmp_hbbjtidx2;
-
   
-  if (analysis->bjetRegression && gt->hbbm>0.) {
-    TLorentzVector hbbdaughters_corr[2];
+   if (analysis->bjetRegression && gt->hbbm>0.) {
+    TLorentzVector hbbdaughters_corr[2], hbbdaughters_corr_jesUp[2], hbbdaughters_corr_jesDown[2];
     
     for (unsigned i = 0; i<2; i++) {
+      // Central value for the jet energies to perform the b-jet regression
       bjetreg_vars[0] = gt->jetPt[gt->hbbjtidx[i]];
       bjetreg_vars[1] = gt->nJot;
       bjetreg_vars[2] = gt->jetEta[gt->hbbjtidx[i]];
@@ -442,13 +457,47 @@ void PandaAnalyzer::JetHbbReco()
       bjetreg_vars[8] = gt->jetEMFrac[gt->hbbjtidx[i]];
       bjetreg_vars[9] = gt->jetHadFrac[gt->hbbjtidx[i]];
       
+      // B-jet regression with jet energy varied up
+      // Don't propagate the JES uncertainty to the hardest track/lepton or the EM fraction for now
+      bjetreg_vars[0] = gt->jetPtUp[gt->hbbjtidx[i]];
+      bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtUp[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
       gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
-      hbbdaughters_corr[i].SetPtEtaPhiE(gt->jetRegFac[i]*gt->jetPt[gt->hbbjtidx[i]],gt->jetEta[gt->hbbjtidx[i]],gt->jetPhi[gt->hbbjtidx[i]],gt->jetRegFac[i]*gt->jetE[gt->hbbjtidx[i]]);
-    }
+      hbbdaughters_corr_jesUp[i].SetPtEtaPhiE(
+        gt->jetRegFac[i]*gt->jetPtUp[gt->hbbjtidx[i]],
+        gt->jetEta[gt->hbbjtidx[i]],
+        gt->jetPhi[gt->hbbjtidx[i]],
+        gt->jetRegFac[i]*gt->jetE[gt->hbbjtidx[i]] * gt->jetPtUp[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]]
+      );
+      // B-jet regression with jet energy varied down
+      bjetreg_vars[0] = gt->jetPtDown[gt->hbbjtidx[i]];
+      bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtDown[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
+      gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+      hbbdaughters_corr_jesDown[i].SetPtEtaPhiE(
+        gt->jetRegFac[i]*gt->jetPtDown[gt->hbbjtidx[i]],
+        gt->jetEta[gt->hbbjtidx[i]],
+        gt->jetPhi[gt->hbbjtidx[i]],
+        gt->jetRegFac[i]*gt->jetE[gt->hbbjtidx[i]] * gt->jetPtDown[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]]
+      );
+      // B-jet regression with central value for jet energy
+      // Call this last so that the central value for jetRegFac[i] is stored in gt
+      gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+      hbbdaughters_corr[i].SetPtEtaPhiE(
+        gt->jetRegFac[i]*gt->jetPt[gt->hbbjtidx[i]],
+        gt->jetEta[gt->hbbjtidx[i]],
+        gt->jetPhi[gt->hbbjtidx[i]],
+        gt->jetRegFac[i]*gt->jetE[gt->hbbjtidx[i]]
+      );
 
+    }
     TLorentzVector hbbsystem_corr = hbbdaughters_corr[0] + hbbdaughters_corr[1];
     gt->hbbm_reg = hbbsystem_corr.M();
     gt->hbbpt_reg = hbbsystem_corr.Pt();
+    TLorentzVector hbbsystem_corr_jesUp = hbbdaughters_corr_jesUp[0] + hbbdaughters_corr_jesUp[1];
+    gt->hbbm_reg_jesUp = hbbsystem_corr_jesUp.M();
+    gt->hbbpt_reg_jesUp = hbbsystem_corr_jesUp.Pt();
+    TLorentzVector hbbsystem_corr_jesDown = hbbdaughters_corr_jesDown[0] + hbbdaughters_corr_jesDown[1];
+    gt->hbbm_reg_jesDown = hbbsystem_corr_jesDown.M();
+    gt->hbbpt_reg_jesDown = hbbsystem_corr_jesDown.Pt();
   }
   
   tr->TriggerEvent("monohiggs");

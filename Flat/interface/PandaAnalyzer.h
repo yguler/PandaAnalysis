@@ -238,6 +238,7 @@ private:
           }
         }
       }
+      tr->TriggerEvent("match gen jets");
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -338,11 +339,15 @@ private:
     panda::Jet *jot1 = 0, *jot2 = 0;
     panda::Jet *jotUp1 = 0, *jotUp2 = 0;
     panda::Jet *jotDown1 = 0, *jotDown2 = 0;
+    panda::Jet *jetUp1 = 0, *jetUp2 = 0;
+    panda::Jet *jetDown1 = 0, *jetDown2 = 0;
     std::vector<panda::GenJet> genJetsNu;
     float genBosonPtMin, genBosonPtMax;
     int looseLep1PdgId, looseLep2PdgId;
     std::vector<TString> wIDs;
     float *bjetreg_vars = 0;
+
+    float jetPtThreshold=30;
     
 };
 

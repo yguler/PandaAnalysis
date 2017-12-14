@@ -154,9 +154,9 @@ class GeneralTree : public genericTree {
           }
           return s;
         }
-        TString makeCsvWeightString(csvShift theShift, bool isCMVA=false) { 
+        TString makeCsvWeightString(csvShift shift, bool isCMVA=false) { 
           TString s = isCMVA? "sf_cmvaWeight_" : "sf_csvWeight_";
-          switch (theShift) {
+          switch (shift) {
             case csvCent         :  s += "Cent"         ; break;
             case csvLFup         :  s += "LFup"         ; break;
             case csvLFdown       :  s += "LFdown"       ; break;
@@ -501,6 +501,14 @@ class GeneralTree : public genericTree {
     float jet2Eta = -1;
     float jet2CSV = -1;
     float jet2CMVA = -1;
+    float jet2EtaUp = -1;
+    float jet2EtaDown = -1;
+    float jet1EtaUp = -1;
+    float jet1EtaDown = -1;
+    float jet1PtUp = -1;
+    float jet1PtDown = -1;
+    float jet2PtUp = -1;
+    float jet2PtDown = -1;
     float isojet1Pt = -1;
     float isojet1CSV = -1;
     int isojet1Flav = -1;

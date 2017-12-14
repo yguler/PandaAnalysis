@@ -422,8 +422,8 @@ void PandaAnalyzer::JetHbbReco()
     gt->hbbm = hbbsystem.M();
     
     // Daughter jet energies varied Up
-    hbbdaughter1.SetPtEtaPhiE(jet_1->ptCorrUp,jet_1->eta(),jet_1->phi(),jet_1->e()*jet_1->pt()/jet_1->ptCorrUp);
-    hbbdaughter2.SetPtEtaPhiE(jet_2->ptCorrUp,jet_2->eta(),jet_2->phi(),jet_2->e()*jet_2->pt()/jet_2->ptCorrUp);
+    hbbdaughter1.SetPtEtaPhiE(jet_1->ptCorrUp,jet_1->eta(),jet_1->phi(),jet_1->e()*jet_1->ptCorrUp/jet_1->pt());
+    hbbdaughter2.SetPtEtaPhiE(jet_2->ptCorrUp,jet_2->eta(),jet_2->phi(),jet_2->e()*jet_2->ptCorrUp/jet_2->pt());
     hbbsystem = hbbdaughter1 + hbbdaughter2;
     gt->hbbpt_jesUp = hbbsystem.Pt();
     gt->hbbeta_jesUp = hbbsystem.Eta();
@@ -431,8 +431,8 @@ void PandaAnalyzer::JetHbbReco()
     gt->hbbm_jesUp = hbbsystem.M();
     
     // Daughter jet energies varied Up
-    hbbdaughter1.SetPtEtaPhiE(jet_1->ptCorrDown,jet_1->eta(),jet_1->phi(),jet_1->e()*jet_1->pt()/jet_1->ptCorrDown);
-    hbbdaughter2.SetPtEtaPhiE(jet_2->ptCorrDown,jet_2->eta(),jet_2->phi(),jet_2->e()*jet_2->pt()/jet_2->ptCorrDown);
+    hbbdaughter1.SetPtEtaPhiE(jet_1->ptCorrDown,jet_1->eta(),jet_1->phi(),jet_1->e()*jet_1->ptCorrDown/jet_1->pt());
+    hbbdaughter2.SetPtEtaPhiE(jet_2->ptCorrDown,jet_2->eta(),jet_2->phi(),jet_2->e()*jet_2->ptCorrDown/jet_2->pt());
     hbbsystem = hbbdaughter1 + hbbdaughter2;
     gt->hbbpt_jesDown = hbbsystem.Pt();
     gt->hbbeta_jesDown = hbbsystem.Eta();

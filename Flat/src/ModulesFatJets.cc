@@ -67,7 +67,7 @@ void PandaAnalyzer::FatjetBasics()
       gt->fj1RawPt = rawpt;
 
       // do a bit of jet energy scaling
-      if (analysis->varyJES) {
+      if (analysis->rerunJES) {
         double scaleUnc = (fj.ptCorrUp - gt->fj1Pt) / gt->fj1Pt; 
         gt->fj1PtScaleUp   = gt->fj1Pt  * (1 + 2*scaleUnc);
         gt->fj1PtScaleDown  = gt->fj1Pt  * (1 - 2*scaleUnc);

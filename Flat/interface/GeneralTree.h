@@ -602,6 +602,9 @@ class GeneralTree : public genericTree {
     float hbbm_jesDown = -1;
     float hbbm_reg_jesDown = -1;
     float hbbpt_reg_jesDown = -1;
+    float topMassLep1Met = -1;
+    float topMassLep1Met_jesUp = -1;
+    float topMassLep1Met_jesDown = -1;
     float scaleUp = -1;
     float scaleDown = -1;
     float pdfUp = -1;

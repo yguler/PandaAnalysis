@@ -492,6 +492,9 @@ void GeneralTree::Reset() {
     hbbm_jesDown = -1;
     hbbm_reg_jesDown = -1;
     hbbpt_reg_jesDown = -1;
+    topMassLep1Met = -1;
+    topMassLep1Met_jesUp = -1;
+    topMassLep1Met_jesDown = -1;
     scaleUp = 1;
     scaleDown = 1;
     pdfUp = 1;
@@ -569,6 +572,9 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("hbbm_reg_jesDown",&hbbm_reg_jesDown,"hbbm_reg_jesDown/F");
     Book("hbbpt_reg_jesDown",&hbbpt_reg_jesDown,"hbbpt_reg_jesDown/F");
     Book("hbbjtidx",hbbjtidx,"hbbjtidx[2]/I");
+    Book("topMassLep1Met",&topMassLep1Met,"topMassLep1Met/F");
+    Book("topMassLep1Met_jesUp",&topMassLep1Met_jesUp,"topMassLep1Met_jesUp/F");
+    Book("topMassLep1Met_jesDown",&topMassLep1Met_jesDown,"topMassLep1Met_jesDown/F");
     Book("jetRegFac",jetRegFac,"jetRegFac[2]/F");
     Book("jet1EtaUp",&jet1EtaUp,"jet1EtaUp/F");
     Book("jet1EtaDown",&jet1EtaDown,"jet1EtaDown/F");

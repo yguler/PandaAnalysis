@@ -3,7 +3,7 @@
 #include "TMath.h"
 #include <algorithm>
 #include <vector>
-
+#include "PandaAnalysis/Utilities/src/NeutrinoSolver.cc"
 #define EGMSCALE 1
 
 using namespace panda;
@@ -410,11 +410,13 @@ void PandaAnalyzer::JetHbbReco()
     gt->hbbjtidx[1] = order[jet_2];
     
     // Form the Higgs dijet system with the two daughters
-    TLorentzVector hbbdaughter1, hbbdaughter2, hbbsystem;
+    TLorentzVector hbbdaughter1, hbbdaughter2, hbbsystem,
+                   hbbdaughter1_jesUp, hbbdaughter2_jesUp, hbbsystem_jesUp,
+                   hbbdaughter1_jesDown, hbbdaughter2_jesDown, hbbsystem_jesDown;
     
     // Central value for the jet energy
-    hbbdaughter1.SetPtEtaPhiE(jet_1->pt(),jet_1->eta(),jet_1->phi(),jet_1->e());
-    hbbdaughter2.SetPtEtaPhiE(jet_2->pt(),jet_2->eta(),jet_2->phi(),jet_2->e());
+    hbbdaughter1 = jet_1->p4();
+    hbbdaughter2 = jet_2->p4();
     hbbsystem = hbbdaughter1 + hbbdaughter2;
     gt->hbbpt = hbbsystem.Pt();
     gt->hbbeta = hbbsystem.Eta();
@@ -422,82 +424,135 @@ void PandaAnalyzer::JetHbbReco()
     gt->hbbm = hbbsystem.M();
     
     // Daughter jet energies varied Up
-    hbbdaughter1.SetPtEtaPhiE(jet_1->ptCorrUp,jet_1->eta(),jet_1->phi(),jet_1->e()*jet_1->ptCorrUp/jet_1->pt());
-    hbbdaughter2.SetPtEtaPhiE(jet_2->ptCorrUp,jet_2->eta(),jet_2->phi(),jet_2->e()*jet_2->ptCorrUp/jet_2->pt());
-    hbbsystem = hbbdaughter1 + hbbdaughter2;
-    gt->hbbpt_jesUp = hbbsystem.Pt();
-    gt->hbbeta_jesUp = hbbsystem.Eta();
-    gt->hbbphi_jesUp = hbbsystem.Phi();
-    gt->hbbm_jesUp = hbbsystem.M();
+    hbbdaughter1_jesUp.SetPtEtaPhiM(jet_1->ptCorrUp,jet_1->eta(),jet_1->phi(),jet_1->m());
+    hbbdaughter2_jesUp.SetPtEtaPhiM(jet_2->ptCorrUp,jet_2->eta(),jet_2->phi(),jet_2->m());
+    hbbsystem_jesUp = hbbdaughter1_jesUp + hbbdaughter2_jesUp;
+    gt->hbbpt_jesUp = hbbsystem_jesUp.Pt();
+    gt->hbbeta_jesUp = hbbsystem_jesUp.Eta();
+    gt->hbbphi_jesUp = hbbsystem_jesUp.Phi();
+    gt->hbbm_jesUp = hbbsystem_jesUp.M();
     
-    // Daughter jet energies varied Up
-    hbbdaughter1.SetPtEtaPhiE(jet_1->ptCorrDown,jet_1->eta(),jet_1->phi(),jet_1->e()*jet_1->ptCorrDown/jet_1->pt());
-    hbbdaughter2.SetPtEtaPhiE(jet_2->ptCorrDown,jet_2->eta(),jet_2->phi(),jet_2->e()*jet_2->ptCorrDown/jet_2->pt());
-    hbbsystem = hbbdaughter1 + hbbdaughter2;
-    gt->hbbpt_jesDown = hbbsystem.Pt();
-    gt->hbbeta_jesDown = hbbsystem.Eta();
-    gt->hbbphi_jesDown = hbbsystem.Phi();
-    gt->hbbm_jesDown = hbbsystem.M();
+    // Daughter jet energies varied Down
+    hbbdaughter1_jesDown.SetPtEtaPhiM(jet_1->ptCorrDown,jet_1->eta(),jet_1->phi(),jet_1->m());
+    hbbdaughter2_jesDown.SetPtEtaPhiM(jet_2->ptCorrDown,jet_2->eta(),jet_2->phi(),jet_2->m());
+    hbbsystem = hbbdaughter1_jesDown + hbbdaughter2_jesDown;
+    gt->hbbpt_jesDown = hbbsystem_jesDown.Pt();
+    gt->hbbeta_jesDown = hbbsystem_jesDown.Eta();
+    gt->hbbphi_jesDown = hbbsystem_jesDown.Phi();
+    gt->hbbm_jesDown = hbbsystem_jesDown.M();
     
-  }
-  
-   if (analysis->bjetRegression && gt->hbbm>0.) {
     TLorentzVector hbbdaughters_corr[2], hbbdaughters_corr_jesUp[2], hbbdaughters_corr_jesDown[2];
-    
-    for (unsigned i = 0; i<2; i++) {
-      // Central value for the jet energies to perform the b-jet regression
-      bjetreg_vars[0] = gt->jetPt[gt->hbbjtidx[i]];
-      bjetreg_vars[1] = gt->nJot;
-      bjetreg_vars[2] = gt->jetEta[gt->hbbjtidx[i]];
-      bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]];
-      bjetreg_vars[4] = gt->npv;
-      bjetreg_vars[5] = gt->jetLeadingTrkPt[gt->hbbjtidx[i]];
-      bjetreg_vars[6] = gt->jetLeadingLepPt[gt->hbbjtidx[i]];
-      bjetreg_vars[7] = gt->jetNLep[gt->hbbjtidx[i]];
-      bjetreg_vars[8] = gt->jetEMFrac[gt->hbbjtidx[i]];
-      bjetreg_vars[9] = gt->jetHadFrac[gt->hbbjtidx[i]];
+    if (analysis->bjetRegression && gt->hbbm>0.) {
       
-      // B-jet regression with jet energy varied up
-      // Don't propagate the JES uncertainty to the hardest track/lepton or the EM fraction for now
-      bjetreg_vars[0] = gt->jetPtUp[gt->hbbjtidx[i]];
-      bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtUp[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
-      gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
-      hbbdaughters_corr_jesUp[i].SetPtEtaPhiE(
-        gt->jetRegFac[i]*gt->jetPtUp[gt->hbbjtidx[i]],
-        gt->jetEta[gt->hbbjtidx[i]],
-        gt->jetPhi[gt->hbbjtidx[i]],
-        gt->jetRegFac[i]*gt->jetE[gt->hbbjtidx[i]] * gt->jetPtUp[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]]
-      );
-      // B-jet regression with jet energy varied down
-      bjetreg_vars[0] = gt->jetPtDown[gt->hbbjtidx[i]];
-      bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtDown[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
-      gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
-      hbbdaughters_corr_jesDown[i].SetPtEtaPhiE(
-        gt->jetRegFac[i]*gt->jetPtDown[gt->hbbjtidx[i]],
-        gt->jetEta[gt->hbbjtidx[i]],
-        gt->jetPhi[gt->hbbjtidx[i]],
-        gt->jetRegFac[i]*gt->jetE[gt->hbbjtidx[i]] * gt->jetPtDown[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]]
-      );
-      // B-jet regression with central value for jet energy
-      // Call this last so that the central value for jetRegFac[i] is stored in gt
-      gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
-      hbbdaughters_corr[i].SetPtEtaPhiE(
-        gt->jetRegFac[i]*gt->jetPt[gt->hbbjtidx[i]],
-        gt->jetEta[gt->hbbjtidx[i]],
-        gt->jetPhi[gt->hbbjtidx[i]],
-        gt->jetRegFac[i]*gt->jetE[gt->hbbjtidx[i]]
-      );
+      for (unsigned i = 0; i<2; i++) {
+        // Central value for the jet energies to perform the b-jet regression
+        bjetreg_vars[0] = gt->jetPt[gt->hbbjtidx[i]];
+        bjetreg_vars[1] = gt->nJot;
+        bjetreg_vars[2] = gt->jetEta[gt->hbbjtidx[i]];
+        bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]];
+        bjetreg_vars[4] = gt->npv;
+        bjetreg_vars[5] = gt->jetLeadingTrkPt[gt->hbbjtidx[i]];
+        bjetreg_vars[6] = gt->jetLeadingLepPt[gt->hbbjtidx[i]];
+        bjetreg_vars[7] = gt->jetNLep[gt->hbbjtidx[i]];
+        bjetreg_vars[8] = gt->jetEMFrac[gt->hbbjtidx[i]];
+        bjetreg_vars[9] = gt->jetHadFrac[gt->hbbjtidx[i]];
+        
+        // B-jet regression with jet energy varied up
+        // Don't propagate the JES uncertainty to the hardest track/lepton or the EM fraction for now
+        bjetreg_vars[0] = gt->jetPtUp[gt->hbbjtidx[i]];
+        bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtUp[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
+        gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+        hbbdaughters_corr_jesUp[i].SetPtEtaPhiM(
+          gt->jetRegFac[i]*gt->jetPtUp[gt->hbbjtidx[i]],
+          gt->jetEta[gt->hbbjtidx[i]],
+          gt->jetPhi[gt->hbbjtidx[i]],
+          btagSortedJets.at(i)->m()
+        );
+        // B-jet regression with jet energy varied down
+        bjetreg_vars[0] = gt->jetPtDown[gt->hbbjtidx[i]];
+        bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtDown[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
+        gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+        hbbdaughters_corr_jesDown[i].SetPtEtaPhiM(
+          gt->jetRegFac[i]*gt->jetPtDown[gt->hbbjtidx[i]],
+          gt->jetEta[gt->hbbjtidx[i]],
+          gt->jetPhi[gt->hbbjtidx[i]],
+          btagSortedJets.at(i)->m()
+        );
+        // B-jet regression with central value for jet energy
+        // Call this last so that the central value for jetRegFac[i] is stored in gt
+        gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+        hbbdaughters_corr[i].SetPtEtaPhiM(
+          gt->jetRegFac[i]*gt->jetPt[gt->hbbjtidx[i]],
+          gt->jetEta[gt->hbbjtidx[i]],
+          gt->jetPhi[gt->hbbjtidx[i]],
+          btagSortedJets.at(i)->m()
+        );
 
+      }
+      TLorentzVector hbbsystem_corr = hbbdaughters_corr[0] + hbbdaughters_corr[1];
+      gt->hbbm_reg = hbbsystem_corr.M();
+      gt->hbbpt_reg = hbbsystem_corr.Pt();
+      TLorentzVector hbbsystem_corr_jesUp = hbbdaughters_corr_jesUp[0] + hbbdaughters_corr_jesUp[1];
+      gt->hbbm_reg_jesUp = hbbsystem_corr_jesUp.M();
+      gt->hbbpt_reg_jesUp = hbbsystem_corr_jesUp.Pt();
+      TLorentzVector hbbsystem_corr_jesDown = hbbdaughters_corr_jesDown[0] + hbbdaughters_corr_jesDown[1];
+      gt->hbbm_reg_jesDown = hbbsystem_corr_jesDown.M();
+      gt->hbbpt_reg_jesDown = hbbsystem_corr_jesDown.Pt();
     }
-    TLorentzVector hbbsystem_corr = hbbdaughters_corr[0] + hbbdaughters_corr[1];
-    gt->hbbm_reg = hbbsystem_corr.M();
-    gt->hbbpt_reg = hbbsystem_corr.Pt();
-    TLorentzVector hbbsystem_corr_jesUp = hbbdaughters_corr_jesUp[0] + hbbdaughters_corr_jesUp[1];
-    gt->hbbm_reg_jesUp = hbbsystem_corr_jesUp.M();
-    gt->hbbpt_reg_jesUp = hbbsystem_corr_jesUp.Pt();
-    TLorentzVector hbbsystem_corr_jesDown = hbbdaughters_corr_jesDown[0] + hbbdaughters_corr_jesDown[1];
-    gt->hbbm_reg_jesDown = hbbsystem_corr_jesDown.M();
-    gt->hbbpt_reg_jesDown = hbbsystem_corr_jesDown.Pt();
+    
+    // Top mass reconstruction
+    if (gt->hbbm>0. && gt->nLooseLep>0) {
+      TLorentzVector leptonP4, metP4, nuP4, *jet1P4, *jet2P4, WP4, topP4;
+      float dRJet1W, dRJet2W;
+      bool jet1IsCloser;
+      leptonP4=looseLeps[0]->p4();
+      
+      metP4.SetPtEtaPhiM(gt->pfmet, 0, gt->pfmetphi, 0);
+      nuP4 = getNu4Momentum( leptonP4, metP4 );
+      WP4 = leptonP4 + nuP4;
+      // If using b-jet regression, use the regressed jets for the top mass reconstruction
+      // Otherwise, use the un regressed jets
+      if (analysis->bjetRegression) {
+        jet1P4 = &hbbdaughters_corr[0]; jet2P4 = &hbbdaughters_corr[1];
+      } else {
+        jet1P4 = &hbbdaughter1; jet2P4 = &hbbdaughter2;
+      }
+      dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
+      topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
+      gt->topMassLep1Met = topP4.M();
+
+      if (analysis->varyJES) {
+        // Top mass with Jet energy scale Up
+        metP4.SetPtEtaPhiM(gt->pfmetUp, 0, gt->pfmetphi, 0);
+        nuP4 = getNu4Momentum( leptonP4, metP4 );
+        WP4 = leptonP4 + nuP4;
+        // If using b-jet regression, use the regressed jets for the top mass reconstruction
+        // Otherwise, use the un regressed jets
+        if (analysis->bjetRegression) {
+          jet1P4 = &hbbdaughters_corr_jesUp[0]; jet2P4 = &hbbdaughters_corr_jesUp[1];
+        } else {
+          jet1P4 = &hbbdaughter1_jesUp; jet2P4 = &hbbdaughter2_jesUp;
+        }
+        dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
+        topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
+        gt->topMassLep1Met_jesUp = topP4.M();
+        
+        // Top mass with Jet energy scale Down
+        metP4.SetPtEtaPhiM(gt->pfmetDown, 0, gt->pfmetphi, 0);
+        nuP4 = getNu4Momentum( leptonP4, metP4 );
+        WP4 = leptonP4 + nuP4;
+        // If using b-jet regression, use the regressed jets for the top mass reconstruction
+        // Otherwise, use the un regressed jets
+        if (analysis->bjetRegression) {
+          jet1P4 = &hbbdaughters_corr_jesDown[0]; jet2P4 = &hbbdaughters_corr_jesDown[1];
+        } else {
+          jet1P4 = &hbbdaughter1_jesDown; jet2P4 = &hbbdaughter2_jesDown;
+        }
+        dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
+        topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
+        gt->topMassLep1Met_jesDown = topP4.M();
+      }
+    }
   }
   
   tr->TriggerEvent("monohiggs");

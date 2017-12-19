@@ -264,6 +264,7 @@ private:
     fastjet::AreaDefinition *areaDef=0;
     fastjet::GhostedAreaSpec *activeArea=0;
     fastjet::JetDefinition *jetDefGen=0;
+    fastjet::JetDefinition *softTrackJetDefinition=0;
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -348,7 +349,8 @@ private:
     float *bjetreg_vars = 0;
 
     float jetPtThreshold=30;
-    
+    float minSoftTrackPt=0.3; // 300 MeV
+
 };
 
 

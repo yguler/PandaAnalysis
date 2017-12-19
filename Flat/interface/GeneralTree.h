@@ -607,6 +607,10 @@ class GeneralTree : public genericTree {
     float topMassLep1Met = -1;
     float topMassLep1Met_jesUp = -1;
     float topMassLep1Met_jesDown = -1;
+    float topWBosonCosThetaCS = -1;
+    float topWBosonPt = -1;
+    float topWBosonEta = -1;
+    float topWBosonPhi = -1;
     float sumEtSoft1 = -1;
     int nSoft2 = -1;
     int nSoft5 = -1;

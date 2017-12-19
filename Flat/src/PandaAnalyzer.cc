@@ -1034,7 +1034,8 @@ void PandaAnalyzer::Run()
 
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
-
+    if(!analysis->genOnly && analysis->monoh)
+      JetHbbSoftActivity();
     if (analysis->monoh && !analysis->genOnly)
       GetMETSignificance();
 

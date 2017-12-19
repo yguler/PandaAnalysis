@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include "PandaAnalysis/Utilities/src/NeutrinoSolver.cc"
+#include "PandaAnalysis/Utilities/interface/Helicity.h"
 #define EGMSCALE 1
 #define TWOPI 6.28318531
 
@@ -506,37 +507,17 @@ void PandaAnalyzer::JetHbbReco()
     if (gt->hbbm>0.) { 
       gt->hbbCosThetaJJ   = hbbsystem.CosTheta();
       // Collins-Soper frame calculation
-      //do transformation to Collins-Soper frame (1 rotation, 2 boosts)
-      TLorentzVector jet1CS,jet2CS,dijetCS;
       if (analysis->bjetRegression) {
-        if(hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) {
-          jet1CS=hbbdaughters_corr[0];
-          jet2CS=hbbdaughters_corr[1];
-        } else {
-          jet1CS=hbbdaughters_corr[1];
-          jet2CS=hbbdaughters_corr[0];
-        }
-        dijetCS=hbbsystem_corr;
+        if(hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) 
+          gt->hbbCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughters_corr[0],hbbdaughters_corr[1]);
+        else
+          gt->hbbCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughters_corr[1],hbbdaughters_corr[0]);
       } else {
-        if(hbbdaughter1.Pt() > hbbdaughter2.Pt()) {
-          jet1CS=hbbdaughter1;
-          jet2CS=hbbdaughter2;
-        } else {
-          jet1CS=hbbdaughter2;
-          jet2CS=hbbdaughter1;
-        }
-        dijetCS=hbbsystem;
+        if(hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) 
+          gt->hbbCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughter1,hbbdaughter2);
+        else
+          gt->hbbCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughter2,hbbdaughter1);
       }
-      // 1st transormation - rotate to ptZ direction
-      double zrot=-dijetCS.Phi(); jet1CS.RotateZ(zrot); jet2CS.RotateZ(zrot);
-      // 2nd transformation - boost in z direction
-      double beta_boostz = -dijetCS.Pz()/dijetCS.E(); jet1CS.Boost(0.,0.,beta_boostz); jet2CS.Boost(0.,0.,beta_boostz);
-      // 3rd transformation: boost in transverse direction (x-prime)
-      double beta_boostx = -(jet1CS.Px()+jet2CS.Px())/(jet1CS.E()+jet2CS.E()); jet1CS.Boost(beta_boostx,0.,0.); jet2CS.Boost(beta_boostx,0.,0.);
-//      bound(gen.pt(),genBosonPtMin,genBosonPtMax);
-      gt->hbbCosThetaCSJ1 = jet1CS.CosTheta();
-      if(dijetCS.Pz()<0) gt->hbbCosThetaCSJ1 *=-1.;
-      gt->hbbCosThetaCSJ1 = bound(gt->hbbCosThetaCSJ1,-0.9999,0.9999);
       tr->TriggerSubEvent("Hbb spin correl.");
     }
  
@@ -560,6 +541,10 @@ void PandaAnalyzer::JetHbbReco()
       dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
       topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
       gt->topMassLep1Met = topP4.M();
+      gt->topWBosonCosThetaCS = CosThetaCollinsSoper(WP4,jet1IsCloser? *jet1P4:*jet2P4);
+      gt->topWBosonPt  = WP4.Pt();
+      gt->topWBosonEta = WP4.Eta();
+      gt->topWBosonPhi = WP4.Phi();
 
       if (analysis->varyJES) {
         // Top mass with Jet energy scale Up
@@ -595,105 +580,6 @@ void PandaAnalyzer::JetHbbReco()
       tr->TriggerSubEvent("Top(bW) reco");
     }
 
-    // Soft activity
-    if (gt->hbbm>0.) {
-      gt->sumEtSoft1=0; gt->nSoft2=0; gt->nSoft5=0; gt->nSoft10=0;
-      // Define the ellipse of particles to forget about
-      // ((x-h)cos(A) + (y-k)sin(A))^2 /a^2 + ((x-h)sin(A) - (y-k)cos(A))^2 /b^2 <=1
-      double ellipse_cosA, ellipse_sinA, ellipse_h, ellipse_k, ellipse_a, ellipse_b; {
-        double ellipse_alpha;
-        float phi1=jet_1->phi(), phi2=jet_2->phi();
-        float eta1=jet_1->eta(), eta2=jet_2->eta();
-        double phi1MinusPhi2 = phi1-phi2;
-        double eta1MinusEta2 = eta1-eta2;
-        double phi1MinusPhi2MPP = TVector2::Phi_mpi_pi(phi1MinusPhi2);
-        ellipse_alpha = atan2( phi1MinusPhi2, eta1MinusEta2);
-        // compute delta R using already computed qty's to save time
-        ellipse_a = sqrt(pow(eta1MinusEta2,2) + pow(TVector2::Phi_mpi_pi(phi1MinusPhi2),2)) + 1.; // dR(b,b)+1
-        ellipse_b = 1.;
-        ellipse_h = (eta1+eta2)/2.;
-        ellipse_k = TVector2::Phi_mpi_pi(phi2 + phi1MinusPhi2MPP/2.);
-        ellipse_cosA = cos(ellipse_alpha);
-        ellipse_sinA = sin(ellipse_alpha);
-        if (DEBUG) {
-          PDebug("PandaAnalyzer::JetHbbReco",Form("Calculating ellipse with (eta1,phi1)=(%.2f,%.2f), (eta2,phi2)=(%.2f,%.2f)",eta1,phi1,eta2,phi2));
-          PDebug("PandaAnalyzer::JetHbbReco",Form("Found ellipse parameters (a,b,h,k,alpha)=(%.2f,%.2f,%.2f,%.2f,%.2f)",ellipse_a,ellipse_b,ellipse_h,ellipse_k,ellipse_alpha));
-        }
-      }
-
-      // Find out which PF constituents to not use
-      RefVector<PFCand> jet1Tracks = jet_1->constituents,
-                        jet2Tracks = jet_2->constituents;
-
-      // Get vector of pseudo jets for clustering
-      panda::PFCandCollection &allTracks = event.pfCandidates;
-      std::vector<fastjet::PseudoJet> softTracksPJ;
-      softTracksPJ.reserve(allTracks.size());
-      panda::PFCand *softTrack=0;
-      for (auto &softTrackRef : allTracks) {
-        softTrack = &softTrackRef;
-        bool trackIsSpokenFor=false;
-        if(!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet1Tracks.size(); iJetTrack++) {
-          if(!jet1Tracks.at(iJetTrack).isValid()) continue;
-          if (softTrack==jet1Tracks.at(iJetTrack).get()) { trackIsSpokenFor=true; break; }
-        }
-        if(!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet2Tracks.size(); iJetTrack++) {
-          if(!jet2Tracks.at(iJetTrack).isValid()) continue;
-          if (softTrack==jet2Tracks.at(iJetTrack).get()) { trackIsSpokenFor=true; break; }
-        }
-        if(!trackIsSpokenFor) for(int iLep=0; iLep<gt->nLooseLep; iLep++) {
-          if(!looseLeps[iLep]->matchedPF.isValid()) continue;
-          if(softTrack==looseLeps[iLep]->matchedPF.get()) { trackIsSpokenFor=true; break; }
-        }
-        if (trackIsSpokenFor) continue;
-        if (softTrack->pt() < minSoftTrackPt) continue;
-        // Only consider tracks with dz < 0.2 w.r.t. the primary vertex
-        if (!softTrack->track.isValid() || fabs(softTrack->track.get()->dz()) > 0.2) continue;
-        // Require tracks to have the lowest |dz| with the hardest PV amongst all others
-        int idxVertexWithMinAbsDz=-1; float minAbsDz=9999;
-        for (int iV=0; iV!=event.vertices.size(); iV++) {
-          auto& theVertex = event.vertices[iV];
-          float vertexAbsDz = fabs(softTrack->dz(theVertex.position()));
-          //if(DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
-          if(vertexAbsDz >= minAbsDz) continue;
-          idxVertexWithMinAbsDz = iV;
-          minAbsDz = vertexAbsDz;
-        }
-        if(idxVertexWithMinAbsDz!=0 || minAbsDz>0.2) continue;
-        //if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
-        // Need to add High Quality track flags :-)
-        bool trackIsInHbbEllipse=false; {
-          double ellipse_x = softTrack->eta();
-          double ellipse_y = softTrack->phi();
-          double ellipse_term1 = pow(
-            (TVector2::Phi_mpi_pi(ellipse_x - ellipse_h)*ellipse_cosA + (ellipse_y - ellipse_k)*ellipse_sinA) / ellipse_a,
-            2
-          );
-          double ellipse_term2 = pow(
-            (TVector2::Phi_mpi_pi(ellipse_x - ellipse_h)*ellipse_sinA + (ellipse_y - ellipse_k)*ellipse_cosA) / ellipse_b,
-            2
-          );
-          double ellipse_equation = (ellipse_term1 + ellipse_term2);
-          trackIsInHbbEllipse = (ellipse_equation <= 1.);
-        } if (trackIsInHbbEllipse) continue;
-        softTracksPJ.emplace_back(softTrack->px(),softTrack->py(),softTrack->pz(),softTrack->e());
-      }
-      if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Found %ld soft tracks that passed track quality cuts and the ellipse, jet constituency, and lepton matching vetoes",softTracksPJ.size()));
-      softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
-      fastjet::ClusterSequenceArea softTrackSequence(softTracksPJ, *softTrackJetDefinition, *areaDef);
-      
-      std::vector<fastjet::PseudoJet> softTrackJets(softTrackSequence.inclusive_jets(1.));
-      if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
-      for (std::vector<fastjet::PseudoJet>::size_type iSTJ=0; iSTJ<softTrackJets.size(); iSTJ++) {
-        if(fabs(softTrackJets[iSTJ].eta()) > 4.7) continue;
-        gt->sumEtSoft1 += softTrackJets[iSTJ].Et(); 
-        //if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
-        if(softTrackJets[iSTJ].pt() >  2.)  gt->nSoft2++; else continue;
-        if(softTrackJets[iSTJ].pt() >  5.)  gt->nSoft5++; else continue;
-        if(softTrackJets[iSTJ].pt() > 10.) gt->nSoft10++; else continue;
-      }
-      tr->TriggerSubEvent("Soft activity");
-    }
 
   }
   
@@ -735,3 +621,105 @@ void PandaAnalyzer::GenJetsNu()
   tr->TriggerEvent("gen jets nu");
 }
 
+void PandaAnalyzer::JetHbbSoftActivity() {
+  // Soft activity
+  if (gt->hbbm>0.) {
+    gt->sumEtSoft1=0; gt->nSoft2=0; gt->nSoft5=0; gt->nSoft10=0;
+    // Define the ellipse of particles to forget about
+    // ((x-h)cos(A) + (y-k)sin(A))^2 /a^2 + ((x-h)sin(A) - (y-k)cos(A))^2 /b^2 <=1
+    double ellipse_cosA, ellipse_sinA, ellipse_h, ellipse_k, ellipse_a, ellipse_b; {
+      double ellipse_alpha;
+      float phi1=gt->jetPhi[gt->hbbjtidx[0]], phi2=gt->jetPhi[gt->hbbjtidx[1]];
+      float eta1=gt->jetEta[gt->hbbjtidx[0]], eta2=gt->jetEta[gt->hbbjtidx[1]];
+      double phi1MinusPhi2 = phi1-phi2;
+      double eta1MinusEta2 = eta1-eta2;
+      double phi1MinusPhi2MPP = TVector2::Phi_mpi_pi(phi1MinusPhi2);
+      ellipse_alpha = atan2( phi1MinusPhi2, eta1MinusEta2);
+      // compute delta R using already computed qty's to save time
+      ellipse_a = sqrt(pow(eta1MinusEta2,2) + pow(TVector2::Phi_mpi_pi(phi1MinusPhi2),2)) + 1.; // dR(b,b)+1
+      ellipse_b = 1.;
+      ellipse_h = (eta1+eta2)/2.;
+      ellipse_k = TVector2::Phi_mpi_pi(phi2 + phi1MinusPhi2MPP/2.);
+      ellipse_cosA = cos(ellipse_alpha);
+      ellipse_sinA = sin(ellipse_alpha);
+      if (DEBUG) {
+        PDebug("PandaAnalyzer::JetHbbReco",Form("Calculating ellipse with (eta1,phi1)=(%.2f,%.2f), (eta2,phi2)=(%.2f,%.2f)",eta1,phi1,eta2,phi2));
+        PDebug("PandaAnalyzer::JetHbbReco",Form("Found ellipse parameters (a,b,h,k,alpha)=(%.2f,%.2f,%.2f,%.2f,%.2f)",ellipse_a,ellipse_b,ellipse_h,ellipse_k,ellipse_alpha));
+      }
+    }
+
+    // Find out which PF constituents to not use
+    RefVector<PFCand> jet1Tracks = cleanedJets[gt->hbbjtidx[0]]->constituents,
+                      jet2Tracks = cleanedJets[gt->hbbjtidx[1]]->constituents;
+
+    // Get vector of pseudo jets for clustering
+    panda::PFCandCollection &allTracks = event.pfCandidates;
+    std::vector<fastjet::PseudoJet> softTracksPJ;
+    softTracksPJ.reserve(allTracks.size());
+    panda::PFCand *softTrack=0;
+    for (auto &softTrackRef : allTracks) {
+      softTrack = &softTrackRef;
+      bool trackIsSpokenFor=false;
+      if(!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet1Tracks.size(); iJetTrack++) {
+        if(!jet1Tracks.at(iJetTrack).isValid()) continue;
+        if (softTrack==jet1Tracks.at(iJetTrack).get()) { trackIsSpokenFor=true; break; }
+      }
+      if(!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet2Tracks.size(); iJetTrack++) {
+        if(!jet2Tracks.at(iJetTrack).isValid()) continue;
+        if (softTrack==jet2Tracks.at(iJetTrack).get()) { trackIsSpokenFor=true; break; }
+      }
+      if(!trackIsSpokenFor) for(int iLep=0; iLep<gt->nLooseLep; iLep++) {
+        if(!looseLeps[iLep]->matchedPF.isValid()) continue;
+        if(softTrack==looseLeps[iLep]->matchedPF.get()) { trackIsSpokenFor=true; break; }
+      }
+      if (trackIsSpokenFor) continue;
+      if (softTrack->pt() < minSoftTrackPt) continue;
+      // Only consider tracks with dz < 0.2 w.r.t. the primary vertex
+      if (!softTrack->track.isValid() || fabs(softTrack->track.get()->dz()) > 0.2) continue;
+      // Require tracks to have the lowest |dz| with the hardest PV amongst all others
+      int idxVertexWithMinAbsDz=-1; float minAbsDz=9999;
+      for (int iV=0; iV!=event.vertices.size(); iV++) {
+        auto& theVertex = event.vertices[iV];
+        float vertexAbsDz = fabs(softTrack->dz(theVertex.position()));
+        //if(DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
+        if(vertexAbsDz >= minAbsDz) continue;
+        idxVertexWithMinAbsDz = iV;
+        minAbsDz = vertexAbsDz;
+      }
+      if(idxVertexWithMinAbsDz!=0 || minAbsDz>0.2) continue;
+      //if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
+      // Need to add High Quality track flags :-)
+      bool trackIsInHbbEllipse=false; {
+        double ellipse_x = softTrack->eta();
+        double ellipse_y = softTrack->phi();
+        double ellipse_term1 = pow(
+          (TVector2::Phi_mpi_pi(ellipse_x - ellipse_h)*ellipse_cosA + (ellipse_y - ellipse_k)*ellipse_sinA) / ellipse_a,
+          2
+        );
+        double ellipse_term2 = pow(
+          (TVector2::Phi_mpi_pi(ellipse_x - ellipse_h)*ellipse_sinA + (ellipse_y - ellipse_k)*ellipse_cosA) / ellipse_b,
+          2
+        );
+        double ellipse_equation = (ellipse_term1 + ellipse_term2);
+        trackIsInHbbEllipse = (ellipse_equation <= 1.);
+      } if (trackIsInHbbEllipse) continue;
+      softTracksPJ.emplace_back(softTrack->px(),softTrack->py(),softTrack->pz(),softTrack->e());
+    }
+    if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Found %ld soft tracks that passed track quality cuts and the ellipse, jet constituency, and lepton matching vetoes",softTracksPJ.size()));
+    softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
+    fastjet::ClusterSequenceArea softTrackSequence(softTracksPJ, *softTrackJetDefinition, *areaDef);
+    
+    std::vector<fastjet::PseudoJet> softTrackJets(softTrackSequence.inclusive_jets(1.));
+    if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
+    for (std::vector<fastjet::PseudoJet>::size_type iSTJ=0; iSTJ<softTrackJets.size(); iSTJ++) {
+      if(fabs(softTrackJets[iSTJ].eta()) > 4.7) continue;
+      gt->sumEtSoft1 += softTrackJets[iSTJ].Et(); 
+      //if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
+      if(softTrackJets[iSTJ].pt() >  2.)  gt->nSoft2++; else continue;
+      if(softTrackJets[iSTJ].pt() >  5.)  gt->nSoft5++; else continue;
+      if(softTrackJets[iSTJ].pt() > 10.) gt->nSoft10++; else continue;
+    }
+    tr->TriggerEvent("Soft activity");
+  }
+
+}

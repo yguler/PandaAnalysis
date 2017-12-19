@@ -497,6 +497,10 @@ void GeneralTree::Reset() {
     topMassLep1Met = -1;
     topMassLep1Met_jesUp = -1;
     topMassLep1Met_jesDown = -1;
+    topWBosonCosThetaCS = -1;
+    topWBosonPt = -1;
+    topWBosonEta = -1;
+    topWBosonPhi = -1;
     sumEtSoft1 = -1;
     nSoft2 = -1;
     nSoft5 = -1;
@@ -583,6 +587,10 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("topMassLep1Met",&topMassLep1Met,"topMassLep1Met/F");
     Book("topMassLep1Met_jesUp",&topMassLep1Met_jesUp,"topMassLep1Met_jesUp/F");
     Book("topMassLep1Met_jesDown",&topMassLep1Met_jesDown,"topMassLep1Met_jesDown/F");
+    Book("topWBosonCosThetaCS",&topWBosonCosThetaCS,"topWBosonCosThetaCS/F");
+    Book("topWBosonPt",&topWBosonPt,"topWBosonPt/F");
+    Book("topWBosonEta",&topWBosonEta,"topWBosonEta/F");
+    Book("topWBosonPhi",&topWBosonPhi,"topWBosonPhi/F");
     Book("sumEtSoft1",&sumEtSoft1,"sumEtSoft1/F");
     Book("nSoft2",&nSoft2,"nSoft2/I");
     Book("nSoft5",&nSoft5,"nSoft5/I");

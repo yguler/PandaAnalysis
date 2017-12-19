@@ -439,9 +439,11 @@ void PandaAnalyzer::JetHbbReco()
     gt->hbbeta_jesDown = hbbsystem_jesDown.Eta();
     gt->hbbphi_jesDown = hbbsystem_jesDown.Phi();
     gt->hbbm_jesDown = hbbsystem_jesDown.M();
-    tr->TriggerSubEvent("Unregressed H(bb) system calculation");
+    tr->TriggerSubEvent("Bare Hbb reco");
+    
     
     TLorentzVector hbbdaughters_corr[2], hbbdaughters_corr_jesUp[2], hbbdaughters_corr_jesDown[2];
+    TLorentzVector hbbsystem_corr, hbbsystem_corr_jesUp, hbbsystem_corr_jesDown;
     if (analysis->bjetRegression && gt->hbbm>0.) {
       
       for (unsigned i = 0; i<2; i++) {
@@ -489,19 +491,55 @@ void PandaAnalyzer::JetHbbReco()
         );
 
       }
-      TLorentzVector hbbsystem_corr = hbbdaughters_corr[0] + hbbdaughters_corr[1];
+      hbbsystem_corr = hbbdaughters_corr[0] + hbbdaughters_corr[1];
       gt->hbbm_reg = hbbsystem_corr.M();
       gt->hbbpt_reg = hbbsystem_corr.Pt();
-      TLorentzVector hbbsystem_corr_jesUp = hbbdaughters_corr_jesUp[0] + hbbdaughters_corr_jesUp[1];
+      hbbsystem_corr_jesUp = hbbdaughters_corr_jesUp[0] + hbbdaughters_corr_jesUp[1];
       gt->hbbm_reg_jesUp = hbbsystem_corr_jesUp.M();
       gt->hbbpt_reg_jesUp = hbbsystem_corr_jesUp.Pt();
-      TLorentzVector hbbsystem_corr_jesDown = hbbdaughters_corr_jesDown[0] + hbbdaughters_corr_jesDown[1];
+      hbbsystem_corr_jesDown = hbbdaughters_corr_jesDown[0] + hbbdaughters_corr_jesDown[1];
       gt->hbbm_reg_jesDown = hbbsystem_corr_jesDown.M();
       gt->hbbpt_reg_jesDown = hbbsystem_corr_jesDown.Pt();
       
-      tr->TriggerSubEvent("Regressed H(bb) system calculation");
+      tr->TriggerSubEvent("Regr. Hbb reco");
     }
-    
+    if (gt->hbbm>0.) { 
+      gt->hbbCosThetaJJ   = hbbsystem.CosTheta();
+      // Collins-Soper frame calculation
+      //do transformation to Collins-Soper frame (1 rotation, 2 boosts)
+      TLorentzVector jet1CS,jet2CS,dijetCS;
+      if (analysis->bjetRegression) {
+        if(hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) {
+          jet1CS=hbbdaughters_corr[0];
+          jet2CS=hbbdaughters_corr[1];
+        } else {
+          jet1CS=hbbdaughters_corr[1];
+          jet2CS=hbbdaughters_corr[0];
+        }
+        dijetCS=hbbsystem_corr;
+      } else {
+        if(hbbdaughter1.Pt() > hbbdaughter2.Pt()) {
+          jet1CS=hbbdaughter1;
+          jet2CS=hbbdaughter2;
+        } else {
+          jet1CS=hbbdaughter2;
+          jet2CS=hbbdaughter1;
+        }
+        dijetCS=hbbsystem;
+      }
+      // 1st transormation - rotate to ptZ direction
+      double zrot=-dijetCS.Phi(); jet1CS.RotateZ(zrot); jet2CS.RotateZ(zrot);
+      // 2nd transformation - boost in z direction
+      double beta_boostz = -dijetCS.Pz()/dijetCS.E(); jet1CS.Boost(0.,0.,beta_boostz); jet2CS.Boost(0.,0.,beta_boostz);
+      // 3rd transformation: boost in transverse direction (x-prime)
+      double beta_boostx = -(jet1CS.Px()+jet2CS.Px())/(jet1CS.E()+jet2CS.E()); jet1CS.Boost(beta_boostx,0.,0.); jet2CS.Boost(beta_boostx,0.,0.);
+//      bound(gen.pt(),genBosonPtMin,genBosonPtMax);
+      gt->hbbCosThetaCSJ1 = jet1CS.CosTheta();
+      if(dijetCS.Pz()<0) gt->hbbCosThetaCSJ1 *=-1.;
+      gt->hbbCosThetaCSJ1 = bound(gt->hbbCosThetaCSJ1,-0.9999,0.9999);
+      tr->TriggerSubEvent("Hbb spin correl.");
+    }
+ 
     // Top mass reconstruction
     if (gt->hbbm>0. && gt->nLooseLep>0) {
       TLorentzVector leptonP4, metP4, nuP4, *jet1P4, *jet2P4, WP4, topP4;
@@ -554,15 +592,14 @@ void PandaAnalyzer::JetHbbReco()
         topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
         gt->topMassLep1Met_jesDown = topP4.M();
       }
-      tr->TriggerSubEvent("Top(bW) mass reconstruction");
+      tr->TriggerSubEvent("Top(bW) reco");
     }
 
     // Soft activity
     if (gt->hbbm>0.) {
-      
+      gt->sumEtSoft1=0; gt->nSoft2=0; gt->nSoft5=0; gt->nSoft10=0;
       // Define the ellipse of particles to forget about
       // ((x-h)cos(A) + (y-k)sin(A))^2 /a^2 + ((x-h)sin(A) - (y-k)cos(A))^2 /b^2 <=1
-      bool jet1IsAbove;
       double ellipse_cosA, ellipse_sinA, ellipse_h, ellipse_k, ellipse_a, ellipse_b; {
         double ellipse_alpha;
         float phi1=jet_1->phi(), phi2=jet_2->phi();
@@ -570,7 +607,6 @@ void PandaAnalyzer::JetHbbReco()
         double phi1MinusPhi2 = phi1-phi2;
         double eta1MinusEta2 = eta1-eta2;
         double phi1MinusPhi2MPP = TVector2::Phi_mpi_pi(phi1MinusPhi2);
-
         ellipse_alpha = atan2( phi1MinusPhi2, eta1MinusEta2);
         // compute delta R using already computed qty's to save time
         ellipse_a = sqrt(pow(eta1MinusEta2,2) + pow(TVector2::Phi_mpi_pi(phi1MinusPhi2),2)) + 1.; // dR(b,b)+1
@@ -611,16 +647,30 @@ void PandaAnalyzer::JetHbbReco()
         }
         if (trackIsSpokenFor) continue;
         if (softTrack->pt() < minSoftTrackPt) continue;
+        // Only consider tracks with dz < 0.2 w.r.t. the primary vertex
+        if (!softTrack->track.isValid() || fabs(softTrack->track.get()->dz()) > 0.2) continue;
+        // Require tracks to have the lowest |dz| with the hardest PV amongst all others
+        int idxVertexWithMinAbsDz=-1; float minAbsDz=9999;
+        for (int iV=0; iV!=event.vertices.size(); iV++) {
+          auto& theVertex = event.vertices[iV];
+          float vertexAbsDz = fabs(softTrack->dz(theVertex.position()));
+          //if(DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
+          if(vertexAbsDz >= minAbsDz) continue;
+          idxVertexWithMinAbsDz = iV;
+          minAbsDz = vertexAbsDz;
+        }
+        if(idxVertexWithMinAbsDz!=0 || minAbsDz>0.2) continue;
+        //if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
         // Need to add High Quality track flags :-)
         bool trackIsInHbbEllipse=false; {
           double ellipse_x = softTrack->eta();
           double ellipse_y = softTrack->phi();
           double ellipse_term1 = pow(
-            (fabs(TVector2::Phi_mpi_pi(ellipse_x - ellipse_h))*ellipse_cosA + (ellipse_y - ellipse_k)*ellipse_sinA) / ellipse_a,
+            (TVector2::Phi_mpi_pi(ellipse_x - ellipse_h)*ellipse_cosA + (ellipse_y - ellipse_k)*ellipse_sinA) / ellipse_a,
             2
           );
           double ellipse_term2 = pow(
-            (fabs(TVector2::Phi_mpi_pi(ellipse_x - ellipse_h))*ellipse_sinA + (ellipse_y - ellipse_k)*ellipse_cosA) / ellipse_b,
+            (TVector2::Phi_mpi_pi(ellipse_x - ellipse_h)*ellipse_sinA + (ellipse_y - ellipse_k)*ellipse_cosA) / ellipse_b,
             2
           );
           double ellipse_equation = (ellipse_term1 + ellipse_term2);
@@ -628,13 +678,21 @@ void PandaAnalyzer::JetHbbReco()
         } if (trackIsInHbbEllipse) continue;
         softTracksPJ.emplace_back(softTrack->px(),softTrack->py(),softTrack->pz(),softTrack->e());
       }
+      if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Found %ld soft tracks that passed track quality cuts and the ellipse, jet constituency, and lepton matching vetoes",softTracksPJ.size()));
       softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
       fastjet::ClusterSequenceArea softTrackSequence(softTracksPJ, *softTrackJetDefinition, *areaDef);
       
-      std::vector<fastjet::PseudoJet> softTrackJets(softTrackSequence.inclusive_jets(0.));
-      //for (std::vector<fastjet::PseudoJet>::size_type iSTJ=0; iSTJ<softTrackJets.size(); iSTJ++) {
-      //  if(pt()
-      tr->TriggerSubEvent("Soft track jet calculation");
+      std::vector<fastjet::PseudoJet> softTrackJets(softTrackSequence.inclusive_jets(1.));
+      if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
+      for (std::vector<fastjet::PseudoJet>::size_type iSTJ=0; iSTJ<softTrackJets.size(); iSTJ++) {
+        if(fabs(softTrackJets[iSTJ].eta()) > 4.7) continue;
+        gt->sumEtSoft1 += softTrackJets[iSTJ].Et(); 
+        //if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
+        if(softTrackJets[iSTJ].pt() >  2.)  gt->nSoft2++; else continue;
+        if(softTrackJets[iSTJ].pt() >  5.)  gt->nSoft5++; else continue;
+        if(softTrackJets[iSTJ].pt() > 10.) gt->nSoft10++; else continue;
+      }
+      tr->TriggerSubEvent("Soft activity");
     }
 
   }

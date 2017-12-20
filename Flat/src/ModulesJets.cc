@@ -209,9 +209,22 @@ void PandaAnalyzer::JetBRegressionInfo(panda::Jet& jet)
       unsigned pdgid = abs(pf->pdgId());
       if (pdgid == 11 || pdgid == 13) {
         gt->jetNLep[N]++;
-        gt->jetLeadingLepPt[N] = max(pt, gt->jetLeadingLepPt[N]);
+        if (pt > gt->jetLeadingLepPt[N]) {
+          gt->jetLeadingLepPt[N] = pt;
+          gt->jetLeadingLepPtRel[N] = pf->p4().Perp(jet.p4().Vect());
+          gt->jetLeadingLepDeltaR[N] = sqrt(DeltaR2(pf->eta(), pf->phi(), jet.eta(), jet.phi()));
+        }
       }
     }
+  }
+
+  auto& vert = jet.secondaryVertex;
+  if (vert.isValid()) {
+    gt->jetvtxPt[N] = vert->pt();
+    gt->jetvtxMass[N] = vert->m();
+    gt->jetvtx3Dval[N] = vert->vtx3DVal;
+    gt->jetvtx3Derr[N] = vert->vtx3DeVal;
+    gt->jetvtxNtrk[N] = vert->ntrk;
   }
 
   tr->TriggerSubEvent("b-jet reg info");

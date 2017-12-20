@@ -379,6 +379,8 @@ void GeneralTree::Reset() {
     genTTPt = -1;
     genTTEta = -1;
     nJet = 0;
+    nJet_jesUp = 0;
+    nJet_jesDown = 0;
     nIsoJet = 0;
     jet1Flav = 0;
     jet1Phi = -1;
@@ -537,6 +539,8 @@ void GeneralTree::WriteTree(TTree *t) {
   Book("electronSelBit",electronSelBit,"electronSelBit[nLooseElectron]/I");
   Book("electronPdgId",electronPdgId,"electronPdgId[nLooseElectron]/I");
   if (monohiggs) {
+    Book("nJet_jesUp",&nJet_jesUp,"nJet_jesUp/I");
+    Book("nJet_jesDown",&nJet_jesDown,"nJet_jesDown/I");
     Book("pfmetUp",&pfmetUp,"pfmetUp/F");
     Book("pfmetDown",&pfmetDown,"pfmetDown/F");
     Book("jetPt",jetPt,"jetPt[nJot]/F");

@@ -489,6 +489,8 @@ class GeneralTree : public genericTree {
     float genTTPt = -1;
     float genTTEta = -1;
     int nJet = -1;
+    int nJet_jesUp = -1;
+    int nJet_jesDown = -1;
     int nIsoJet = -1;
     int jet1Flav = -1;
     float jet1Phi = -1;

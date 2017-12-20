@@ -138,7 +138,10 @@ void PandaAnalyzer::JetBasics()
           ++(gt->jetNMBtags);
       }
     }
-
+    if (analysis->varyJES && fabs(jet.eta())<2.4) {
+      if (jet.ptCorrUp>jetPtThreshold) gt->nJet_jesUp++;
+      if (jet.ptCorrDown>jetPtThreshold) gt->nJet_jesDown++;
+    }
     if (analysis->varyJES)
       JetVaryJES(jet);
 

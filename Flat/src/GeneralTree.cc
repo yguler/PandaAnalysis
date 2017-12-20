@@ -537,6 +537,8 @@ void GeneralTree::WriteTree(TTree *t) {
   Book("electronSelBit",electronSelBit,"electronSelBit[nLooseElectron]/I");
   Book("electronPdgId",electronPdgId,"electronPdgId[nLooseElectron]/I");
   if (monohiggs) {
+    Book("pfmetUp",&pfmetUp,"pfmetUp/F");
+    Book("pfmetDown",&pfmetDown,"pfmetDown/F");
     Book("jetPt",jetPt,"jetPt[nJot]/F");
     Book("jetPtUp",jetPtUp,"jetPtUp[nJot]/F");
     Book("jetPtDown",jetPtDown,"jetPtDown[nJot]/F");

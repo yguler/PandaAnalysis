@@ -3,18 +3,19 @@ from os import getenv
 
 
 def query():
-      r = ''
+      r = []
       try:
             l = pickle.load(open(getenv('SUBMIT_WORKDIR')+'/submission.pkl'))
             s = l[-1]
-            r += 'ClusterID'+str(s.cluster_id) + '\n'
+            r.append( 'ClusterID '+str(s.cluster_id) )
             statii = s.query_status()
-            r += 'Job summary:\n'
+            r.append( 'Job summary:' )
             for k,v in statii.iteritems():
-                  r += '\t %10s : %5i\n'%(k,len(v))
+                  r.append( '\t %10s : %5i'%(k,len(v)) )
             return r
       except IOError:
-            print 'No job submitted yet!'
+            r.append( 'No job submitted yet!' )
+            return r
 
 if __name__ == '__main__':
-      print query()
+      print '\n'.join(query())

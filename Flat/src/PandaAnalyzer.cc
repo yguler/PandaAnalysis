@@ -450,7 +450,6 @@ void PandaAnalyzer::SetDataDir(const char *s)
   OpenCorrection(cBadECALJets,dirPath+"vbf16/hotjets-runBCDEFGH.root",
                  "h2jet",2);
 
-
   if (analysis->btagSFs) {
     // btag SFs
     btagCalib = new BTagCalibration("csvv2",(dirPath+"moriond17/CSVv2_Moriond17_B_H.csv").Data());
@@ -632,9 +631,9 @@ bool PandaAnalyzer::PassPreselection()
   }
 
   float max_puppi = std::max({gt->puppimet, gt->puppiUZmag, gt->puppiUWmag, gt->puppiUAmag});
-  float max_pf = std::max({gt->pfmet, gt->pfUZmag, gt->pfUWmag, gt->pfUAmag});
-  float max_pfUp = std::max({gt->pfmetUp, gt->pfUZmagUp, gt->pfUWmagUp, gt->pfUAmagUp});
-  float max_pfDown = std::max({gt->pfmetDown, gt->pfUZmagDown, gt->pfUWmagDown, gt->pfUAmagDown});
+  float max_pf = std::max({gt->pfmet, gt->pfUZmag, gt->pfUWmag, gt->pfUAmag, gt->pfUWWmag});
+  float max_pfUp = std::max({gt->pfmetUp, gt->pfUZmagUp, gt->pfUWmagUp, gt->pfUAmagUp, gt->pfUWWmagUp});
+  float max_pfDown = std::max({gt->pfmetDown, gt->pfUZmagDown, gt->pfUWmagDown, gt->pfUAmagDown, gt->pfUWWmagDown});
 
   if (preselBits & kRecoil) {
     if ( max_pfDown>200 || max_pf>200 || max_pfUp>200 || max_puppi>200 ) {
@@ -654,20 +653,21 @@ bool PandaAnalyzer::PassPreselection()
     }
   }
   if (preselBits & kMonojet) {
-    if (true) {
-      if ( max_pfDown>200 || max_pf>200 || max_pfUp>200 || max_puppi>200 ) {
+    if (gt->nJet>=1 && gt->jet1Pt>100) {
+      if ( max_pfDown>250 || max_pf>250 || max_pfUp>250 || max_puppi>250 ) {
         isGood = true;
       }
     }
   }
   if (preselBits & kMonohiggs) {
-    if ((gt->nFatjet>=1 && gt->fj1Pt>200) || gt->hbbpt>150 ) {
-      if ( max_pf>175 || max_puppi>175) {
+    if (gt->nFatjet>=1 && gt->fj1Pt>150) {
+      if ( max_pf>250 || max_puppi>250) {
         isGood = true;
       }
     }
   }
 
+<<<<<<< HEAD
   if (preselBits & kVHBB) {
     double bestMet = TMath::Max(TMath::Max(gt->pfmetUp, gt->pfmetDown), gt->pfmet);
     double bestLeadingJet = TMath::Max(TMath::Max(gt->jet1PtUp, gt->jet1PtDown), gt->jet1Pt);
@@ -710,9 +710,7 @@ bool PandaAnalyzer::PassPreselection()
   if (preselBits & kPassTrig) {
     isGood &= (!isData) || (gt->trigger != 0);
   }
-
   tr->TriggerEvent("presel");
-  
   return isGood;
 }
 
@@ -901,8 +899,6 @@ void PandaAnalyzer::Run()
   unsigned int iE=0;
   ProgressReporter pr("PandaAnalyzer::Run",&iE,&nEvents,10);
   tr = new TimeReporter("PandaAnalyzer::Run",DEBUG+1);
-
-
   // EVENTLOOP --------------------------------------------------------------------------
   for (iE=nZero; iE!=nEvents; ++iE) {
     tr->Start();
@@ -910,29 +906,28 @@ void PandaAnalyzer::Run()
     ResetBranches();
     event.getEntry(*tIn,iE);
 
-
     tr->TriggerEvent(TString::Format("GetEntry %u",iE));
     if (DEBUG>2) {
       PDebug("PandaAnalyzer::Run::Dump","");
       event.print(std::cout, 2);
       std::cout << std::endl;
       PDebug("PandaAnalyzer::Run::Dump","");
-      event.photons.print(std::cout, 2);
+      event.photons.print(std::cout, 2);       // photon branch
       std::cout << std::endl;
       PDebug("PandaAnalyzer::Run::Dump","");
-      event.muons.print(std::cout, 2);
+      event.muons.print(std::cout, 2);         // muons branch
       std::cout << std::endl;
       PDebug("PandaAnalyzer::Run::Dump","");
-      event.electrons.print(std::cout, 2);
+      event.electrons.print(std::cout, 2);     // electron branch
       std::cout << std::endl;
       PDebug("PandaAnalyzer::Run::Dump","");
-      event.chsAK4Jets.print(std::cout, 2);
+      event.chsAK4Jets.print(std::cout, 2);    // chsAK4Jets branch
       std::cout << std::endl;
       PDebug("PandaAnalyzer::Run::Dump","");
-      event.pfMet.print(std::cout, 2);
+      event.pfMet.print(std::cout, 2);         // pfMet branch
       std::cout << std::endl;
       PDebug("PandaAnalyzer::Run::Dump","");
-      event.metMuOnlyFix.print(std::cout, 2);
+      event.metMuOnlyFix.print(std::cout, 2);  // metMuOnlyFix branch
       std::cout << std::endl;
     }
 
@@ -1091,7 +1086,7 @@ void PandaAnalyzer::Run()
       continue;
 
     gt->Fill();
-
+    
   } // entry loop
 
   tr->Summary();

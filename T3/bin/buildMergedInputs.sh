@@ -50,8 +50,9 @@ cp -v /tmp/x509up_u$UID $WD/x509up
 
 cp -v ${CMSSW_BASE}/src/PandaAnalysis/T3/inputs/exec.sh ${WD}
 
-PInfo -n "$0" "Taking a snapshot of work area..."
-cp -rvT ${WD} $SUBMIT_OUTDIR/workdir/
+#PInfo -n "$0" "Taking a snapshot of work area..."
+#eosmkdir -p $SUBMIT_OUTDIR/workdir/
+#xrdcp -r ${WD} root://cmseos.fnal.gov/$SUBMIT_OUTDIR/workdir/
 
 PInfo -n "$0" "Done!"
 

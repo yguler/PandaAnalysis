@@ -105,7 +105,9 @@ void PandaAnalyzer::JetBtagSFs()
 {
       // now get the jet btag SFs
       vector<btagcand> btagcands;
+      vector<btagcand> btagcands_alt;
       vector<double> sf_cent, sf_bUp, sf_bDown, sf_mUp, sf_mDown;
+      vector<double> sf_cent_alt, sf_bUp_alt, sf_bDown_alt, sf_mUp_alt, sf_mDown_alt;
 
       unsigned int nJ = centralJets.size();
       for (unsigned int iJ=0; iJ!=nJ; ++iJ) {
@@ -168,7 +170,22 @@ void PandaAnalyzer::JetBtagSFs()
           }
 
         }
-
+	// alternate stuff for inclusive jet collection (also different b tagging WP)                                                                                                                  
+	//std::cout<<"B-tagging Medium SF evaluating"<<std::endl;                                                                                                                                      
+	double sf_alt(1),sfUp_alt(1),sfDown_alt(1);                                                                                                                                       
+	  
+	//Calculating medium working point SF                                                                                                                                                        
+	CalcBJetSFs(bJetM,flavor,eta,pt,eff,btagUncFactor,sf_alt,sfUp_alt,sfDown_alt); //                                                                                                            
+	btagcands_alt.push_back(btagcand(iJ,flavor,eff,sf_alt,sfUp_alt,sfDown_alt));                                                                                                              
+	sf_cent_alt.push_back(sf_alt);                                                                                                                                                                
+	  
+	if (flavor>0) {                                                                                                                                                                              
+	  sf_bUp_alt.push_back(sfUp_alt); sf_bDown_alt.push_back(sfDown_alt);                                                                                                                   
+	  sf_mUp_alt.push_back(sf_alt); sf_mDown_alt.push_back(sf_alt);                                                                                                                             
+	} else {                                                                                                                                                                                   
+	  sf_bUp_alt.push_back(sf_alt); sf_bDown_alt.push_back(sf_alt);                                                                                                                           
+	  sf_mUp_alt.push_back(sfUp_alt); sf_mDown_alt.push_back(sfDown_alt);                                                                                                                 
+	}                                                                                                                                                                                               
       } // loop over jets
 
       EvalBTagSF(btagcands,sf_cent,GeneralTree::bCent,GeneralTree::bJet);
@@ -176,6 +193,11 @@ void PandaAnalyzer::JetBtagSFs()
       EvalBTagSF(btagcands,sf_bDown,GeneralTree::bBDown,GeneralTree::bJet);
       EvalBTagSF(btagcands,sf_mUp,GeneralTree::bMUp,GeneralTree::bJet);
       EvalBTagSF(btagcands,sf_mDown,GeneralTree::bMDown,GeneralTree::bJet);
+      EvalBTagSF(btagcands_alt,sf_cent_alt,GeneralTree::bCent,GeneralTree::bMedJet,true);
+      EvalBTagSF(btagcands_alt,sf_bUp_alt, GeneralTree::bBUp, GeneralTree::bMedJet,true);
+      EvalBTagSF(btagcands_alt,sf_bDown_alt, GeneralTree::bBDown, GeneralTree::bMedJet,true);
+      EvalBTagSF(btagcands_alt,sf_mUp_alt, GeneralTree::bMUp, GeneralTree::bMedJet,true);
+      EvalBTagSF(btagcands_alt,sf_mDown_alt, GeneralTree::bMDown, GeneralTree::bMedJet,true);
 
     tr->TriggerEvent("ak4 gen-matching");
 }

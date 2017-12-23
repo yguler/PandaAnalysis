@@ -120,6 +120,25 @@ void PandaAnalyzer::Recoil()
 
         vpuppiU = vpuppiUZ; vpfU = vpfUZ;
         gt->whichRecoil = 2;
+      } else if ( gt->nLooseLep>1 && ( (gt->looseLep1PdgId==11 && gt->looseLep2PdgId==-13)
+                                       || ( gt->looseLep1PdgId==-11 && gt->looseLep2PdgId==13 )
+                                       || ( gt->looseLep1PdgId==13 && gt->looseLep2PdgId==-11 )
+                                       || ( gt->looseLep1PdgId==-13 && gt->looseLep2PdgId==11 )
+                                       ) ){
+        // two W with opposite flavor                                                                                                                                                                       
+	panda::Lepton *lep2 = looseLeps.at(1);
+        vObj2.SetPtEtaPhiM(lep2->pt(),lep2->eta(),lep2->phi(),lep2->m());
+
+	vpuppiUWW=vpuppiUW+vObj2; gt->puppiUWWmag=vpuppiUWW.Pt(); gt->puppiUWWphi=vpuppiUWW.Phi();
+        vpfUWW=vpfUW+vObj2; gt->pfUWWmag=vpfUWW.Pt(); gt->pfUWWphi=vpfUWW.Phi();
+
+        if (analysis->varyJES) {
+	  TLorentzVector vpfUWWUp = vpfUWUp+vObj2; gt->pfUWWmagUp = vpfUWWUp.Pt();
+	  TLorentzVector vpfUWWDown = vpfUWDown+vObj2; gt->pfUWWmagDown = vpfUWWDown.Pt();
+	}
+
+        vpuppiU = vpuppiUWW; vpfU = vpfUWW;
+        gt->whichRecoil = 3;
       } else {
         vpuppiU = vpuppiUW; vpfU = vpfUW;
         gt->whichRecoil = 1;

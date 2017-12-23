@@ -160,6 +160,10 @@ void PandaAnalyzer::JetBasics()
       gt->dphipuppiU = gt->dphipuppiUZ;
       gt->dphipfU = gt->dphipfUZ;
       break;
+    case 3:
+      gt->dphipuppiU = gt->dphipuppiUWW;                                                                                                                                                              
+      gt->dphipfU = gt->dphipfUWW;
+    break;
     default: // impossible
       break;
   }

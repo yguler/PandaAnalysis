@@ -328,8 +328,8 @@ private:
     std::vector<panda::Photon*> loosePhos;
     TLorentzVector vPFMET, vPuppiMET;
     TVector2 vMETNoMu;
-    TLorentzVector vpfUW, vpfUZ, vpfUA, vpfU;
-    TLorentzVector vpuppiUW, vpuppiUZ, vpuppiUA, vpuppiU;
+    TLorentzVector vpfUW, vpfUZ, vpfUWW, vpfUA, vpfU;
+    TLorentzVector vpuppiUW, vpuppiUZ, vpuppiUWW, vpuppiUA, vpuppiU;
     panda::FatJet *fj1 = 0;
     std::vector<panda::Jet*> cleanedJets, isoJets, btaggedJets, centralJets;
     std::vector<int> btagindices;

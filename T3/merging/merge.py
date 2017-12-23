@@ -32,10 +32,12 @@ for k,v in processes.iteritems():
 VERBOSE = not args.silent
 
 user = environ['USER']
-system('mkdir -p /tmp/%s/split'%user) # tmp dir
-system('mkdir -p /tmp/%s/merged'%user) # tmp dir
+system('mkdir -p /uscmst1b_scratch/lpc1/3DayLifetime/%s/split'%user) # tmp dir
+system('mkdir -p /uscmst1b_scratch/lpc1/3DayLifetime/%s/merged'%user) # tmp dir
 
 inbase = environ['SUBMIT_OUTDIR']
+#inbase ="/eos/uscms/store/user/shoh/miniaod/Vector_Zprime_NLO_Mphi-1000_Mchi-300_gSM-0p25_gDM-1p0_13TeV-madgraph/"
+#inbase  ='root://cmseos.fnal.gov/'+ inbase1.split('/eos/uscms')[1]
 outbase = environ['PANDA_FLATDIR']
 
 if VERBOSE:
@@ -48,6 +50,7 @@ def hadd(inpath,outpath):
         infiles = glob(inpath)
         PInfo(sname,'hadding %s into %s'%(inpath,outpath))
         cmd = 'hadd -k -ff -n 100 -f %s %s %s'%(outpath,inpath,suffix)
+        print cmd
         system(cmd)
         return
     else:
@@ -91,12 +94,13 @@ def merge(shortnames,mergedname):
         elif 'Vector' in shortname:
             tmp_ = shortname
             replacements = {
-                'Vector_MonoTop_NLO_Mphi-':'',
+                'Vector_Zprime_NLO_Mphi-':'',
                 '_gSM-0p25_gDM-1p0_13TeV-madgraph':'',
                 '_Mchi-':'_',
                 }
             for k,v in replacements.iteritems():
                 tmp_ = tmp_.replace(k,v)
+            print "tmp_= ", tmp_
             m_V,m_DM = [int(x) for x in tmp_.split('_')]
             params = read_nr_model(m_V,m_DM)
             if params:
@@ -127,11 +131,13 @@ def merge(shortnames,mergedname):
                     pd = pds[shortname_][0]
                     xsec = pds[shortname_][1]
                     break
-        inpath = inbase+shortname+'_*.root'
-        hadd(inpath,'/tmp/%s/split/%s.root'%(user,shortname))
+
+        inpath = '`xrdfs root://cmseos.fnal.gov ls -u ' + inbase + ' | grep \'' + shortname + '_\'`'
+        print inpath
+        hadd(inpath,'/uscmst1b_scratch/lpc1/3DayLifetime/%s/split/%s.root'%(user,shortname))
         if xsec>0:
-            normalizeFast('/tmp/%s/split/%s.root'%(user,shortname),xsec)
-    hadd(['/tmp/%s/split/%s.root'%(user,x) for x in shortnames],'/tmp/%s/merged/%s.root'%(user,mergedname))
+            normalizeFast('/uscmst1b_scratch/lpc1/3DayLifetime/%s/split/%s.root'%(user,shortname),xsec)
+    hadd(['/uscmst1b_scratch/lpc1/3DayLifetime/%s/split/%s.root'%(user,x) for x in shortnames],'/uscmst1b_scratch/lpc1/3DayLifetime/%s/merged/%s.root'%(user,mergedname))
 
 d = {
     'test'                : ['Diboson_ww'],
@@ -179,6 +185,6 @@ for pd in arguments:
 
 for pd in args:
     merge(args[pd],pd)
-    system('cp -r /tmp/%s/merged/%s.root %s'%(user,pd,outbase))
+    system('cp -r /uscmst1b_scratch/lpc1/3DayLifetime/%s/merged/%s.root %s'%(user,pd,outbase))
     PInfo(sname,'finished with '+pd)
 

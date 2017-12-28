@@ -44,7 +44,7 @@ class CatalogSample:
             lines.append('{0:<25} {2:<10} {3:<15} {1}\n'.format(nickname,f,self.dtype,self.xsec)) 
             if smartcache_args is not None:
                 if not path.isfile(f.replace('root://xrootd.cmsaf.mit.edu','/mnt/hadoop/cms')):
-                    smartcache_args.append('/cms/store/user/paus/pandaf/%s/%s'%(book_,ds_))
+                    smartcache_args.append('/cms/store/user/paus/%s/%s'%(book_,ds_))
         return lines
 
 def smartcache(arguments):

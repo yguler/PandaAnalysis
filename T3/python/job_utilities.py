@@ -153,29 +153,42 @@ def drop_branches(to_drop=None, to_keep=None):
 # then, check if the file exists:
 #  - if IS_T3, use os.path.isfile
 #  - else, use lcg-ls
-def stageout(outdir,outfilename,infilename='output.root'):
-    if IS_T3:
-        mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
-    else:
-        mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
-        #mvargs = 'gfal-copy $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
-    PInfo(sname+'.stageout',mvargs)
-    ret = system(mvargs)
-    if not ret:
-        PInfo(sname+'.stageout','Move exited with code %i'%ret)
-    else:
-        PError(sname+'.stageout','Move exited with code %i'%ret)
-        return ret
-    if IS_T3:
-        if not path.isfile('%s/%s'%(outdir,outfilename)):
-            PError(sname+'.stageout','Output file is missing!')
-            ret = 1
-    else:
-        lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
-        PInfo(sname+'.stageout',lsargs)
-        ret = system(lsargs)
-        if ret:
-            PError(sname+'.stageout','Output file is missing!')
+def stageout(outdir,outfilename,infilename='output.root',n_attempts=3):
+    timeout = 300
+    ret = -1
+    for i_attempt in xrange(n_attempts):
+        failed = False
+        if IS_T3:
+            mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
+        else:
+            #mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
+            mvargs = 'gfal-copy --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
+        PInfo(sname+'.stageout',mvargs)
+        ret = system(mvargs)
+        if not ret:
+            PInfo(sname+'.stageout','Move exited with code %i'%ret)
+        else:
+            PError(sname+'.stageout','Move exited with code %i'%ret)
+            failed = True
+        if not failed:
+            if IS_T3:
+                if not path.isfile('%s/%s'%(outdir,outfilename)):
+                    PError(sname+'.stageout','Output file is missing!')
+                    failed = True
+            else:
+                #lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+                lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+                PInfo(sname+'.stageout',lsargs)
+                ret = system(lsargs)
+                if ret:
+                    PError(sname+'.stageout','Output file is missing!')
+                    failed = True
+        if not failed:
+            PInfo(sname+'.stageout', 'Copy succeeded after %i attempts'%(i_attempt))
+            return ret
+        else:
+            timeout *= 2
+    PError(sname+'.stagoeut', 'Copy failed after %i attempts'%(n_attempts))
     return ret
 
 

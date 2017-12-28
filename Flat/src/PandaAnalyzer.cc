@@ -193,11 +193,13 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
       sdZcut = 0.1;
       sdBeta = 0.;
       jetDef = new fastjet::JetDefinition(fastjet::antikt_algorithm,radius);
+      jetDefKt = new fastjet::JetDefinition(fastjet::kt_algorithm,radius);
     } else {
       radius = 1.5;
       sdZcut = 0.15;
       sdBeta = 1.;
       jetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm,radius);
+      jetDefKt = new fastjet::JetDefinition(fastjet::kt_algorithm,radius);
     }
     softDrop = new fastjet::contrib::SoftDrop(sdBeta,sdZcut,radius);
   } else { 
@@ -282,6 +284,7 @@ void PandaAnalyzer::Terminate()
   delete activeArea;
   delete areaDef;
   delete jetDef;
+  delete jetDefKt;
   delete jetDefGen;
   delete softDrop;
 
@@ -439,27 +442,6 @@ void PandaAnalyzer::SetDataDir(const char *s)
     OpenCorrection(cVBFTight_ZllNLO,dirPath+"vbf16/kqcd/mjj/merged_zll.root","h_kfactors_cc",1);
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded VBF k factors");
-    /*
-    TFile *fKFactor_VBFZ = new TFile(dirPath+"vbf16/kqcd/kfactor_VBF_zjets_v2.root");
-    h1Corrs[cVBF_ZNLO] = new THCorr1((TH1D*)fKFactor_VBFZ->Get("bosonPt_NLO_vbf_relaxed"));
-    h1Corrs[cVBF_ZNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFZ->Get("bosonPt_LO_vbf_relaxed"));
-    h1Corrs[cVBF_ZNLO]->GetHist()->Multiply((TH1D*)fKFactor_VBFZ->Get("bosonPt_LO_monojet"));
-    h1Corrs[cVBF_ZNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFZ->Get("bosonPt_NLO_monojet"));
-    h1Corrs[cVBFTight_ZNLO] = new THCorr1((TH1D*)fKFactor_VBFZ->Get("bosonPt_NLO_vbf"));
-    h1Corrs[cVBFTight_ZNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFZ->Get("bosonPt_LO_vbf"));
-    h1Corrs[cVBFTight_ZNLO]->GetHist()->Multiply((TH1D*)fKFactor_VBFZ->Get("bosonPt_LO_monojet"));
-    h1Corrs[cVBFTight_ZNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFZ->Get("bosonPt_NLO_monojet"));
-
-    TFile *fKFactor_VBFW = new TFile(dirPath+"vbf16/kqcd/kfactor_VBF_wjets_v2.root");
-    h1Corrs[cVBF_WNLO] = new THCorr1((TH1D*)fKFactor_VBFW->Get("bosonPt_NLO_vbf_relaxed"));
-    h1Corrs[cVBF_WNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFW->Get("bosonPt_LO_vbf_relaxed"));
-    h1Corrs[cVBF_WNLO]->GetHist()->Multiply((TH1D*)fKFactor_VBFW->Get("bosonPt_LO_monojet"));
-    h1Corrs[cVBF_WNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFW->Get("bosonPt_NLO_monojet"));
-    h1Corrs[cVBFTight_WNLO] = new THCorr1((TH1D*)fKFactor_VBFW->Get("bosonPt_NLO_vbf"));
-    h1Corrs[cVBFTight_WNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFW->Get("bosonPt_LO_vbf"));
-    h1Corrs[cVBFTight_WNLO]->GetHist()->Multiply((TH1D*)fKFactor_VBFW->Get("bosonPt_LO_monojet"));
-    h1Corrs[cVBFTight_WNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFW->Get("bosonPt_NLO_monojet"));
-    */
 
     OpenCorrection(cVBF_EWKZ,dirPath+"vbf16/kewk/kFactor_ZToNuNu_pT_Mjj.root",
                    "TH2F_kFactor",2);

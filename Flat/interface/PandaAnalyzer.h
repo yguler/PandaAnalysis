@@ -264,6 +264,7 @@ private:
     
     // fastjet reclustering
     fastjet::JetDefinition *jetDef=0;
+    fastjet::JetDefinition *jetDefKt=0;
     fastjet::contrib::SoftDrop *softDrop=0;
     fastjet::AreaDefinition *areaDef=0;
     fastjet::GhostedAreaSpec *activeArea=0;
@@ -358,7 +359,7 @@ private:
     float jetPtThreshold=30;
 
     std::vector<std::vector<float>> pfInfo;
-    float fjmsd, fjpt;
+    float fjmsd, fjpt, fjrawpt, fjeta, fjphi;
     
 };
 

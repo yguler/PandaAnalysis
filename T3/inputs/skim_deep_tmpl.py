@@ -23,6 +23,7 @@ from PandaAnalysis.Flat.analysis import gghbb
 
 deep_utils.STORE = True
 deep_utils.SAVE = True
+deep_utils.INFER = False
 
 Load('PandaAnalyzer')
 data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'

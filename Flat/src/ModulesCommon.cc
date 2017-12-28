@@ -29,6 +29,9 @@ void PandaAnalyzer::IncrementAuxFile(bool close)
   tAux->Branch("kinematics",&pfInfo);
   tAux->Branch("msd",&fjmsd,"msd/F");
   tAux->Branch("pt",&fjpt,"pt/F");
+  tAux->Branch("rawpt",&fjrawpt,"rawpt/F");
+  tAux->Branch("eta",&fjeta,"eta/F");
+  tAux->Branch("phi",&fjphi,"phi/F");
   tAux->Branch("eventNumber",&(gt->eventNumber),"eventNumber/l");
 
   fOut->cd();

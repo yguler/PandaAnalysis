@@ -109,7 +109,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
                                      "pfMet", "caloMet", "puppiMet", "rawMet", 
-                                     "recoil","metFilters"});
+                                     "recoil","metFilters","trkMet"});
   readlist.setVerbosity(0);
 
   if (analysis->ak8)
@@ -119,6 +119,9 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   
   if (analysis->recluster || analysis->bjetRegression || analysis->deep)
     readlist.push_back("pfCandidates");
+
+  if (analysis->bjetRegression)
+    readlist.push_back("secondaryVertices");
 
   if (isData) {
     readlist.push_back("triggers");

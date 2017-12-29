@@ -84,4 +84,7 @@ for i,c in enumerate(correlations):
         for f,n in files.iteritems():
             print '   ',f,n
     else:
-        print 'Failure class %i failed on %3i files, an average of %.1f times'%(i, len(files), float(sum(files.values())) / len(files) / 2) # each file appears in error logs twice
+        try:
+            print 'Failure class %i failed on %3i files, an average of %.1f times'%(i, len(files), float(sum(files.values())) / len(files) / 2) # each file appears in error logs twice
+        except ZeroDivisionError:
+            pass

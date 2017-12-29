@@ -24,9 +24,9 @@ echo -n "file length "
 wc -l local.cfg
 
 python -c "import sys; import socket; sys.stderr.write('hostname = '+socket.gethostname()+'\n');"
-hostname 
+hostname 1>&2
 
 python skim.py $@
 
 ls
-rm -rf $RELEASE skim.py x509up cmssw.tgz local.cfg *root
+rm -rf $RELEASE skim.py x509up cmssw.tgz local.cfg *root *npz

@@ -15,7 +15,7 @@ argv=[]
 import ROOT as root
 from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import *
-import PandaCore.Tools.job_management as cb
+import PandaCore.Tools.job_config as cb
 import PandaAnalysis.Tagging.cfg_v8 as tagcfg
 import PandaAnalysis.T3.job_utilities as utils
 import PandaAnalysis.T3.job_deep_utilities as deep_utils
@@ -77,7 +77,8 @@ if __name__ == "__main__":
         PError(sname,'Could not find a job for PROCID=%i'%(which))
         exit(3)
 
-    outdir = 'XXXX' # will be replaced when building the job
+    outdir = getenv('SUBMIT_OUTDIR')
+    lockdir = getenv('SUBMIT_LOCKDIR')  
     outfilename = to_run.name+'_%i.root'%(submit_id)
     processed = {}
     
@@ -97,13 +98,23 @@ if __name__ == "__main__":
         utils.stageout(outdir,outfilename.replace('.root','_arrays.root'),'arrays.root')
     utils.cleanup('*.root')
     if deep_utils.SAVE:
+        data = {}
         for f in glob('*npz'):
-            utils.stageout(outdir, f, f)
+            f_data = deep_utils.np.load(f)
+            for k,v in f_data.iteritems():
+                if k not in data:
+                    data[k] = [v]
+                else:
+                    data[k].append(v)
+        merged_data = {k : deep_utils.np.concatenate(v) for k,v in data.iteritems()}
+        deep_utils.np.savez('merged_arrays.npz', **merged_data)
+        utils.print_time('merging npz')
+        utils.stageout(outdir, outfilename.replace('.root', '.npz'), 'merged_arrays.npz')
         #    utils.stageout(outdir,outfilename.replace('.root','.npz'),'arrays.npz')
         utils.cleanup('*.npz')
     utils.print_time('stageout and cleanup')
     if not ret:
-        utils.write_lock(outdir,outfilename,processed)
+        utils.write_lock(lockdir,outfilename,processed)
         utils.cleanup('*.lock')
         utils.print_time('create lock')
     else:

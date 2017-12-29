@@ -38,7 +38,7 @@ def tree_to_arrays(infilepath, treename='inputs'):
 
 
 def normalize_arrays(data, infilepath):
-    if NORM:
+    if NORM and data['pt'].shape[0]:
         data['msd'] /= 300
         
         data['pt'] -= 400
@@ -62,7 +62,7 @@ def normalize_arrays(data, infilepath):
         data['pf'] /= sigma
 
     if SAVE:
-        np.savez(infilepath.replace('.root','npz'), **data)
+        np.savez(infilepath.replace('.root','.npz'), **data)
     
 
 def infer(data):
@@ -89,13 +89,14 @@ def run_model(infilepattern, outfilepath):
         data = tree_to_arrays(infilepath)
         normalize_arrays(data, infilepath)
         utils.print_time('preprocessing')
-        pred = infer(data)
-        predictions.append(pred)
+        if INFER:
+            pred = infer(data)
+            predictions.append(pred)
+            utils.print_time('inference')
         if not STORE:
             utils.cleanup(infilepath)
-        utils.print_time('inference')
     if INFER:
         pred = np.concatenate(predictions)
         arrays_to_tree(outfilepath, pred)
-    utils.print_time('saving prediction')
+        utils.print_time('saving prediction')
 

@@ -10,6 +10,9 @@ from re import sub as rsub
 import cPickle as pickle
 from itertools import chain 
 
+## TODO: matrix of errors correlated with
+## hosts where job was running
+
 logdir = getenv('SUBMIT_LOGDIR')
 workdir = getenv('SUBMIT_WORKDIR')
 parser = argparse.ArgumentParser(description='analyze log files')
@@ -87,4 +90,4 @@ for i,c in enumerate(correlations):
         try:
             print 'Failure class %i failed on %3i files, an average of %.1f times'%(i, len(files), float(sum(files.values())) / len(files) / 2) # each file appears in error logs twice
         except ZeroDivisionError:
-            pass
+            print 'Failure class %i failed on %3i jobs, but number of files is unknown'%(i, len(aggregates[list(c)[0]])) 

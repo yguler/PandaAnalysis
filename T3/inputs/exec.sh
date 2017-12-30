@@ -2,7 +2,6 @@
 
 WD=$PWD
 
-export SCRAM_ARCH=slc6_amd64_gcc630
 export VO_CMS_SW_DIR=/cvmfs/cms.cern.ch
 source $VO_CMS_SW_DIR/cmsset_default.sh
 
@@ -12,7 +11,7 @@ mv local*cfg local.cfg
 export X509_USER_PROXY=${PWD}/x509up
 export HOME=.
 
-RELEASE=CMSSW_9_3_0
+RELEASE=$CMSSW_VERSION
 scram p CMSSW $RELEASE
 tar xzf cmssw.tgz -C $RELEASE
 

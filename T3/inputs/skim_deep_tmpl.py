@@ -109,7 +109,7 @@ if __name__ == "__main__":
         merged_data = {k : deep_utils.np.concatenate(v) for k,v in data.iteritems()}
         deep_utils.np.savez('merged_arrays.npz', **merged_data)
         utils.print_time('merging npz')
-        utils.stageout(outdir, outfilename.replace('.root', '.npz'), 'merged_arrays.npz')
+        ret = max(ret, utils.stageout(outdir, outfilename.replace('.root', '.npz'), 'merged_arrays.npz'))
         #    utils.stageout(outdir,outfilename.replace('.root','.npz'),'arrays.npz')
         utils.cleanup('*.npz')
     utils.print_time('stageout and cleanup')

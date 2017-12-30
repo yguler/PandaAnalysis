@@ -56,7 +56,13 @@ fout = root.TFile.Open(getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/deep/flat
 fout.WriteTObject(h_inv, 'h_'+args.proc, 'overwrite')
 fout.Close()
 
+h_inv.Scale(h.Integral()/100.)
+
+fout = root.TFile.Open(getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/deep/flatten_scaled.root', 'UPDATE')
+fout.WriteTObject(h_inv, 'h_'+args.proc, 'overwrite')
+fout.Close()
+
+
 if args.plot:
     plot.AddHistogram(h_inv, '', 11, root.kBlue, "e hist")
     plot.Draw(args.plot, 'weight_'+args.proc)
-

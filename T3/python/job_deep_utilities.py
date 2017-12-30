@@ -91,7 +91,8 @@ def run_model(infilepattern, outfilepath):
         utils.print_time('preprocessing')
         if INFER:
             pred = infer(data)
-            predictions.append(pred)
+            if pred.shape[0]:
+                predictions.append(pred)
             utils.print_time('inference')
         if not STORE:
             utils.cleanup(infilepath)

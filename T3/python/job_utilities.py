@@ -162,7 +162,7 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=3):
             mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
         else:
             #mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
-            mvargs = 'gfal-copy --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
+            mvargs = 'gfal-copy -f -K --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
         PInfo(sname+'.stageout',mvargs)
         ret = system(mvargs)
         if not ret:

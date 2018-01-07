@@ -196,6 +196,7 @@ private:
     void IncrementAuxFile(bool close=false);
     void FatjetBasics();
     void FatjetMatching();
+    void FatjetPartons();
     void FatjetRecluster();
     void FillPFTree();
     void GenJetsNu();

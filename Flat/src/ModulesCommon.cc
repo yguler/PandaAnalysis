@@ -32,7 +32,21 @@ void PandaAnalyzer::IncrementAuxFile(bool close)
   tAux->Branch("rawpt",&fjrawpt,"rawpt/F");
   tAux->Branch("eta",&fjeta,"eta/F");
   tAux->Branch("phi",&fjphi,"phi/F");
+  tAux->Branch("rho",&(gt->fj1Rho),"rho/f");
+  tAux->Branch("rawrho",&(gt->fj1RawRho),"rawrho/f");
+  tAux->Branch("rho2",&(gt->fj1Rho2),"rho2/f");
+  tAux->Branch("rawrho2",&(gt->fj1RawRho2),"rawrho2/f");
+  tAux->Branch("nPartons",&(gt->fj1NPartons),"nPartons/I");
+  tAux->Branch("partonM",&(gt->fj1PartonM),"partonM/f");
+  tAux->Branch("partonPt",&(gt->fj1PartonPt),"partonPt/f");
+  tAux->Branch("partonEta",&(gt->fj1PartonEta),"partonEta/f");
+  tAux->Branch("tau32",&(gt->fj1Tau32),"tau32/f");
+  tAux->Branch("tau32SD",&(gt->fj1Tau32SD),"tau32SD/f");
+  tAux->Branch("tau21",&(gt->fj1Tau21),"tau21/f");
+  tAux->Branch("tau21SD",&(gt->fj1Tau21SD),"tau21SD/f");
   tAux->Branch("eventNumber",&(gt->eventNumber),"eventNumber/l");
+
+  gt->SetAuxTree(tAux);
 
   fOut->cd();
 }

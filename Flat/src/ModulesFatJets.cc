@@ -3,6 +3,7 @@
 #include "TMath.h"
 #include <algorithm>
 #include <vector>
+#include <unordered_set>
 
 #define EGMSCALE 1
 
@@ -14,7 +15,103 @@ struct JetHistory {
   int child_idx;
 };
 
-void PandaAnalyzer::FillPFTree() {
+
+void PandaAnalyzer::FatjetPartons() 
+{
+  gt->fj1NPartons = 0;
+  if (fj1) {
+    unsigned nP = 0;
+    double threshold = 0.2 * fj1->rawPt;
+
+    FatJet *my_fj = fj1; 
+    double dR2 = FATJETMATCHDR2; // put these guys in local scope
+
+    auto matchJet = [my_fj, dR2](const GenParticle &p) -> bool {
+      return DeltaR2(my_fj->eta(), my_fj->phi(), p.eta(), p.phi()) < dR2;
+    };
+
+    unordered_set<const panda::GenParticle*> partons; 
+    for (auto &gen : event.genParticles) {
+      unsigned apdgid = abs(gen.pdgid);
+      if (apdgid > 5 && 
+          apdgid != 21 &&
+          apdgid != 15 &&
+          apdgid != 11 && 
+          apdgid != 13)
+        continue; 
+
+      if (gen.pt() < threshold)
+        continue; 
+
+      if (!matchJet(gen))
+        continue;
+
+      const GenParticle *parent = &gen;
+      const GenParticle *foundParent = NULL;
+      while (parent->parent.isValid()) {
+        parent = parent->parent.get();
+        if (partons.find(parent) != partons.end()) {
+          foundParent = parent;
+          break;
+        }
+      }
+
+
+      GenParticle *dau1 = NULL, *dau2 = NULL;
+      for (auto &child : event.genParticles) {
+        if (!(child.parent.isValid() && 
+              child.parent.get() == &gen))
+          continue; 
+        
+        unsigned child_apdgid = abs(child.pdgid);
+        if (child_apdgid > 5 && 
+            child_apdgid != 21 &&
+            child_apdgid != 15 &&
+            child_apdgid != 11 && 
+            child_apdgid != 13)
+          continue; 
+
+        if (dau1)
+          dau2 = &child;
+        else
+          dau1 = &child;
+
+        if (dau1 && dau2)
+          break;
+      }
+
+      if (dau1 && dau2 && 
+          dau1->pt() > threshold && dau2->pt() > threshold && 
+          matchJet(*dau1) && matchJet(*dau2)) {
+        if (foundParent) {
+          partons.erase(partons.find(foundParent));
+        }
+        partons.insert(dau1);
+        partons.insert(dau2);
+      } else if (foundParent) {
+        continue; 
+      } else {
+        partons.insert(&gen);
+      }
+    }
+
+    gt->fj1NPartons = partons.size();
+    TLorentzVector vPartonSum;
+    TLorentzVector vTmp;
+    for (auto *p : partons) {
+      vTmp.SetPtEtaPhiM(p->pt(), p->eta(), p->phi(), p->m());
+      vPartonSum += vTmp;
+    }
+    gt->fj1PartonM = vPartonSum.M();
+    gt->fj1PartonPt = vPartonSum.Pt();
+    gt->fj1PartonEta = vPartonSum.Eta();
+  }
+
+}
+
+
+void PandaAnalyzer::FillPFTree() 
+{
   // this function saves the PF information of the leading fatjet
   // to a compact 2D array, that is eventually saved to an auxillary
   // tree/file. this is used as temporary input to the inference step
@@ -37,6 +134,11 @@ void PandaAnalyzer::FillPFTree() {
   fjeta = fj1->eta();
   fjphi = fj1->phi();
   fjrawpt = fj1->rawPt;
+
+  gt->fj1Rho = TMath::Log(TMath::Power(fjmsd,2) / fjpt);
+  gt->fj1RawRho = TMath::Log(TMath::Power(fjmsd,2) / fjrawpt);
+  gt->fj1Rho2 = TMath::Log(TMath::Power(fjmsd,2) / TMath::Power(fjpt,2));
+  gt->fj1RawRho2 = TMath::Log(TMath::Power(fjmsd,2) / TMath::Power(fjrawpt,2));
 
   if (analysis->deepKtSort) {
     VPseudoJet particles = ConvertPFCands(fj1->constituents,analysis->puppi_jets,0.001);

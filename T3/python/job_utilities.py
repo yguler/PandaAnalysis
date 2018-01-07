@@ -4,7 +4,7 @@ import json
 import socket
 from re import sub
 from sys import exit
-from time import clock,time
+from time import clock,time,sleep
 from os import system,getenv,path
 
 import ROOT as root
@@ -162,7 +162,7 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=3):
             mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
         else:
             #mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
-            mvargs = 'gfal-copy -f -K --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
+            mvargs = 'gfal-copy -f --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
         PInfo(sname+'.stageout',mvargs)
         ret = system(mvargs)
         if not ret:
@@ -170,13 +170,14 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=3):
         else:
             PError(sname+'.stageout','Move exited with code %i'%ret)
             failed = True
-        if not failed:
+        if not failed and False:
             if IS_T3:
                 if not path.isfile('%s/%s'%(outdir,outfilename)):
                     PError(sname+'.stageout','Output file is missing!')
                     failed = True
             else:
                 #lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+                sleep(10)
                 lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
                 PInfo(sname+'.stageout',lsargs)
                 ret = system(lsargs)

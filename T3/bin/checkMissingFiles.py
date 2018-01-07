@@ -12,6 +12,7 @@ from itertools import chain
 from query import query
 from time import time, sleep, strftime
 import curses
+from submit import main as resubmit
 
 lockdir = getenv('SUBMIT_LOCKDIR')
 workdir = getenv('SUBMIT_WORKDIR')
@@ -25,6 +26,7 @@ parser.add_argument('--width',type=int,default=None)
 parser.add_argument('--silent',action='store_true')
 parser.add_argument('--verbose',action='store_true')
 parser.add_argument('--monitor',type=int,default=None)
+parser.add_argument('--resubmit',action='store_true')
 args = parser.parse_args()
 lockdir = args.lockdir
 
@@ -346,6 +348,9 @@ def main(stdscr=None):
                 sys.stdout.write('\n'.join(msg))
 
             last_lock = int(time())
+
+            if args.resubmit and len(merged_samples):
+                resubmit()
 
 
         if args.monitor:

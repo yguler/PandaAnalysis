@@ -28,6 +28,26 @@ deep_utils.INFER = False
 Load('PandaAnalyzer')
 data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'
 
+class BDTAdder(object):
+    def __init__(self):
+        Load('TMVABranchAdder')
+        self.ba = root.TMVABranchAdder()
+        self.ba.defaultValue = -1.2
+        self.ba.presel = 'fj1ECFN_2_4_20>0'
+        for v in tagcfg.variables:
+            self.ba.AddVariable(v[0],v[2])
+        for v in tagcfg.formulae:
+            self.ba.AddFormula(v[0],v[2])
+        for s in tagcfg.spectators:
+            self.ba.AddSpectator(s[0])
+        self.ba.BookMVA('top_ecf_bdt',data_dir+'/trainings/top_ecfbdt_v8_BDT.weights.xml')
+    def __call__(self, fname='output.root', tname='events'):
+        # now run the BDT
+        self.ba.treename = tname
+        self.ba.RunFile(fname)
+
+add_bdt = BDTAdder() #backwards compatability
+
 def fn(input_name, isData, full_path):
     
     PInfo(sname+'.fn','Starting to process '+input_name)
@@ -45,25 +65,10 @@ def fn(input_name, isData, full_path):
     outpath = utils.run_PandaAnalyzer(skimmer, isData, input_name)
     if not outpath:
         return False 
+    for f in glob('*_pf_*.root'):
+        add_bdt(f, 'inputs')
     deep_utils.run_model(outpath.replace('.root','_pf_%i.root'), outpath)
     return True
-
-
-def add_bdt():
-    # now run the BDT
-    Load('TMVABranchAdder')
-    ba = root.TMVABranchAdder()
-    ba.treename = 'events'
-    ba.defaultValue = -1.2
-    ba.presel = 'fj1ECFN_2_4_20>0'
-    for v in tagcfg.variables:
-        ba.AddVariable(v[0],v[2])
-    for v in tagcfg.formulae:
-        ba.AddFormula(v[0],v[2])
-    for s in tagcfg.spectators:
-        ba.AddSpectator(s[0])
-    ba.BookMVA('top_ecf_bdt',data_dir+'/trainings/top_ecfbdt_v8_BDT.weights.xml')
-    ba.RunFile('output.root')
 
 
 if __name__ == "__main__":
@@ -85,7 +90,7 @@ if __name__ == "__main__":
     utils.main(to_run, processed, fn)
 
     utils.hadd(processed.keys())
-    if deep_utils.STORE:
+    if deep_utils.STORE and False:
         utils.hadd([x.replace('output_','') for x in glob('*pf*.root')], 'arrays.root')
         utils.cleanup('*pf*.root')
     utils.print_time('hadd')
@@ -94,7 +99,7 @@ if __name__ == "__main__":
     utils.print_time('bdt')
 
     ret = utils.stageout(outdir,outfilename)
-    if deep_utils.STORE:
+    if deep_utils.STORE and False:
         utils.stageout(outdir,outfilename.replace('.root','_arrays.root'),'arrays.root')
     utils.cleanup('*.root')
     if deep_utils.SAVE:
@@ -103,14 +108,15 @@ if __name__ == "__main__":
             f_data = deep_utils.np.load(f)
             for k,v in f_data.iteritems():
                 if k not in data:
-                    data[k] = [v]
-                else:
+                    data[k] = []
+                if v.shape[0] > 0:
                     data[k].append(v)
-        merged_data = {k : deep_utils.np.concatenate(v) for k,v in data.iteritems()}
-        deep_utils.np.savez('merged_arrays.npz', **merged_data)
-        utils.print_time('merging npz')
-        ret = max(ret, utils.stageout(outdir, outfilename.replace('.root', '.npz'), 'merged_arrays.npz'))
-        #    utils.stageout(outdir,outfilename.replace('.root','.npz'),'arrays.npz')
+        if len(data['pt']) > 0:
+            merged_data = {k : deep_utils.np.concatenate(v) for k,v in data.iteritems()}
+            deep_utils.np.savez('merged_arrays.npz', **merged_data)
+            utils.print_time('merging npz')
+            ret = max(ret, utils.stageout(outdir, outfilename.replace('.root', '.npz'), 'merged_arrays.npz'))
+            #    utils.stageout(outdir,outfilename.replace('.root','.npz'),'arrays.npz')
         utils.cleanup('*.npz')
     utils.print_time('stageout and cleanup')
     if not ret:

@@ -1103,6 +1103,7 @@ void PandaAnalyzer::Run()
       continue;
 
     if (analysis->deep) {
+      FatjetPartons();
       FillPFTree();
       tAux->Fill();
       if (tAux->GetEntriesFast() == 2500)

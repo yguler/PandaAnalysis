@@ -18,5 +18,6 @@ mkdir -p $SUBMIT_WORKDIR $SUBMIT_OUTDIR $SUBMIT_LOGDIR $SUBMIT_LOCKDIR
 
 export SUBMIT_CONFIG=T2
 
-export SUBMIT_NPY="/mnt/hadoop/scratch/snarayan/deep/"${SUBMIT_NAME}"/"
+#export SUBMIT_NPY="/mnt/hadoop/scratch/snarayan/deep/"${SUBMIT_NAME}"/"
+export SUBMIT_NPY="/data/t3serv014/snarayan/deep/"${SUBMIT_NAME}"/"
 mkdir -p $SUBMIT_NPY/train $SUBMIT_NPY/test $SUBMIT_NPY/validate

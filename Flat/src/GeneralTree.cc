@@ -81,6 +81,17 @@ GeneralTree::~GeneralTree() {
 //ENDCUSTOMDEST
 }
 
+void GeneralTree::SetAuxTree(TTree *t) {
+//STARTCUSTOMAUX
+  for (auto p : ecfParams) { 
+    TString ecfn(makeECFString(p));
+    t->Branch("fj1"+ecfn,&(fj1ECFNs[p]),"fj1"+ecfn+"/F");
+  }
+  t->Branch("fj1Tau32SD",&(fj1Tau32SD),"fj1Tau32SD/F");
+  t->Branch("fj1HTTFRec",&(fj1HTTFRec),"fj1HTTFRec/F");
+//ENDCUSTOMAUX
+}
+
 void GeneralTree::Reset() {
 //STARTCUSTOMRESET
   for (unsigned iS=0; iS!=6; ++iS) {
@@ -192,6 +203,14 @@ void GeneralTree::Reset() {
   }
 
 //ENDCUSTOMRESET
+    fj1Rho2 = -1;
+    fj1RawRho2 = -1;
+    fj1Rho = -1;
+    fj1RawRho = -1;
+    fj1NPartons = 0;
+    fj1PartonM = -1;
+    fj1PartonPt = -1;
+    fj1PartonEta = -1;
     trkmetphi = -1;
     sf_zzUnc = 1;
     sf_zz = 1;
@@ -786,6 +805,14 @@ void GeneralTree::WriteTree(TTree *t) {
     }
   }
 //ENDCUSTOMWRITE
+    Book("fj1Rho2",&fj1Rho2,"fj1Rho2/F");
+    Book("fj1RawRho2",&fj1RawRho2,"fj1RawRho2/F");
+    Book("fj1Rho",&fj1Rho,"fj1Rho/F");
+    Book("fj1RawRho",&fj1RawRho,"fj1RawRho/F");
+    Book("fj1NPartons",&fj1NPartons,"fj1NPartons/I");
+    Book("fj1PartonM",&fj1PartonM,"fj1PartonM/F");
+    Book("fj1PartonPt",&fj1PartonPt,"fj1PartonPt/F");
+    Book("fj1PartonEta",&fj1PartonEta,"fj1PartonEta/F");
     Book("trkmetphi",&trkmetphi,"trkmetphi/F");
     Book("whichRecoil",&whichRecoil,"whichRecoil/I");
     Book("genJet1Pt",&genJet1Pt,"genJet1Pt/F");

@@ -3,10 +3,13 @@
 from sys import argv, exit
 import numpy as np 
 from os import getenv, system
-from PandaCore.Tools.Misc import PInfo 
+from PandaCore.Tools.Misc import PInfo, PDebug 
 from glob import glob 
 
-singletons = ['rawpt', 'pt', 'msd', 'eta']
+singletons = ['msd','pt', 'rawpt', 'eta', 'phi',
+                'partonM', 'partonPt', 'partonEta',
+                'rho','rawrho','rho2','rawrho2']
+truth = 'nPartons'
 events = ['eventNumber']
 fractions = {'train':0.7, 'test':0.15}
 fcfg = open(argv[1])
@@ -15,6 +18,19 @@ outdir = getenv('SUBMIT_NPY')
 datadir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/deep/'
 me = argv[0]
 argv = []
+
+n_partons_proc = {
+        'QCD'   : 1,
+        'ZpTT'  : 3,
+        'ZpWW'  : 2,
+        'ZpA0h' : 2,
+        }
+n_partons = 1
+for k,v in n_partons_proc.iteritems():
+    if k in name:
+        n_partons = v
+        break
+
 
 import ROOT as root 
 f_pt = root.TFile.Open(datadir + 'flatten.root')
@@ -25,11 +41,12 @@ h_pt_scaled = f_pt_scaled.Get('h_%s'%(name.split('_')[0]))
 data = {}
 for fpath in fcfg.readlines():
     d = np.load(fpath.strip())
+    mask = (d['nPartons'] == n_partons)
     for k,v in d.iteritems():
         if v.shape[0]:
             if k not in data:
                 data[k] = []
-            data[k].append(v)
+            data[k].append(v[mask])
 
 if not len(data):
     PInfo(me, 'This was an empty config!')
@@ -38,11 +55,17 @@ if not len(data):
 for k,v in data.iteritems():
     data[k] = np.concatenate(v)
 
+if not data['pt'].shape[0]:
+    PInfo(me, 'Nothing passed the mask')
+    exit(0)
+
 def reweight(x_pt):
+#    x_pt = 400 + (600 * x_pt)
     return h_pt.GetBinContent(h_pt.FindBin(x_pt))
 reweight = np.vectorize(reweight)
 
 def reweight_s(x_pt):
+#    x_pt = 400 + (600 * x_pt)
     return h_pt_scaled.GetBinContent(h_pt_scaled.FindBin(x_pt))
 reweight_s = np.vectorize(reweight_s)
 
@@ -66,10 +89,16 @@ def dump(idx, partition):
     d = data['pf'][idx, :, :]
     np.save(outpath%'pf', d)
 
+    # pf
+    d = data[truth][idx]
+    np.save(outpath%'truth', d)
+
     # pt weights
-    d = [data['ptweight'][idx], data['ptweight_scaled'][idx]]
-    d = np.vstack(d).T
+    d = data['ptweight'][idx]
     np.save(outpath%'ptweight', d)
+
+    d = data['ptweight_scaled'][idx]
+    np.save(outpath%'ptweight_scaled', d)
     
 
 indices = range(data['eventNumber'].shape[0])
@@ -84,11 +113,14 @@ dump(indices[:N['train']], 'train')
 dump(indices[N['train']:N['train']+N['test']], 'test')
 dump(indices[N['train']+N['test']:], 'validate')
 
+ret = None
 for d in ['train', 'test', 'validate']:
     for ftmp in glob('tmp/'+d+'/*npy'):
         cmd = 'cp -v %s %s/%s'%(ftmp,outdir,ftmp.replace('tmp/',''))
         # cmd = 'gfal-copy -f file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(ftmp,outdir,ftmp.replace('tmp/',''))
         PInfo(me, cmd)
-        system(cmd)
+        ret = max(ret, system(cmd))
 
-# system('rm -rf tmp')
+system('rm -rf tmp')
+PDebug(me, 'exit code %i'%ret)
+exit(ret)

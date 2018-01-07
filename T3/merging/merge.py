@@ -155,7 +155,7 @@ d = {
     'SingleTop'           : ['SingleTop_tT','SingleTop_tTbar','SingleTop_tbarW','SingleTop_tW',
                              'SingleTop_tZll','SingleTop_tZnunu'],
     'SingleTop_tG'        : ['SingleTop_tG'],
-    'QCD'                 : ['QCD_ht100to200','QCD_ht200to300','QCD_ht300to500','QCD_ht500to700',
+    'QCD'                 : ['QCD_ht300to500','QCD_ht500to700',
                              'QCD_ht700to1000','QCD_ht1000to1500','QCD_ht1500to2000','QCD_ht2000toinf'],
     'MET'                 : ['MET'],
     'SingleElectron'      : ['SingleElectron'],

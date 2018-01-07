@@ -26,7 +26,11 @@ def tree_to_arrays(infilepath, treename='inputs'):
     f = root.TFile(infilepath)
     t = f.Get(treename)
     data = {}
-    branches = ['msd','pt', 'rawpt', 'eta', 'phi',  'eventNumber']
+    branches = ['msd','pt', 'rawpt', 'eta', 'phi',  'eventNumber',
+                'partonM', 'partonPt', 'partonEta', 'nPartons',
+                'rho','rawrho','rho2','rawrho2',
+                'tau32','tau32SD','tau21','tau21SD',
+                'top_ecf_bdt']
     singletons = r.read_tree(t, branches=branches)
     for k in branches:
         data[k] = singletons[k]
@@ -39,13 +43,13 @@ def tree_to_arrays(infilepath, treename='inputs'):
 
 def normalize_arrays(data, infilepath):
     if NORM and data['pt'].shape[0]:
-        data['msd'] /= 300
-        
-        data['pt'] -= 400
-        data['pt'] /= (1000-400)
+        # data['msd'] /= 300
+        # 
+        # data['pt'] -= 400
+        # data['pt'] /= (1000-400)
 
-        data['rawpt'] -= 400
-        data['rawpt'] /= (1000-400)
+        # data['rawpt'] -= 400
+        # data['rawpt'] /= (1000-400)
 
         payload = json.load(open(cmssw_base + '/src/PandaAnalysis/data/deep/QCD_1_inclusive.json'))
         mu = []; sigma = []
@@ -97,7 +101,10 @@ def run_model(infilepattern, outfilepath):
         if not STORE:
             utils.cleanup(infilepath)
     if INFER:
-        pred = np.concatenate(predictions)
+        if predicitions:
+            pred = np.concatenate(predictions)
+        else:
+            pred = np.array([])
         arrays_to_tree(outfilepath, pred)
         utils.print_time('saving prediction')
 

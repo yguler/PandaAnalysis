@@ -60,7 +60,7 @@ def fn(input_name, isData, full_path):
     skimmer.isData=isData
     processType = utils.classify_sample(full_path, isData)
     skimmer.processType=processType 
-    skimmer.SetPreselectionBit(root.PandaAnalyzer.kFatjet)
+    skimmer.SetPreselectionBit(root.PandaAnalyzer.kFatjet450)
 
     outpath = utils.run_PandaAnalyzer(skimmer, isData, input_name)
     if not outpath:
@@ -97,6 +97,9 @@ if __name__ == "__main__":
 
     add_bdt()
     utils.print_time('bdt')
+
+    utils.record_inputs('output.root',processed)
+    utils.print_time('record inputs')
 
     ret = utils.stageout(outdir,outfilename)
     if deep_utils.STORE and False:

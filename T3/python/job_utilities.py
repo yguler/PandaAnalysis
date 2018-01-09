@@ -204,6 +204,16 @@ def write_lock(outdir,outfilename,processed):
     stageout(outdir,outfilename,outfilename)
 
 
+# make a record in the primary output of what
+# inputs went into it
+def record_inputs(outfilename,processed):
+    fout = root.TFile.Open(outfilename,'UPDATE')
+    names = root.TNamed('record',
+                        ','.join(processed.values()))
+    fout.WriteTObject(names)
+    fout.Close()
+
+
 # classify a sample based on its name
 def classify_sample(full_path, isData):
     if not isData:

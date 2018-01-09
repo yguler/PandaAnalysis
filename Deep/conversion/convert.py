@@ -7,8 +7,10 @@ from PandaCore.Tools.Misc import PInfo, PDebug
 from glob import glob 
 
 singletons = ['msd','pt', 'rawpt', 'eta', 'phi',
-                'partonM', 'partonPt', 'partonEta',
-                'rho','rawrho','rho2','rawrho2']
+                'partonM', 'partonPt', 'partonEta', 'nPartons',
+                'rho','rawrho','rho2','rawrho2',
+                'tau32','tau32SD','tau21','tau21SD',
+                'top_ecf_bdt']
 truth = 'nPartons'
 events = ['eventNumber']
 fractions = {'train':0.7, 'test':0.15}
@@ -16,7 +18,7 @@ fcfg = open(argv[1])
 name = '_'.join(argv[1].split('/')[-2:]).replace('.txt','')
 outdir = getenv('SUBMIT_NPY')
 datadir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/deep/'
-me = argv[0]
+me = argv[0].split('/')[-1]
 argv = []
 
 n_partons_proc = {
@@ -70,8 +72,8 @@ def reweight_s(x_pt):
 reweight_s = np.vectorize(reweight_s)
 
 
-data['ptweight'] = reweight(data['pt'])
-data['ptweight_scaled'] = reweight_s(data['pt'])
+data['ptweight'] = reweight(data['rawpt'])
+data['ptweight_scaled'] = reweight_s(data['rawpt'])
 
 
 def dump(idx, partition):
@@ -101,7 +103,12 @@ def dump(idx, partition):
     np.save(outpath%'ptweight_scaled', d)
     
 
-indices = range(data['eventNumber'].shape[0])
+
+pt = data['rawpt']
+mask = np.logical_and(pt > 450, pt < 1200)
+
+indices = np.array(range(data['eventNumber'].shape[0]))
+indices = indices[mask] # only within pT window
 np.random.shuffle(indices)
 
 N = {k:int(len(indices) * v) for k,v in fractions.iteritems()}

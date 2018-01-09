@@ -118,7 +118,7 @@ void PandaAnalyzer::FillPFTree()
   // which then adds a separate tree to the main output. ideally,
   // this is integrated by use of e.g. lwtnn, but there is a bit of
   // development needed to support our networks. for the time being
-  // we do it this way. -SN
+  // we do it this way. -SMN
   fjpt = -1; fjmsd = -1;
   for (unsigned i = 0; i != NMAXPF; ++i) {
     for (unsigned j = 0; j != NPFPROPS; ++j) {
@@ -208,7 +208,7 @@ void PandaAnalyzer::FillPFTree()
 
 }
 
-float PandaAnalyzer::GetMSDCorr(Float_t puppipt, Float_t puppieta) 
+float PandaAnalyzer::GetMSDCorr(float puppipt, float puppieta) 
 {
 
   float genCorr  = 1.;
@@ -216,7 +216,7 @@ float PandaAnalyzer::GetMSDCorr(Float_t puppipt, Float_t puppieta)
   float totalWeight = 1.;
 
   genCorr = puppisd_corrGEN->Eval( puppipt );
-  if( fabs(puppieta) <= 1.3 ){
+  if(fabs(puppieta) <= 1.3){
     recoCorr = puppisd_corrRECO_cen->Eval( puppipt );
   }
   else{

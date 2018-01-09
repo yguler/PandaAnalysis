@@ -54,9 +54,10 @@ public :
      kVBF        =(1<<5),
      kRecoil     =(1<<6),
      kFatjet     =(1<<7),
-     kRecoil50   =(1<<8),
-     kGenBosonPt =(1<<9),
-     kVHBB       =(1<<10)
+     kFatjet450  =(1<<8),
+     kRecoil50   =(1<<9),
+     kGenBosonPt =(1<<10),
+     kVHBB       =(1<<11)
     };
     
     enum LepSelectionBit {
@@ -201,7 +202,7 @@ private:
     void FillPFTree();
     void GenJetsNu();
     void GenStudyEWK();
-    float GetMSDCorr(Float_t puppipt, Float_t puppieta); // @bmaier: please refactor this
+    float GetMSDCorr(float, float); 
     void HeavyFlavorCounting();
     void IsoJet(panda::Jet&);
     void JetBRegressionInfo(panda::Jet&);

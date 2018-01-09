@@ -35,7 +35,7 @@ t = f.Get('events')
 
 s = Selector()
 
-s.read_tree(t, branches = ['fj1RawPt'], cut = 'fj1RawPt>450 && fj1RawPt<1500')
+s.read_tree(t, branches = ['fj1RawPt'], cut = 'fj1RawPt>450 && fj1RawPt<1200')
 
 h = s.draw('fj1RawPt', fbins = binning)
 

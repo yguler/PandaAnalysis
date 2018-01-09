@@ -38,6 +38,8 @@ system('mkdir -p /tmp/%s/merged'%user) # tmp dir
 inbase = environ['SUBMIT_OUTDIR']
 outbase = environ['PANDA_FLATDIR']
 
+hadd_cmd = 'hadd -k -f '
+
 if VERBOSE:
     suffix = ''
 else:
@@ -47,7 +49,7 @@ def hadd(inpath,outpath):
     if type(inpath)==type('str'):
         infiles = glob(inpath)
         PInfo(sname,'hadding %s into %s'%(inpath,outpath))
-        cmd = 'hadd -k -ff -n 100 -f %s %s %s'%(outpath,inpath,suffix)
+        cmd = '%s %s %s %s'%(hadd_cmd, outpath,inpath,suffix)
         system(cmd)
         return
     else:
@@ -58,7 +60,7 @@ def hadd(inpath,outpath):
     elif len(infiles)==1:
         cmd = 'mv %s %s'%(infiles[0],outpath)
     else:
-        cmd = 'hadd -k -ff -n 100 -f %s '%outpath
+        cmd = '%s %s '%(hadd_cmd, outpath)
         for f in infiles:
             if path.isfile(f):
                 cmd += '%s '%f

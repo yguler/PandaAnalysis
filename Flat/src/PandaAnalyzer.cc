@@ -643,6 +643,11 @@ bool PandaAnalyzer::PassPreselection()
       isGood = true;
   }
 
+  if (preselBits & kFatjet450) {
+    if (gt->fj1RawPt>400 && gt->fj1MSD>10)
+      isGood = true;
+  }
+
   float max_puppi = std::max({gt->puppimet, gt->puppiUZmag, gt->puppiUWmag, gt->puppiUAmag});
   float max_pf = std::max({gt->pfmet, gt->pfUZmag, gt->pfUWmag, gt->pfUAmag});
   float max_pfUp = std::max({gt->pfmetUp, gt->pfUZmagUp, gt->pfUWmagUp, gt->pfUAmagUp});

@@ -667,7 +667,7 @@ bool PandaAnalyzer::PassPreselection()
     }
   }
 
-<<<<<<< HEAD
+
   if (preselBits & kVHBB) {
     double bestMet = TMath::Max(TMath::Max(gt->pfmetUp, gt->pfmetDown), gt->pfmet);
     double bestLeadingJet = TMath::Max(TMath::Max(gt->jet1PtUp, gt->jet1PtDown), gt->jet1Pt);

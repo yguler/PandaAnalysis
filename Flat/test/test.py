@@ -17,21 +17,14 @@ argv = []
 
 import ROOT as root
 from PandaCore.Tools.Load import *
-from PandaAnalysis.Flat.analysis import gghbb
+from PandaAnalysis.Flat.analysis import monoh
 
 Load('PandaAnalyzer')
 
 skimmer = root.PandaAnalyzer(debug_level)
-gghbb = gghbb()
-gghbb.reclusterGen = True
-gghbb.bjetRegression = True
-gghbb.hbb = True
-gghbb.btagWeights = True
-gghbb.btagSFs = True
-gghbb.useCMVA = True
-gghbb.processType = root.kTT
-gghbb.dump()
-skimmer.SetAnalysis(gghbb)
+monoh = monoh()
+skimmer.SetAnalysis(monoh)
+skimmer.SetPreselectionBit(root.PandaAnalyzer.kMonohiggs)
 
 skimmer.firstEvent=0
 skimmer.lastEvent=1000

@@ -156,8 +156,9 @@ def stageout(outdir,outfilename,infilename='output.root'):
     if IS_T3:
         mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
     else:
-        mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
+        #mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
         #mvargs = 'gfal-copy $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
+        mvargs = 'xrdcp $PWD/output.root root://cmseos.fnal.gov/%s/%s'%(outdir,outfilename)
     PInfo(sname+'.stageout',mvargs)
     ret = system(mvargs)
     if not ret:
@@ -170,7 +171,8 @@ def stageout(outdir,outfilename,infilename='output.root'):
             PError(sname+'.stageout','Output file is missing!')
             ret = 1
     else:
-        lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+        #lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+        lsargs = 'root://cmseos.fnal.gov/%s/%s'%(outdir,outfilename)
         PInfo(sname+'.stageout',lsargs)
         ret = system(lsargs)
         if ret:

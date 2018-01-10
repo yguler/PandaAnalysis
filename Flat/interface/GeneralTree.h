@@ -319,6 +319,8 @@ class GeneralTree : public genericTree {
     int looseGenLep2PdgId = -1;
     int looseGenLep3PdgId = -1;
     int looseGenLep4PdgId = -1;
+    int looseLep1PdgId = -1;
+    int looseLep2PdgId = -1;
     int whichRecoil = -1;
     float genJet1Pt = -1;
     float genJet2Pt = -1;
@@ -459,6 +461,8 @@ class GeneralTree : public genericTree {
     float puppiUpara = -1;
     float puppiUmag = -1;
     float puppiUphi = -1;
+    float puppiUWWmag = -1;
+    float puppiUWWphi = -1;
     float pfUWmag = -1;
     float pfUWphi = -1;
     float pfUZmag = -1;
@@ -474,6 +478,7 @@ class GeneralTree : public genericTree {
     float dphipfmet = -1;
     float dphipuppimet = -1;
     float dphipuppiUW = -1;
+    float dphipuppiUWW = -1;
     float dphipuppiUZ = -1;
     float dphipuppiUA = -1;
     float dphipfUW = -1;

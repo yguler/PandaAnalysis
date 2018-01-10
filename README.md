@@ -2,7 +2,7 @@
 
 # Backgrounds (Moriond17) and 2016 data processes cfg
 
-  http://t3serv001.mit.edu/~mcremone/eoscatalog/20170905.cfg
+  http://t3serv001.mit.edu/~snarayan/histcatalog/20170703.cfg
 
 # Photon backgrounds (Moriond17) and 2016 data processes cfg
 

@@ -40,18 +40,18 @@ public :
     // configuration enums
     enum PreselectionBit {
      kTriggers   =(1<<0),
-     kVBF        =(1<<1),
-     kRecoil     =(1<<2),
-     kLepton     =(1<<3)
+     kLepton     =(1<<1),
+     kLeptonFake =(1<<2)
     };
 
     enum SelectionBit {
-     kLoose    =(1<<0),
-     kFake     =(1<<1),
-     kMedium   =(1<<2),
-     kTight    =(1<<3),
-     kDxyz     =(1<<4),
-     kTrigger  =(1<<5)
+     kLoose       =(1<<0),
+     kFake        =(1<<1),
+     kMedium      =(1<<2),
+     kTight       =(1<<3),
+     kDxyz        =(1<<4),
+     kTrigger     =(1<<5),
+     kFakeTrigger =(1<<6)
     };
 
     enum ProcessType { 
@@ -77,7 +77,9 @@ public :
         kEGEGTrig      =(1<<5),
         kEGTrig        =(1<<6),
         kMuTagTrig     =(1<<7),
-        kEGTagTrig     =(1<<8)
+        kEGTagTrig     =(1<<8),
+        kMuFakeTrig    =(1<<9),
+        kEGFakeTrig    =(1<<10)
     };
 
     //////////////////////////////////////////////////////////////////////////////////////

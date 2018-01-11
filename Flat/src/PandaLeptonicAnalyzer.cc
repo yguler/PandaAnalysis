@@ -87,7 +87,7 @@ int PandaLeptonicAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber", "rho", 
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
-                                     "pfMet", "caloMet", "puppiMet", "rawMet", 
+                                     "pfMet", "caloMet", "puppiMet", "rawMet", "trkMet",
                                      "recoil","metFilters","genMet","superClusters", "vertices", "triggerObjects"});
   readlist.setVerbosity(0);
 
@@ -825,7 +825,6 @@ void PandaLeptonicAnalyzer::AddGoodLumiRange(int run, int l0, int l1) {
   }
 }
 
-
 bool PandaLeptonicAnalyzer::PassGoodLumis(int run, int lumi) {
   auto run_ = goodLumis.find(run);
   if (run_==goodLumis.end()) {
@@ -850,20 +849,33 @@ bool PandaLeptonicAnalyzer::PassGoodLumis(int run, int lumi) {
   return false;
 }
 
-
 bool PandaLeptonicAnalyzer::PassPreselection() {
-  
+
   if (preselBits==0)
     return true;
+
   bool isGood=false;
 
-  if (preselBits & kLepton) {
-    if     (gt->nLooseLep >= 2 && gt->looseLep1Pt > 20 && gt->looseLep2Pt > 20) isGood = true;
+  if     (preselBits & kLepton) {
+    if(gt->nLooseLep >= 2 && gt->looseLep1Pt > 20 && gt->looseLep2Pt > 20) isGood = true;
+  }
+  else if(preselBits & kLeptonFake) {
+    bool passFakeTrigger = (gt->trigger & kMuFakeTrig) == kMuFakeTrig || (gt->trigger & kEGFakeTrig) == kEGFakeTrig;
+    if(passFakeTrigger == true){
+      double mll = 0.0;
+      if(gt->nLooseLep == 2){
+        TLorentzVector lep1;
+        lep1.SetPtEtaPhiM(gt->looseLep1Pt,gt->looseLep1Eta,gt->looseLep1Phi,0.0);
+        TLorentzVector lep2;
+        lep2.SetPtEtaPhiM(gt->looseLep2Pt,gt->looseLep2Eta,gt->looseLep2Phi,0.0);
+	mll = (lep1 + lep2).M();
+      }
+      if(mll > 70.0 || gt->nLooseLep == 1) isGood = true;
+    }
   }
 
   return isGood;
 }
-
 
 void PandaLeptonicAnalyzer::CalcBJetSFs(BTagType bt, int flavor,
                 double eta, double pt, double eff, double uncFactor,
@@ -1006,9 +1018,11 @@ void PandaLeptonicAnalyzer::Run() {
   std::vector<unsigned int> mumuTriggers;
   std::vector<unsigned int> muTriggers;
   std::vector<unsigned int> muTagTriggers;
+  std::vector<unsigned int> muFakeTriggers;
   std::vector<unsigned int> egegTriggers;
   std::vector<unsigned int> egTriggers;
   std::vector<unsigned int> egTagTriggers;
+  std::vector<unsigned int> egFakeTriggers;
 
   if (1) {
     std::vector<TString> metTriggerPaths = {
@@ -1073,6 +1087,11 @@ void PandaLeptonicAnalyzer::Run() {
 	  "HLT_Mu50"
     };
 
+    std::vector<TString> muFakeTriggerPaths = {
+	  "HLT_Mu8_TrkIsoVV",
+	  "HLT_Mu17_TrkIsoVVL"
+    };
+
     std::vector<TString> egegTriggerPaths = {
 	  "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
 	  "HLT_DoubleEle24_22_eta2p1_WPLoose_Gsf"
@@ -1102,6 +1121,12 @@ void PandaLeptonicAnalyzer::Run() {
 	  "HLT_Ele27_eta2p1_WPLoose_Gsf"
     };
 
+    std::vector<TString> egFakeTriggerPaths = {
+          "HLT_Ele12_CaloIdL_TrackIdL_IsoVL_PFJet30",
+          "HLT_Ele17_CaloIdL_TrackIdL_IsoVL_PFJet30",
+          "HLT_Ele23_CaloIdL_TrackIdL_IsoVL_PFJet30"
+    };
+
     if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading MET triggers");
     for (auto path : metTriggerPaths) {
       RegisterTrigger(path,metTriggers);
@@ -1126,6 +1151,10 @@ void PandaLeptonicAnalyzer::Run() {
     for (auto path : muTagTriggerPaths) {
       RegisterTrigger(path,muTagTriggers);
     }
+    if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading MuFake triggers");
+    for (auto path : muFakeTriggerPaths) {
+      RegisterTrigger(path,muFakeTriggers);
+    }
     if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading EGEG triggers");
     for (auto path : egegTriggerPaths) {
       RegisterTrigger(path,egegTriggers);
@@ -1137,6 +1166,10 @@ void PandaLeptonicAnalyzer::Run() {
     if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading EGTag triggers");
     for (auto path : egTagTriggerPaths) {
       RegisterTrigger(path,egTagTriggers);
+    }
+    if (DEBUG>1) PDebug("PandaLeptonicAnalyzer::Run","Loading EGFake triggers");
+    for (auto path : egFakeTriggerPaths) {
+      RegisterTrigger(path,egFakeTriggers);
     }
 
   }
@@ -1236,6 +1269,12 @@ void PandaLeptonicAnalyzer::Run() {
       break;
      }
     }
+    for (auto iT : muFakeTriggers) {
+     if (event.triggerFired(iT)) {
+      gt->trigger |= kMuFakeTrig;
+      break;
+     }
+    }
     for (auto iT : egegTriggers) {
      if (event.triggerFired(iT)) {
       gt->trigger |= kEGEGTrig;
@@ -1251,6 +1290,12 @@ void PandaLeptonicAnalyzer::Run() {
     for (auto iT : egTagTriggers) {
      if (event.triggerFired(iT)) {
       gt->trigger |= kEGTagTrig;
+      break;
+     }
+    }
+    for (auto iT : egFakeTriggers) {
+     if (event.triggerFired(iT)) {
+      gt->trigger |= kEGFakeTrig;
       break;
      }
     }
@@ -1403,85 +1448,67 @@ void PandaLeptonicAnalyzer::Run() {
 
         isTrigger = isTrigger || mu->triggerMatch[panda::Muon::fIsoMu24] || mu->triggerMatch[panda::Muon::fIsoTkMu24] || mu->triggerMatch[panda::Muon::fIsoMu22er] || mu->triggerMatch[panda::Muon::fIsoTkMu22er] || mu->triggerMatch[panda::Muon::fMu50];
 
+	bool isFakeTrigger = false;
+        for (auto& trigObj : event.triggerObjects.filterObjects("hltL3fL1sMu5L1f0L2f5L3Filtered8TkIsoFiltered0p4")) { // HLT_Mu8_TrkIsoVVL
+         if (trigObj->pt() > 0 && mu->pt() > 0 && trigObj->dR(*mu) < 0.1) isFakeTrigger = true;
+        }
+	if(isFakeTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltL3fL1sMu1lqL1f0L2f10L3Filtered17TkIsoFiltered0p4")) { // HLT_Mu17_TrkIsoVVL
+           if (trigObj->pt() > 0 && mu->pt() > 0 && trigObj->dR(*mu) < 0.1) isFakeTrigger = true;
+          }
+	}
+
         if      (lep_counter==1) {
           gt->looseLep1SCEta = mu->pfPt; // sure, it is a hack!
           gt->looseLep1RegPt = mu->trkLayersWithMmt; // sure, it is a hack!
           gt->looseLep1SmePt = mu->pt();
           gt->looseLep1PdgId = mu->charge*-13;
-          if(isLoose)  gt->looseLep1SelBit |= kLoose;
-          if(isFake)   gt->looseLep1SelBit |= kFake;
-          if(isMedium) gt->looseLep1SelBit |= kMedium;
-          if(isTight)  gt->looseLep1SelBit |= kTight;
-          if(isDxyz)   gt->looseLep1SelBit |= kDxyz;
-          if(isTrigger)gt->looseLep1SelBit |= kTrigger;
-	  gt->sf_trk1    = GetCorr(cTrackingMuon,mu->eta());
-	  gt->sf_loose1  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_medium1 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_tight1  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_unc1 = sqrt(GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
-	               0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())*0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
-			     GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())+
-		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
+          if(isLoose)      gt->looseLep1SelBit |= kLoose;
+          if(isFake)       gt->looseLep1SelBit |= kFake;
+          if(isMedium)     gt->looseLep1SelBit |= kMedium;
+          if(isTight)      gt->looseLep1SelBit |= kTight;
+          if(isDxyz)       gt->looseLep1SelBit |= kDxyz;
+          if(isTrigger)    gt->looseLep1SelBit |= kTrigger;
+          if(isFakeTrigger)gt->looseLep1SelBit |= kFakeTrigger;
         }
 	else if (lep_counter==2) {
           gt->looseLep2SCEta = mu->pfPt; // sure, it is a hack!
           gt->looseLep2RegPt = mu->trkLayersWithMmt; // sure, it is a hack!
           gt->looseLep2SmePt = mu->pt();
           gt->looseLep2PdgId = mu->charge*-13;
-          if(isLoose)  gt->looseLep2SelBit |= kLoose;
-          if(isFake)   gt->looseLep2SelBit |= kFake;
-          if(isMedium) gt->looseLep2SelBit |= kMedium;
-          if(isTight)  gt->looseLep2SelBit |= kTight;
-          if(isDxyz)   gt->looseLep2SelBit |= kDxyz;
-          if(isTrigger)gt->looseLep2SelBit |= kTrigger;
-	  gt->sf_trk2    = GetCorr(cTrackingMuon,mu->eta());
-	  gt->sf_loose2  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_medium2 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_tight2  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_unc2 = sqrt(GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
-	               0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())*0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
-			     GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())+
-		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
+          if(isLoose)      gt->looseLep2SelBit |= kLoose;
+          if(isFake)       gt->looseLep2SelBit |= kFake;
+          if(isMedium)     gt->looseLep2SelBit |= kMedium;
+          if(isTight)      gt->looseLep2SelBit |= kTight;
+          if(isDxyz)       gt->looseLep2SelBit |= kDxyz;
+          if(isTrigger)    gt->looseLep2SelBit |= kTrigger;
+          if(isFakeTrigger)gt->looseLep2SelBit |= kFakeTrigger;
         }
 	else if (lep_counter==3) {
           gt->looseLep3SCEta = mu->pfPt; // sure, it is a hack!
           gt->looseLep3RegPt = mu->trkLayersWithMmt; // sure, it is a hack!
           gt->looseLep3SmePt = mu->pt();
           gt->looseLep3PdgId = mu->charge*-13;
-          if(isLoose)  gt->looseLep3SelBit |= kLoose;
-          if(isFake)   gt->looseLep3SelBit |= kFake;
-          if(isMedium) gt->looseLep3SelBit |= kMedium;
-          if(isTight)  gt->looseLep3SelBit |= kTight;
-          if(isDxyz)   gt->looseLep3SelBit |= kDxyz;
-          if(isTrigger)gt->looseLep3SelBit |= kTrigger;
-	  gt->sf_trk3    = GetCorr(cTrackingMuon,mu->eta());
-	  gt->sf_loose3  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_medium3 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_tight3  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_unc3 = sqrt(GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
-	               0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())*0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
-			     GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())+
-		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
+          if(isLoose)      gt->looseLep3SelBit |= kLoose;
+          if(isFake)       gt->looseLep3SelBit |= kFake;
+          if(isMedium)     gt->looseLep3SelBit |= kMedium;
+          if(isTight)      gt->looseLep3SelBit |= kTight;
+          if(isDxyz)       gt->looseLep3SelBit |= kDxyz;
+          if(isTrigger)    gt->looseLep3SelBit |= kTrigger;
+          if(isFakeTrigger)gt->looseLep3SelBit |= kFakeTrigger;
         }
 	else if (lep_counter==4) {
           gt->looseLep4SCEta = mu->pfPt; // sure, it is a hack!
           gt->looseLep4RegPt = mu->trkLayersWithMmt; // sure, it is a hack!
           gt->looseLep4SmePt = mu->pt();
           gt->looseLep4PdgId = mu->charge*-13;
-          if(isLoose)  gt->looseLep4SelBit |= kLoose;
-          if(isFake)   gt->looseLep4SelBit |= kFake;
-          if(isMedium) gt->looseLep4SelBit |= kMedium;
-          if(isTight)  gt->looseLep4SelBit |= kTight;
-          if(isDxyz)   gt->looseLep4SelBit |= kDxyz;
-          if(isTrigger)gt->looseLep4SelBit |= kTrigger;
-	  gt->sf_trk4    = GetCorr(cTrackingMuon,mu->eta());
-	  gt->sf_loose4  = GetCorr(cLooseMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cLooseMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_medium4 = GetCorr(cMediumMuonId,TMath::Abs(mu->eta()),mu->pt()) * GetCorr(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_tight4  = GetCorr(cTightMuonId,TMath::Abs(mu->eta()),mu->pt())  * GetCorr(cTightMuonIso,TMath::Abs(mu->eta()),mu->pt());
-	  gt->sf_unc4 = sqrt(GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
-	               0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())*0.010*GetCorr (cMediumMuonId ,TMath::Abs(mu->eta()),mu->pt())+
-			     GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())      *GetError(cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())+
-		       0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt())*0.005*GetCorr (cMediumMuonIso,TMath::Abs(mu->eta()),mu->pt()));
+          if(isLoose)      gt->looseLep4SelBit |= kLoose;
+          if(isFake)       gt->looseLep4SelBit |= kFake;
+          if(isMedium)     gt->looseLep4SelBit |= kMedium;
+          if(isTight)      gt->looseLep4SelBit |= kTight;
+          if(isDxyz)       gt->looseLep4SelBit |= kDxyz;
+          if(isTrigger)    gt->looseLep4SelBit |= kTrigger;
+          if(isFakeTrigger)gt->looseLep4SelBit |= kFakeTrigger;
         }
       } else {
         panda::Electron *ele = dynamic_cast<panda::Electron*>(lep);
@@ -1523,6 +1550,21 @@ void PandaLeptonicAnalyzer::Run() {
 
         isTrigger = isTrigger || ele->triggerMatch[panda::Electron::fEl25Tight] || ele->triggerMatch[panda::Electron::fEl27Tight] || ele->triggerMatch[panda::Electron::fEl27Loose];
 
+	bool isFakeTrigger = false;
+        for (auto& trigObj : event.triggerObjects.filterObjects("hltEle12PFJet30EleCleaned")) { // HLT_Ele12_CaloIdL_TrackIdL_IsoVL_PFJet30
+         if (trigObj->pt() > 0 && ele->pt() > 0 && trigObj->dR(*ele) < 0.1) isFakeTrigger = true;
+        }
+	if(isFakeTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltEle17PFJet30EleCleaned")) { // HLT_Ele17_CaloIdL_TrackIdL_IsoVL_PFJet30
+           if (trigObj->pt() > 0 && ele->pt() > 0 && trigObj->dR(*ele) < 0.1) isFakeTrigger = true;
+          }
+	}
+	if(isFakeTrigger == false){
+          for (auto& trigObj : event.triggerObjects.filterObjects("hltEle23PFJet30EleCleaned")) { // HLT_Ele23_CaloIdL_TrackIdL_IsoVL_PFJet30
+           if (trigObj->pt() > 0 && ele->pt() > 0 && trigObj->dR(*ele) < 0.1) isFakeTrigger = true;
+          }
+	}
+
 	if(TMath::Abs(ele->eta()-ele->superCluster->eta) > 0.2) printf("Potential issue ele/sc: dist: %f - %f/%f/%f vs. %f/%f/%f\n",TMath::Abs(ele->eta()-ele->superCluster->eta),ele->pt(),ele->eta(),ele->phi(),ele->superCluster->rawPt,ele->superCluster->eta,ele->superCluster->phi);
         if      (lep_counter==1) {
           gt->looseLep1SCEta = ele->superCluster->eta;
@@ -1530,17 +1572,13 @@ void PandaLeptonicAnalyzer::Run() {
           gt->looseLep1SmePt = ele->smearedPt;
           gt->looseLep1Pt *= EGMSCALE;
           gt->looseLep1PdgId = ele->charge*-11;
-          if(isLoose)  gt->looseLep1SelBit |= kLoose;
-          if(isFake)   gt->looseLep1SelBit |= kFake;
-          if(isMedium) gt->looseLep1SelBit |= kMedium;
-          if(isTight)  gt->looseLep1SelBit |= kTight;
-          if(isDxyz)   gt->looseLep1SelBit |= kDxyz;
-          if(isTrigger)gt->looseLep1SelBit |= kTrigger;
-	  gt->sf_trk1    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
-	  gt->sf_loose1  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
-	  gt->sf_medium1 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
-	  gt->sf_tight1  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  gt->sf_unc1    = GetError(cMediumElectronId,ele->eta(),ele->pt());
+          if(isLoose)      gt->looseLep1SelBit |= kLoose;
+          if(isFake)       gt->looseLep1SelBit |= kFake;
+          if(isMedium)     gt->looseLep1SelBit |= kMedium;
+          if(isTight)      gt->looseLep1SelBit |= kTight;
+          if(isDxyz)       gt->looseLep1SelBit |= kDxyz;
+          if(isTrigger)    gt->looseLep1SelBit |= kTrigger;
+          if(isFakeTrigger)gt->looseLep1SelBit |= kFakeTrigger;
         }
 	else if (lep_counter==2) {
           gt->looseLep2SCEta = ele->superCluster->eta;
@@ -1548,17 +1586,13 @@ void PandaLeptonicAnalyzer::Run() {
           gt->looseLep2SmePt = ele->smearedPt;
           gt->looseLep2Pt *= EGMSCALE;
           gt->looseLep2PdgId = ele->charge*-11;
-          if(isLoose)  gt->looseLep2SelBit |= kLoose;
-          if(isFake)   gt->looseLep2SelBit |= kFake;
-          if(isMedium) gt->looseLep2SelBit |= kMedium;
-          if(isTight)  gt->looseLep2SelBit |= kTight;
-          if(isDxyz)   gt->looseLep2SelBit |= kDxyz;
-          if(isTrigger)gt->looseLep2SelBit |= kTrigger;
-	  gt->sf_trk2    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
-	  gt->sf_loose2  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
-	  gt->sf_medium2 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
-	  gt->sf_tight2  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  gt->sf_unc2    = GetError(cMediumElectronId,ele->eta(),ele->pt());
+          if(isLoose)      gt->looseLep2SelBit |= kLoose;
+          if(isFake)       gt->looseLep2SelBit |= kFake;
+          if(isMedium)     gt->looseLep2SelBit |= kMedium;
+          if(isTight)      gt->looseLep2SelBit |= kTight;
+          if(isDxyz)       gt->looseLep2SelBit |= kDxyz;
+          if(isTrigger)    gt->looseLep2SelBit |= kTrigger;
+          if(isFakeTrigger)gt->looseLep2SelBit |= kFakeTrigger;
         }
 	else if (lep_counter==3) {
           gt->looseLep3SCEta = ele->superCluster->eta;
@@ -1566,17 +1600,13 @@ void PandaLeptonicAnalyzer::Run() {
           gt->looseLep3SmePt = ele->smearedPt;
           gt->looseLep3Pt *= EGMSCALE;
           gt->looseLep3PdgId = ele->charge*-11;
-          if(isLoose)  gt->looseLep3SelBit |= kLoose;
-          if(isFake)   gt->looseLep3SelBit |= kFake;
-          if(isMedium) gt->looseLep3SelBit |= kMedium;
-          if(isTight)  gt->looseLep3SelBit |= kTight;
-          if(isDxyz)   gt->looseLep3SelBit |= kDxyz;
-          if(isTrigger)gt->looseLep3SelBit |= kTrigger;
-	  gt->sf_trk3    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
-	  gt->sf_loose3  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
-	  gt->sf_medium3 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
-	  gt->sf_tight3  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  gt->sf_unc3    = GetError(cMediumElectronId,ele->eta(),ele->pt());
+          if(isLoose)      gt->looseLep3SelBit |= kLoose;
+          if(isFake)       gt->looseLep3SelBit |= kFake;
+          if(isMedium)     gt->looseLep3SelBit |= kMedium;
+          if(isTight)      gt->looseLep3SelBit |= kTight;
+          if(isDxyz)       gt->looseLep3SelBit |= kDxyz;
+          if(isTrigger)    gt->looseLep3SelBit |= kTrigger;
+          if(isFakeTrigger)gt->looseLep3SelBit |= kFakeTrigger;
         }
 	else if (lep_counter==4) {
           gt->looseLep4SCEta = ele->superCluster->eta;
@@ -1584,17 +1614,13 @@ void PandaLeptonicAnalyzer::Run() {
           gt->looseLep4SmePt = ele->smearedPt;
           gt->looseLep4Pt *= EGMSCALE;
           gt->looseLep4PdgId = ele->charge*-11;
-          if(isLoose)  gt->looseLep4SelBit |= kLoose;
-          if(isFake)   gt->looseLep4SelBit |= kFake;
-          if(isMedium) gt->looseLep4SelBit |= kMedium;
-          if(isTight)  gt->looseLep4SelBit |= kTight;
-          if(isDxyz)   gt->looseLep4SelBit |= kDxyz;
-          if(isTrigger)gt->looseLep4SelBit |= kTrigger;
-	  gt->sf_trk4    = GetCorr(cTrackingElectron,ele->superCluster->eta,ele->pt());
-	  gt->sf_loose4  = GetCorr(cLooseElectronId,ele->eta(),ele->pt());
-	  gt->sf_medium4 = GetCorr(cMediumElectronId,ele->eta(),ele->pt());
-	  gt->sf_tight4  = GetCorr(cTightElectronId,ele->eta(),ele->pt());
-	  gt->sf_unc4    = GetError(cMediumElectronId,ele->eta(),ele->pt());
+          if(isLoose)      gt->looseLep4SelBit |= kLoose;
+          if(isFake)       gt->looseLep4SelBit |= kFake;
+          if(isMedium)     gt->looseLep4SelBit |= kMedium;
+          if(isTight)      gt->looseLep4SelBit |= kTight;
+          if(isDxyz)       gt->looseLep4SelBit |= kDxyz;
+          if(isTrigger)    gt->looseLep4SelBit |= kTrigger;
+          if(isFakeTrigger)gt->looseLep4SelBit |= kFakeTrigger;
         }
       }
       ++lep_counter;
@@ -1649,7 +1675,7 @@ void PandaLeptonicAnalyzer::Run() {
 
       if (jet.pt()>20 && jet.csv>0.5426) ++(gt->jetNLBtags);
       if (jet.pt()>20 && jet.csv>0.8484) ++(gt->jetNMBtags);
-      if (jet.pt()>20 && jet.csv>0.9535) ++(gt->jetNLBtags);
+      if (jet.pt()>20 && jet.csv>0.9535) ++(gt->jetNTBtags);
 
       if (jet.pt()>20) cleaned20Jets.push_back(&jet); // to be used for btagging SFs
 
@@ -1855,7 +1881,6 @@ void PandaLeptonicAnalyzer::Run() {
       maxQCDscale = (TMath::Abs(1+gt->scale[0])+TMath::Abs(1+gt->scale[1])+TMath::Abs(1+gt->scale[2])+
     		     TMath::Abs(1+gt->scale[3])+TMath::Abs(1+gt->scale[4])+TMath::Abs(1+gt->scale[4]))/6.0;
     }
-
 
     gt->sf_tt = 1;
     gt->genLep1Pt = 0;

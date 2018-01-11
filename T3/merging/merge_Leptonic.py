@@ -161,6 +161,7 @@ d = {
     'DYJetsToMM_POWHEG'             : ['ZToMuMu_NNPDF30_13TeV-powheg_M_50_120'],
     'DYJetsToEE_POWHEG'             : ['ZToEE_NNPDF30_13TeV-powheg_M_50_120'],
     'WJets'                         : ['WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8'],
+    'TT'                            : ['TT_TuneCUETP8M2T4_13TeV-powheg-pythia8'],
     'MET'                           : ['MET'],
     'SingleMuon'                    : ['SingleMuon'],
     'SingleElectron'                : ['SingleElectron'],

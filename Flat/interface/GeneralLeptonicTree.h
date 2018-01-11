@@ -249,28 +249,6 @@ class GeneralLeptonicTree : public genericTree {
     float sf_zhDown = 1.0;
     float sf_tt = 1.0;
 
-    float sf_trk1 = 1.0;
-    float sf_trk2 = 1.0;
-    float sf_trk3 = 1.0;
-    float sf_trk4 = 1.0;
-    float sf_loose1 = 1.0;
-    float sf_loose2 = 1.0;
-    float sf_loose3 = 1.0;
-    float sf_loose4 = 1.0;
-    float sf_medium1 = 1.0;
-    float sf_medium2 = 1.0;
-    float sf_medium3 = 1.0;
-    float sf_medium4 = 1.0;
-    float sf_tight1 = 1.0;
-    float sf_tight2 = 1.0;
-    float sf_tight3 = 1.0;
-    float sf_tight4 = 1.0;
-
-    float sf_unc1 = 1.0;
-    float sf_unc2 = 1.0;
-    float sf_unc3 = 1.0;
-    float sf_unc4 = 1.0;
-
 };
 
 #endif

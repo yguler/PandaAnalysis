@@ -182,28 +182,6 @@ void GeneralLeptonicTree::Reset() {
     sf_zhDown = 1.0;
     sf_tt = 1.0;
 
-    sf_trk1 = 1.0;
-    sf_trk2 = 1.0;
-    sf_trk3 = 1.0;
-    sf_trk4 = 1.0;
-    sf_loose1 = 1.0;
-    sf_loose2 = 1.0;
-    sf_loose3 = 1.0;
-    sf_loose4 = 1.0;
-    sf_medium1 = 1.0;
-    sf_medium2 = 1.0;
-    sf_medium3 = 1.0;
-    sf_medium4 = 1.0;
-    sf_tight1 = 1.0;
-    sf_tight2 = 1.0;
-    sf_tight3 = 1.0;
-    sf_tight4 = 1.0;
-
-    sf_unc1 = 1.0;
-    sf_unc2 = 1.0;
-    sf_unc3 = 1.0;
-    sf_unc4 = 1.0;
-
 }
 
 void GeneralLeptonicTree::WriteTree(TTree *t) {
@@ -362,26 +340,5 @@ void GeneralLeptonicTree::WriteTree(TTree *t) {
   Book("sf_zhUp",&sf_zhUp,"sf_zhUp/F");
   Book("sf_zhDown",&sf_zhDown,"sf_zhDown/F");
   Book("sf_tt",&sf_tt,"sf_tt/F");
-
-  Book("sf_trk1",&sf_trk1,"sf_trk1/F");
-  Book("sf_trk2",&sf_trk2,"sf_trk2/F");
-  Book("sf_trk3",&sf_trk3,"sf_trk3/F");
-  Book("sf_trk4",&sf_trk4,"sf_trk4/F");
-  Book("sf_loose1",&sf_loose1,"sf_loose1/F");
-  Book("sf_loose2",&sf_loose2,"sf_loose2/F");
-  Book("sf_loose3",&sf_loose3,"sf_loose3/F");
-  Book("sf_loose4",&sf_loose4,"sf_loose4/F");
-  Book("sf_medium1",&sf_medium1,"sf_medium1/F");
-  Book("sf_medium2",&sf_medium2,"sf_medium2/F");
-  Book("sf_medium3",&sf_medium3,"sf_medium3/F");
-  Book("sf_medium4",&sf_medium4,"sf_medium4/F");
-  Book("sf_tight1",&sf_tight1,"sf_tight1/F");
-  Book("sf_tight2",&sf_tight2,"sf_tight2/F");
-  Book("sf_tight3",&sf_tight3,"sf_tight3/F");
-  Book("sf_tight4",&sf_tight4,"sf_tight4/F");
-  Book("sf_unc1",&sf_unc1,"sf_unc1/F");
-  Book("sf_unc2",&sf_unc2,"sf_unc2/F");
-  Book("sf_unc3",&sf_unc3,"sf_unc3/F");
-  Book("sf_unc4",&sf_unc4,"sf_unc4/F");
 
 }

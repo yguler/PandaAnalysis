@@ -7,12 +7,17 @@ from re import sub
 from random import shuffle
 
 parser = ArgumentParser()
-parser.add_argument('--nmax',type=int,default=20)
+parser.add_argument('--nmax',type=int,default=15)
 parser.add_argument('--nmin',type=int,default=10)
 parser.add_argument('--proc',type=str)
 args = parser.parse_args()
 
-fs = glob(getenv('SUBMIT_OUTDIR') + '/' + args.proc + '*.npz')
+if args.proc == 'Top':
+    fs = []
+    for p in ['ZpTT', 'Scalar_MonoTop', 'Vector_MonoTop']:
+        fs +=  glob(getenv('SUBMIT_OUTDIR') + '/' + p + '*.npz')
+else:
+    fs = glob(getenv('SUBMIT_OUTDIR') + '/' + args.proc + '*.npz')
 
 pd_map = {}
 for f in fs:
@@ -57,6 +62,7 @@ for k in xrange(npartition):
                     fout.write(r + '\n')
             arglist.append( 'partitions/' + args.proc + '/' + klabel + '.txt' )
 
+shuffle(arglist)
 with open('partitions/' + args.proc + '.txt', 'w') as fout:
-    for a in arglist:
-        fout.write(path.realpath(a) + '\n')
+    for i,a in enumerate(arglist):
+        fout.write(path.realpath(a) + ' %s_%i \n'%(args.proc,i))

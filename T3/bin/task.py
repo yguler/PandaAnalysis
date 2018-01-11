@@ -1,49 +1,65 @@
 #!/usr/bin/env python
 
-from os import getenv,path,popen,system
-from PandaCore.Tools.job_management import *
-import subprocess
 import sys
-import argparse
-from glob import glob
-from re import sub
-import cPickle as pickle
-from itertools import chain 
-from query import query
-from time import time, sleep, strftime
 import curses
-from submit import main as resubmit
+import argparse
+import subprocess
+import cPickle as pickle
 
+from re import sub
+from glob import glob
+from query import query
+from itertools import chain 
+from time import time, sleep, strftime
+from os import system,getenv,getuid,path,popen
+
+import PandaCore.Tools.job_management as jm
+from PandaCore.Tools.Misc import PInfo, PError, PWarning
+
+### Global definitions ###
+
+# environment:
+logdir=getenv('SUBMIT_LOGDIR')
+workdir=getenv('SUBMIT_WORKDIR')
 lockdir = getenv('SUBMIT_LOCKDIR')
-workdir = getenv('SUBMIT_WORKDIR')
-parser = argparse.ArgumentParser(description='check missing files')
-parser.add_argument('--infile',type=str,default=None)
-parser.add_argument('--outfile',type=str,default=None)
+outdir = getenv('SUBMIT_OUTDIR')
+submit_name = getenv('SUBMIT_NAME')
+cmssw_base=getenv('CMSSW_BASE')
+incfg = workdir+'/local_all.cfg'
+outcfg = workdir+'/local.cfg'
+
+if any([x is None for x in [lockdir, workdir, logdir, cmssw_base]]):
+    PError('task.py','Your environment is incomplete!')
+
+# argument parsing:
+parser = argparse.ArgumentParser(description='task')
+parser.add_argument('--kill',action='store_true')
+parser.add_argument('--check',action='store_true')
+parser.add_argument('--submit',action='store_true')
+parser.add_argument('--build_only',action='store_true')
+parser.add_argument('--submit_only',action='store_true')
+parser.add_argument('--clean_output',action='store_true')
+parser.add_argument('--clean',action='store_true')
 parser.add_argument('--lockdir',type=str,default=lockdir)
 parser.add_argument('--force',action='store_true')
 parser.add_argument('--nfiles',type=int,default=-1)
-parser.add_argument('--width',type=int,default=None)
 parser.add_argument('--silent',action='store_true')
-parser.add_argument('--verbose',action='store_true')
 parser.add_argument('--monitor',type=int,default=None)
-parser.add_argument('--resubmit',action='store_true')
 args = parser.parse_args()
 lockdir = args.lockdir
+if args.clean:
+    args.clean_output = True
+if args.submit:
+    args.submit_only = True
+    args.build_only = True
+if args.monitor:
+    jm.SILENT = True
+    args.check = True
 
-if args.monitor and args.verbose:
-    args.verbose = False
-
-if not args.infile:
-    args.infile = workdir+'/local_all.cfg'
-if not args.outfile:
-    args.outfile = workdir+'/local.cfg'
-
+# for printing to screen:
 columns = int(popen('stty size', 'r').read().split()[-1])
 rows = int(popen('stty size', 'r').read().split()[0])
-if not args.width:
-    WIDTH = (columns-90)/2
-else:
-    WIDTH = args.width
+WIDTH = (columns-90)/2
 header = ('%%-%is'%(WIDTH))%('Sample')
 header += ('%%-%is'%(WIDTH+2))%('Progress')
 header += ' %10s %10s %10s %10s %10s %10s'%('Total','T3', 'T2','Idle','Missing','Done')
@@ -67,6 +83,42 @@ def init_colors():
     curses.init_pair(colors['grey'], curses.COLOR_WHITE, curses.COLOR_WHITE)
     curses.init_pair(colors['red'], curses.COLOR_WHITE, curses.COLOR_RED)
 
+
+### Task-specific functions ###
+
+# for submission:
+def build_snapshot(N):
+    system('%s/src/PandaAnalysis/T3/bin/buildMergedInputs.sh -t -n %i'%(cmssw_base, N))
+
+def submit(silent=False):
+    now = int(time())
+    frozen_outcfg = outcfg.replace('local','local_%i'%now)
+    system('cp %s %s'%(outcfg,frozen_outcfg)) 
+
+    jm.setup_schedd(getenv('SUBMIT_CONFIG'))
+    s = jm.Submission(frozen_outcfg,workdir+'/submission.pkl')
+    s.execute()
+    s.save()
+
+    if not silent:
+        statii = s.query_status()
+        print 'Job summary:'
+        for k,v in statii.iteritems():
+            print '\t %10s : %5i'%(k,len(v))
+
+def kill():
+    if path.isfile(workdir+'/submission.pkl'): 
+        with open(workdir+'/submission.pkl','rb') as fpkl:
+            submissions = pickle.load(fpkl)
+            for s in submissions:
+                s.kill()
+            return
+    else:
+        PWarning('task.py','Trying to kill a task with no submissions!')
+
+
+
+# for monitoring:
 class Output:
     def __init__(self,name):
         self.name = name
@@ -148,7 +200,7 @@ class Output:
             msgs.append( (s,) )
             return msgs
 
-def main(stdscr=None):
+def check(stdscr=None):
     if args.monitor:
         init_colors()
         stdscr.nodelay(True)
@@ -170,24 +222,14 @@ def main(stdscr=None):
         if (recent_lock >= last_lock) or (time() - last_lock > args.monitor):
             # determine what files have been processed and logged as such
             processedfiles = []
-            if args.verbose:
-                print 'Finding locks...                      \r',
-                sys.stdout.flush()
             locks = glob(lockdir+'/*lock')
             nl = len(locks)
             il = 1
             for lock in locks:
-                if args.verbose:
-                    print 'Reading lock %i/%i                   \r'%(il,nl),
-                    sys.stdout.flush()
                 il += 1
                 flock = open(lock)
                 for l in flock:
                     processedfiles.append(l.strip())
-
-            if args.verbose:
-                print 'Checking jobs...                 \r',
-                sys.stdout.flush()
 
             # determine what samples from previous resubmissions are still running
             t2_samples = []
@@ -214,23 +256,20 @@ def main(stdscr=None):
             data = Output('Data')
             mc = Output('MC')
 
-            if args.verbose:
-                print 'Rebuilding configuration...            \r',
-
-            all_samples = read_sample_config(args.infile)
+            all_samples = jm.read_sample_config(incfg)
             filtered_samples = {}
             merged_samples = {}
-            outfile = open(args.outfile,'w')
+            outfile = open(outcfg,'w')
             for name in sorted(all_samples):
                 sample = all_samples[name]
-                out_sample = DataSample(name,sample.dtype,sample.xsec)
+                out_sample = jm.DataSample(name,sample.dtype,sample.xsec)
 
                 base_name = sub('_[0-9]+$','',name)
                 if base_name not in outputs:
                     outputs[base_name] = Output(base_name)
                 output = outputs[base_name]
                 if base_name not in merged_samples:
-                    merged_samples[base_name] = DataSample(base_name,sample.dtype,sample.xsec)
+                    merged_samples[base_name] = jm.DataSample(base_name,sample.dtype,sample.xsec)
                 merged_sample = merged_samples[base_name]
 
                 to_resubmit = []
@@ -280,12 +319,9 @@ def main(stdscr=None):
                         outfile.write(c%(counter,counter))
                         counter += 1
 
-            if args.verbose:
-                print '\r',
-                sys.stdout.flush()
-            msg = []
-            if args.verbose:
-                msg.append('Summary:                     ')
+            msg = ['TASK = '+submit_name]
+            if args.monitor:
+                msg.append('\n')
 
             msg.append(header)
             if args.monitor:
@@ -349,17 +385,38 @@ def main(stdscr=None):
 
             last_lock = int(time())
 
-            if args.resubmit and len(merged_samples):
-                resubmit()
+            if args.submit_only and (mc.missing + data.missing > 0):
+                submit(silent=(args.monitor is not None))
 
 
         if args.monitor:
-            sleep(.1)
+            sleep(1)
         else:
             return
 
+### MAIN ###
+if args.kill:
+    kill()
+if args.clean_output:
+    PInfo('task.py', 'Cleaning up %s and %s'%(lockdir, outdir))
+    sleep(2)
+    system('rm -rf %s/* %s/* &'%(lockdir, outdir))
+    if args.clean:
+        PInfo('task.py', 'Cleaning up %s and %s'%(logdir, workdir))
+        sleep(2)
+        system('rm -rf %s/* %s/*'%(logdir, workdir))
 
-if args.monitor:
-    curses.wrapper(main)
+if args.check:
+    if args.monitor is not None:
+        curses.wrapper(check)
+    else:
+        check()
 else:
-    main()
+    PInfo('task.py', 'TASK = '+submit_name)
+    if args.build_only and not path.isfile(workdir+'/submission.pkl'): 
+        if args.nfiles < 0:
+            PInfo('task.py', 'Number of files not provided for new task => setting nfiles=25')
+            args.nfiles = 25
+        build_snapshot(args.nfiles)
+    if args.submit_only:
+        submit(silent=False)

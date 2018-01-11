@@ -55,6 +55,7 @@ def fn(input_name, isData, full_path):
     skimmer = root.PandaAnalyzer()
     hbb = gghbb()
     hbb.deep = True
+    hbb.deepAntiKtSort = True
     hbb.dump()
     skimmer.SetAnalysis(hbb)
     skimmer.isData=isData
@@ -65,6 +66,7 @@ def fn(input_name, isData, full_path):
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kFatjet450)
 
     outpath = utils.run_PandaAnalyzer(skimmer, isData, input_name)
+    utils.print_time('analyzing '+input_name)
     if not outpath:
         return False 
     for f in glob('*_pf_*.root'):

@@ -140,7 +140,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   hDTotalMCWeight->SetDirectory(0);
   hDTotalMCWeight->SetBinContent(1,hweights->GetBinContent(1));
 
-  if (weightNames) {
+  if (weightNames && analysis->processType==kSignal) { // hack?
     if (weightNames->GetEntries()!=377 && weightNames->GetEntries()!=22) {
       PError("PandaAnalyzer::Init",
           TString::Format("Reweighting failed because only found %u weights!",

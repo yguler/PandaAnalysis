@@ -104,7 +104,7 @@ def merge(shortnames,mergedname):
             if params:
                 xsec = params.sigma
             else:
-                exit(1)
+                xsec = 1
         elif 'Scalar' in shortname:
             tmp_ = shortname
             replacements = {
@@ -119,7 +119,7 @@ def merge(shortnames,mergedname):
             if params:
                 xsec = params.sigma
             else:
-                exit(1)
+                xsec = 1
         elif shortname in pds:
             pd = pds[shortname][0]
             xsec = pds[shortname][1]

@@ -15,7 +15,7 @@ truth = 'nPartons'
 events = ['eventNumber']
 fractions = {'train':0.7, 'test':0.15}
 fcfg = open(argv[1])
-name = '_'.join(argv[1].split('/')[-2:]).replace('.txt','')
+name = argv[2]
 outdir = getenv('SUBMIT_NPY')
 datadir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/deep/'
 me = argv[0].split('/')[-1]
@@ -23,6 +23,7 @@ argv = []
 
 n_partons_proc = {
         'QCD'   : 1,
+        'Top'   : 3,
         'ZpTT'  : 3,
         'ZpWW'  : 2,
         'ZpA0h' : 2,

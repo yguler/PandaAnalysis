@@ -30,6 +30,11 @@ if args.plot:
 
 binning = (40, 450, 1200)
 
+n_partons = {
+        'Top' : 3,
+        'QCD' : 1,
+        }
+
 f = root.TFile(basedir + '/' + args.proc + '.root')
 t = f.Get('events')
 

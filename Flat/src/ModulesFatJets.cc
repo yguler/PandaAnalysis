@@ -140,9 +140,11 @@ void PandaAnalyzer::FillPFTree()
   gt->fj1Rho2 = TMath::Log(TMath::Power(fjmsd,2) / TMath::Power(fjpt,2));
   gt->fj1RawRho2 = TMath::Log(TMath::Power(fjmsd,2) / TMath::Power(fjrawpt,2));
 
-  if (analysis->deepKtSort) {
+  if (analysis->deepKtSort || analysis->deepAntiKtSort) {
     VPseudoJet particles = ConvertPFCands(fj1->constituents,analysis->puppi_jets,0.001);
-    fastjet::ClusterSequenceArea seq(particles,*jetDefKt,*areaDef);
+    fastjet::ClusterSequenceArea seq(particles,
+                                     *(analysis->deepKtSort ? jetDefKt : jetDef),
+                                     *areaDef);
     VPseudoJet allJets(seq.inclusive_jets(0.));
   
     auto &history = seq.history();

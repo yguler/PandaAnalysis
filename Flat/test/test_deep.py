@@ -17,24 +17,21 @@ argv = []
 
 import ROOT as root
 from PandaCore.Tools.Load import *
-from PandaAnalysis.Flat.analysis import gghbb
+from PandaAnalysis.Flat.analysis import deep, gghbb
 import PandaAnalysis.T3.job_utilities as utils
 import PandaAnalysis.T3.job_deep_utilities as deep_utils
 
 Load('PandaAnalyzer')
 
 skimmer = root.PandaAnalyzer(debug_level)
-gghbb = gghbb()
-gghbb.reclusterGen = False
-gghbb.bjetRegression = False
-gghbb.btagSFs = False
-gghbb.deep = True
-gghbb.dump()
-gghbb.processType=root.kTop
-skimmer.SetAnalysis(gghbb)
+deep = deep()
+#deep.deepSVs = False
+#deep.deepTracks = False
+deep.processType=root.kTop
+skimmer.SetAnalysis(deep)
 
-skimmer.firstEvent=39
-skimmer.lastEvent=40
+skimmer.firstEvent=0
+skimmer.lastEvent=10
 skimmer.isData=False
 if skimmer.isData:
     with open(getenv('CMSSW_BASE')+'/src/PandaAnalysis/data/certs/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt') as jsonFile:

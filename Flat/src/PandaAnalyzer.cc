@@ -117,10 +117,14 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   else if (analysis->fatjet) 
     readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
   
-  if (analysis->recluster || analysis->bjetRegression || analysis->deep)
+  if (analysis->recluster || analysis->bjetRegression || analysis->deep) {
     readlist.push_back("pfCandidates");
+  }
+  if (analysis->deepTracks) {
+    readlist.push_back("tracks");
+  }
 
-  if (analysis->bjetRegression)
+  if (analysis->bjetRegression || analysis->deepSVs)
     readlist.push_back("secondaryVertices");
 
   if (isData) {
@@ -210,6 +214,13 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     gt->RemoveBranches(droppable);
   }
 
+  if (analysis->deepTracks) {
+    NPFPROPS += 7;
+    if (analysis->deepSVs) {
+      NPFPROPS += 3;
+    }
+  }
+
   if (analysis->reclusterGen) {
     double radius = 0.4;
     jetDefGen = new fastjet::JetDefinition(fastjet::antikt_algorithm,radius);
@@ -250,6 +261,7 @@ void PandaAnalyzer::Terminate()
   fOut->WriteTObject(tOut);
   fOut->Close();
   fOut = 0; tOut = 0;
+
 
   IncrementAuxFile(true);
 
@@ -293,12 +305,6 @@ void PandaAnalyzer::Terminate()
 
   delete hDTotalMCWeight;
 
-  // if (pfInfo) {
-  //   for (unsigned i = 0; i != NMAXPF; ++i) {
-  //     delete[] pfInfo[i];
-  //   }
-  //   delete[] pfInfo;
-  // }
   if (DEBUG) PDebug("PandaAnalyzer::Terminate","Finished with output");
 }
 

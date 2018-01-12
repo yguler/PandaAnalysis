@@ -203,6 +203,8 @@ void GeneralTree::Reset() {
   }
 
 //ENDCUSTOMRESET
+    fj1NBPartons = 0;
+    fj1NCPartons = 0;
     fj1Rho2 = -1;
     fj1RawRho2 = -1;
     fj1Rho = -1;
@@ -805,6 +807,8 @@ void GeneralTree::WriteTree(TTree *t) {
     }
   }
 //ENDCUSTOMWRITE
+    Book("fj1NBPartons",&fj1NBPartons,"fj1NBPartons/I");
+    Book("fj1NCPartons",&fj1NCPartons,"fj1NCPartons/I");
     Book("fj1Rho2",&fj1Rho2,"fj1Rho2/F");
     Book("fj1RawRho2",&fj1RawRho2,"fj1RawRho2/F");
     Book("fj1Rho",&fj1Rho,"fj1Rho/F");

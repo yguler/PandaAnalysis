@@ -27,11 +27,11 @@ def fn(input_name, isData, full_path):
     PInfo(sname+'.fn','Starting to process '+input_name)
     # now we instantiate and configure the analyzer
     skimmer = root.PandaAnalyzer()
-    skimmer.SetAnalysis(wlnhbb(True))
     analysis = wlnhbb(True)
     analysis.processType = utils.classify_sample(full_path, isData)	
     if analysis.processType == root.kTT or analysis.processType == root.kSignal:
         analysis.reclusterGen = True # only turn on if necessary
+    skimmer.SetAnalysis(analysis)
     skimmer.isData=isData
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kVHBB)
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)  

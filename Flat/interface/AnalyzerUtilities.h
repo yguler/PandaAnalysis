@@ -94,8 +94,10 @@ public:
   bool btagWeights = false;
   bool complicatedLeptons = false;
   bool deep = false;
-  bool deepKtSort = false;
   bool deepAntiKtSort = false;
+  bool deepKtSort = false;
+  bool deepSVs = false;
+  bool deepTracks = false;
   bool fatjet = true;
   bool firstGen = true;
   bool genOnly = false;

@@ -96,11 +96,19 @@ void PandaAnalyzer::FatjetPartons()
     }
 
     gt->fj1NPartons = partons.size();
+
     TLorentzVector vPartonSum;
     TLorentzVector vTmp;
     for (auto *p : partons) {
       vTmp.SetPtEtaPhiM(p->pt(), p->eta(), p->phi(), p->m());
       vPartonSum += vTmp;
+
+      unsigned digit3 = (p->pdgid%1000 - p->pdgid%100) / 100;
+      unsigned digit4 = (p->pdgid%10000 - p->pdgid%1000) / 1000;
+      if (p->pdgid == 5 || digit3 == 5 || digit4 == 5)
+        gt->fj1NBPartons++;
+      if (p->pdgid == 4 || digit3 == 4 || digit4 == 4)
+        gt->fj1NCPartons++;
     }
     gt->fj1PartonM = vPartonSum.M();
     gt->fj1PartonPt = vPartonSum.Pt();
@@ -119,12 +127,21 @@ void PandaAnalyzer::FillPFTree()
   // this is integrated by use of e.g. lwtnn, but there is a bit of
   // development needed to support our networks. for the time being
   // we do it this way. -SMN
-  fjpt = -1; fjmsd = -1;
+   
+
+  // jet-wide quantities
+  fjpt = -1; fjmsd = -1; fjeta = -1; fjphi = -1; fjphi = -1; fjrawpt = -1;
   for (unsigned i = 0; i != NMAXPF; ++i) {
     for (unsigned j = 0; j != NPFPROPS; ++j) {
       pfInfo[i][j] = 0;
     }
   }
+  if (analysis->deepSVs) {
+    for (unsigned i = 0; i != NMAXSV; ++i) {
+      for (unsigned j = 0; j != NSVPROPS; ++j) {
+        svInfo[i][j] = 0;
+      }
+    }}
 
   if (!fj1)
     return;
@@ -140,6 +157,40 @@ void PandaAnalyzer::FillPFTree()
   gt->fj1Rho2 = TMath::Log(TMath::Power(fjmsd,2) / TMath::Power(fjpt,2));
   gt->fj1RawRho2 = TMath::Log(TMath::Power(fjmsd,2) / TMath::Power(fjrawpt,2));
 
+  // secondary vertices come first so we can link to tracks later
+  std::map<const SecondaryVertex*, std::unordered_set<const PFCand*>> svTracks;
+  std::map<const SecondaryVertex*, int> svIdx;
+  if (analysis->deepSVs) {
+    unsigned idx = 0;
+    for (auto &sv : event.secondaryVertices) {
+      if (idx == NMAXSV)
+        break;
+
+      svInfo[idx][0] = sv.x;
+      svInfo[idx][1] = sv.y;
+      svInfo[idx][2] = sv.z;
+      svInfo[idx][3] = sv.ntrk;
+      svInfo[idx][4] = sv.ndof;
+      svInfo[idx][5] = sv.chi2;
+      svInfo[idx][6] = sv.significance;
+      svInfo[idx][7] = sv.vtx3DVal;
+      svInfo[idx][8] = sv.vtx3DeVal;
+      svInfo[idx][9] = sv.pt();
+      svInfo[idx][10] = sv.eta();
+      svInfo[idx][11] = sv.phi();
+      svInfo[idx][12] = sv.m();
+
+      auto *svPtr = &sv;
+      svIdx[svPtr] = idx;
+      svTracks[svPtr] = {};
+      for (auto pf : sv.daughters) {
+        svTracks[svPtr].insert(pf.get());
+      }
+    }
+  }
+
+
+  std::vector<const PFCand*> sortedC;
   if (analysis->deepKtSort || analysis->deepAntiKtSort) {
     VPseudoJet particles = ConvertPFCands(fj1->constituents,analysis->puppi_jets,0.001);
     fastjet::ClusterSequenceArea seq(particles,
@@ -163,52 +214,61 @@ void PandaAnalyzer::FillPFTree()
     }
     sort(ordered_jets.begin(), ordered_jets.end(),
          [](JetHistory x, JetHistory y) { return x.child_idx < y.child_idx; });
-    unsigned idx = 0;
     for (auto &jh : ordered_jets) {
-      if (idx == NMAXPF)
-        break;
       const PFCand *cand = fj1->constituents.at(jh.user_idx).get();
-      pfInfo[idx][0] = cand->pt() * cand->puppiW() / fjrawpt;
-      pfInfo[idx][1] = cand->eta() - fj1->eta();
-      pfInfo[idx][2] = SignedDeltaPhi(cand->phi(), fj1->phi());
-      pfInfo[idx][3] = cand->m();
-      pfInfo[idx][4] = cand->e();
-      pfInfo[idx][5] = cand->ptype;
-      pfInfo[idx][6] = cand->puppiW();
-      pfInfo[idx][7] = 0; // zero these out for now
-      pfInfo[idx][8] = 0;
-      idx++;
+      sortedC.push_back(cand);
     }
   } else {
-    std::vector<const PFCand*> sortedC;
     for (auto ref : fj1->constituents)
       sortedC.push_back(ref.get());
     sort(sortedC.begin(), sortedC.end(),
          [](const PFCand *x, const PFCand *y) { return x->pt() > y->pt(); });
-//    sort(fj1->constituents.begin(), fj1->constituents.end(),
-//         [](const Ref<PFCand> x, const Ref<PFCand> y) { return x->pt() > y->pt(); });
-    unsigned idx = 0;
-    for (auto *cand : sortedC) {
-      if (idx == NMAXPF)
-        break;
-      pfInfo[idx][0] = cand->pt() * cand->puppiW() / fj1->rawPt;
-      pfInfo[idx][1] = cand->eta() - fj1->eta();
-      pfInfo[idx][2] = SignedDeltaPhi(cand->phi(), fj1->phi());
-      pfInfo[idx][3] = cand->m();
-      pfInfo[idx][4] = cand->e();
-      pfInfo[idx][5] = cand->ptype;
-      pfInfo[idx][6] = cand->puppiW();
-      pfInfo[idx][7] = 0; // zero these out for now
-      pfInfo[idx][8] = 0;
-      idx++;
-    }
+  }
 
+  unsigned idx = 0;
+  for (auto *cand : sortedC) {
+    if (idx == NMAXPF)
+      break;
+    pfInfo[idx][0] = cand->pt() * cand->puppiW() / fjrawpt;
+    pfInfo[idx][1] = cand->eta() - fj1->eta();
+    pfInfo[idx][2] = SignedDeltaPhi(cand->phi(), fj1->phi());
+    pfInfo[idx][3] = cand->m();
+    pfInfo[idx][4] = cand->e();
+    pfInfo[idx][5] = cand->ptype;
+    pfInfo[idx][6] = cand->puppiW();
+    pfInfo[idx][7] = cand->puppiWNoLep(); 
+    pfInfo[idx][8] = cand->hCalFrac;
+    if (analysis->deepTracks) {
+      if (cand->track.isValid())  {
+        TVector3 pca = cand->pca();
+        pfInfo[idx][9] = pca.Perp();
+        pfInfo[idx][10] = pca.Z();
+        pfInfo[idx][11] = cand->track->ptError();
+        pfInfo[idx][12] = cand->track->dxy();
+        pfInfo[idx][13] = cand->track->dz();
+        pfInfo[idx][14] = cand->track->dPhi();
+        pfInfo[idx][15] = cand->q();
+        if (analysis->deepSVs) {
+          for (auto &iter : svTracks) {
+            if (iter.second.find(cand) != iter.second.end()) {
+              TVector3 pos = iter.first->position();
+              pfInfo[idx][16] = svIdx[iter.first] + 1; // offset from 0 value
+              pfInfo[idx][17] = cand->dxy(pos);
+              pfInfo[idx][18] = cand->dz(pos); 
+              break;
+            }
+          }
+        }
+      }
+    }
+    idx++;
   }
 
 
   tr->TriggerEvent("pf tree");
 
 }
+
 
 float PandaAnalyzer::GetMSDCorr(float puppipt, float puppieta) 
 {
@@ -381,8 +441,8 @@ void PandaAnalyzer::FatjetBasics()
         }
       }
 
+      gt->fj1DoubleCSV = fj.double_sub;
       if (analysis->monoh) {
-        gt->fj1DoubleCSV = fj.double_sub;
         for (unsigned int iSJ=0; iSJ!=fj.subjets.size(); ++iSJ) {
           auto& subjet = fj.subjets.objAt(iSJ);
           gt->fj1sjPt[iSJ]=subjet.pt();

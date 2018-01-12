@@ -28,6 +28,7 @@ def tree_to_arrays(infilepath, treename='inputs'):
     data = {}
     branches = ['msd','pt', 'rawpt', 'eta', 'phi',  'eventNumber',
                 'partonM', 'partonPt', 'partonEta', 'nPartons',
+                'nBPartons', 'nCPartons',
                 'rho','rawrho','rho2','rawrho2',
                 'tau32','tau32SD','tau21','tau21SD',
                 'top_ecf_bdt']
@@ -37,6 +38,9 @@ def tree_to_arrays(infilepath, treename='inputs'):
 
     arr = r.read_tree(t, branches=['kinematics'])
     data['pf'] = np.array([x[0].tolist() for x in arr])
+
+    arr = r.read_tree(t, branches=['svs'])
+    data['sv'] = np.array([x[0].tolist() for x in arr])
 
     return data 
 
@@ -101,7 +105,7 @@ def run_model(infilepattern, outfilepath):
         if not STORE:
             utils.cleanup(infilepath)
     if INFER:
-        if predicitions:
+        if predictions:
             pred = np.concatenate(predictions)
         else:
             pred = np.array([])

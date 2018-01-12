@@ -22,11 +22,19 @@ void PandaAnalyzer::IncrementAuxFile(bool close)
   fAux = TFile::Open(path.Data(), "RECREATE");
   if (DEBUG) PDebug("PandaAnalyzer::IncrementAuxFile", "Opening "+path);
   tAux = new TTree("inputs","inputs");
+  
   pfInfo.resize(NMAXPF);
   for (unsigned i = 0; i != NMAXPF; ++i) {
     pfInfo[i].resize(NPFPROPS);
   }
   tAux->Branch("kinematics",&pfInfo);
+  
+  svInfo.resize(NMAXSV);
+  for (unsigned i = 0; i != NMAXSV; ++i) {
+    svInfo[i].resize(NSVPROPS);
+  }
+  tAux->Branch("svs",&svInfo);
+
   tAux->Branch("msd",&fjmsd,"msd/F");
   tAux->Branch("pt",&fjpt,"pt/F");
   tAux->Branch("rawpt",&fjrawpt,"rawpt/F");
@@ -37,6 +45,8 @@ void PandaAnalyzer::IncrementAuxFile(bool close)
   tAux->Branch("rho2",&(gt->fj1Rho2),"rho2/f");
   tAux->Branch("rawrho2",&(gt->fj1RawRho2),"rawrho2/f");
   tAux->Branch("nPartons",&(gt->fj1NPartons),"nPartons/I");
+  tAux->Branch("nBPartons",&(gt->fj1NBPartons),"nBPartons/I");
+  tAux->Branch("nCPartons",&(gt->fj1NCPartons),"nCPartons/I");
   tAux->Branch("partonM",&(gt->fj1PartonM),"partonM/f");
   tAux->Branch("partonPt",&(gt->fj1PartonPt),"partonPt/f");
   tAux->Branch("partonEta",&(gt->fj1PartonEta),"partonEta/f");
@@ -45,6 +55,7 @@ void PandaAnalyzer::IncrementAuxFile(bool close)
   tAux->Branch("tau21",&(gt->fj1Tau21),"tau21/f");
   tAux->Branch("tau21SD",&(gt->fj1Tau21SD),"tau21SD/f");
   tAux->Branch("eventNumber",&(gt->eventNumber),"eventNumber/l");
+
 
   gt->SetAuxTree(tAux);
 

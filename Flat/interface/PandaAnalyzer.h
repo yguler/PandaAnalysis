@@ -39,7 +39,8 @@
 // some misc definitions
 
 #define NMAXPF 100
-#define NPFPROPS 9
+#define NMAXSV 10
+
 
 /////////////////////////////////////////////////////////////////////////////
 // PandaAnalyzer definition
@@ -361,7 +362,9 @@ private:
     float jetPtThreshold=30;
 
     std::vector<std::vector<float>> pfInfo;
+    std::vector<std::vector<float>> svInfo; 
     float fjmsd, fjpt, fjrawpt, fjeta, fjphi;
+    int NPFPROPS = 9, NSVPROPS = 13;
     
 };
 

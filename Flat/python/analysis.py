@@ -61,6 +61,18 @@ gghbb = lambda v=False : _analysis(
         recoil = False,
         ak8 = True,
     )
+
+deep = lambda v=False : _analysis(
+        name = 'deep',
+        verbose = v,
+        ak8 = True,
+        deep = True,
+        deepTracks = True,
+        deepSVs = True,
+        deepAntiKtSort = True,
+        btagSFs = False,
+    )
+
 wlnhbb = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,

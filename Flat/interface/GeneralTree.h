@@ -300,6 +300,8 @@ class GeneralTree : public genericTree {
       int electronTripleCharge[NLEP];
 
 //ENDCUSTOMDEF
+    int fj1NBPartons = -1;
+    int fj1NCPartons = -1;
     float fj1Rho2 = -1;
     float fj1RawRho2 = -1;
     float fj1Rho = -1;

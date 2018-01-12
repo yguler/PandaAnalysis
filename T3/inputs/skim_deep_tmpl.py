@@ -19,11 +19,12 @@ import PandaCore.Tools.job_config as cb
 import PandaAnalysis.Tagging.cfg_v8 as tagcfg
 import PandaAnalysis.T3.job_utilities as utils
 import PandaAnalysis.T3.job_deep_utilities as deep_utils
-from PandaAnalysis.Flat.analysis import gghbb
+from PandaAnalysis.Flat.analysis import deep
 
 deep_utils.STORE = True
 deep_utils.SAVE = True
 deep_utils.INFER = False
+deep_utils.NORM = False # temporary, need to recalculate normalizations
 
 Load('PandaAnalyzer')
 data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'
@@ -53,15 +54,15 @@ def fn(input_name, isData, full_path):
     PInfo(sname+'.fn','Starting to process '+input_name)
     # now we instantiate and configure the analyzer
     skimmer = root.PandaAnalyzer()
-    hbb = gghbb()
-    hbb.deep = True
-    hbb.dump()
-    skimmer.SetAnalysis(hbb)
-    skimmer.isData=isData
+
     processType = utils.classify_sample(full_path, isData)
     if processType == root.kSignal:
         processType = root.kTop
-    skimmer.processType=processType 
+    analysis = deep() 
+    analysis.processType=processType 
+    analysis.dump()
+    skimmer.SetAnalysis(analysis)
+    skimmer.isData=isData
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kFatjet450)
 
     outpath = utils.run_PandaAnalyzer(skimmer, isData, input_name)

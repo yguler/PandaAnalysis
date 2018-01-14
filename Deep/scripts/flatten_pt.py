@@ -33,6 +33,8 @@ binning = (40, 450, 1200)
 n_partons = {
         'Top' : 3,
         'QCD' : 1,
+        'Higgs' : 2,
+        'W' : 2,
         }
 
 f = root.TFile(basedir + '/' + args.proc + '.root')

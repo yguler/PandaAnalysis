@@ -4,14 +4,12 @@ from sys import argv, exit
 import numpy as np 
 from os import getenv, system
 from PandaCore.Tools.Misc import PInfo, PDebug 
+import PandaAnalysis.T3.job_deep_utilities as deep_utils
 from glob import glob 
 
-singletons = ['msd','pt', 'rawpt', 'eta', 'phi',
-                'partonM', 'partonPt', 'partonEta', 'nPartons',
-                'rho','rawrho','rho2','rawrho2',
-                'tau32','tau32SD','tau21','tau21SD',
-                'top_ecf_bdt']
-truth = 'nPartons'
+NORM = True
+singletons = deep_utils.singleton_branches
+truth = ['nPartons', 'nBPartons', 'nCPartons']
 events = ['eventNumber']
 fractions = {'train':0.7, 'test':0.15}
 fcfg = open(argv[1])
@@ -22,11 +20,13 @@ me = argv[0].split('/')[-1]
 argv = []
 
 n_partons_proc = {
-        'QCD'   : 1,
-        'Top'   : 3,
-        'ZpTT'  : 3,
-        'ZpWW'  : 2,
-        'ZpA0h' : 2,
+            'QCD'   : 1,
+            'Top'   : 3,
+            'ZpTT'  : 3,
+            'ZpWW'  : 2,
+            'ZpA0h' : 2,
+            'Higgs' : 2,
+            'W'     : 2,
         }
 n_partons = 1
 for k,v in n_partons_proc.iteritems():
@@ -62,6 +62,11 @@ if not data['pt'].shape[0]:
     PInfo(me, 'Nothing passed the mask')
     exit(0)
 
+if NORM:
+    deep_utils.normalize_arrays(data, 'pf')
+    deep_utils.normalize_arrays(data, 'sv')
+
+
 def reweight(x_pt):
 #    x_pt = 400 + (600 * x_pt)
     return h_pt.GetBinContent(h_pt.FindBin(x_pt))
@@ -92,8 +97,12 @@ def dump(idx, partition):
     d = data['pf'][idx, :, :]
     np.save(outpath%'pf', d)
 
-    # pf
-    d = data[truth][idx]
+    # sv
+    d = data['sv'][idx, :, :]
+    np.save(outpath%'sv', d)
+
+    # truth
+    d = np.vstack([data[x][idx] for x in truth]).T 
     np.save(outpath%'truth', d)
 
     # pt weights

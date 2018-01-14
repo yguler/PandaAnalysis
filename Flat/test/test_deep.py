@@ -54,7 +54,7 @@ skimmer.SetOutputFile(output)
 skimmer.Run()
 skimmer.Terminate()
 
-deep_utils.STORE = True
-deep_utils.SAVE = True
-deep_utils.NORM = False
-deep_utils.run_model('testskim_pf_%i.root', 'testskim.root')
+#deep_utils.STORE = True
+#deep_utils.SAVE = True
+#deep_utils.NORM = False
+#deep_utils.run_model('testskim_pf_%i.root', 'testskim.root')

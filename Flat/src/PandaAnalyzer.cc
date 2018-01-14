@@ -121,7 +121,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     readlist.push_back("pfCandidates");
   }
   if (analysis->deepTracks) {
-    readlist.push_back("tracks");
+    readlist += {"tracks","vertices"};
   }
 
   if (analysis->bjetRegression || analysis->deepSVs)

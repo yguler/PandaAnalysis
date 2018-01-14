@@ -22,18 +22,20 @@ STORE = False
 NORM = True
 INFER = True
 
+singleton_branches = ['msd','pt', 'rawpt', 'eta', 'phi',  'eventNumber',
+                      'partonM', 'partonPt', 'partonEta', 'nPartons',
+                      'nBPartons', 'nCPartons',
+                      'rho','rawrho','rho2','rawrho2',
+                      'tau32','tau32SD','tau21','tau21SD',
+                      'maxcsv','mincsv','doubleb', # uncomment in a bit
+                      'top_ecf_bdt']
+
 def tree_to_arrays(infilepath, treename='inputs'):
     f = root.TFile(infilepath)
     t = f.Get(treename)
     data = {}
-    branches = ['msd','pt', 'rawpt', 'eta', 'phi',  'eventNumber',
-                'partonM', 'partonPt', 'partonEta', 'nPartons',
-                'nBPartons', 'nCPartons',
-                'rho','rawrho','rho2','rawrho2',
-                'tau32','tau32SD','tau21','tau21SD',
-                'top_ecf_bdt']
-    singletons = r.read_tree(t, branches=branches)
-    for k in branches:
+    singletons = r.read_tree(t, branches=singleton_branches)
+    for k in singleton_branches:
         data[k] = singletons[k]
 
     arr = r.read_tree(t, branches=['kinematics'])
@@ -45,17 +47,9 @@ def tree_to_arrays(infilepath, treename='inputs'):
     return data 
 
 
-def normalize_arrays(data, infilepath):
+def normalize_arrays(data, cat, infilepath=None):
     if NORM and data['pt'].shape[0]:
-        # data['msd'] /= 300
-        # 
-        # data['pt'] -= 400
-        # data['pt'] /= (1000-400)
-
-        # data['rawpt'] -= 400
-        # data['rawpt'] /= (1000-400)
-
-        payload = json.load(open(cmssw_base + '/src/PandaAnalysis/data/deep/QCD_1_inclusive.json'))
+        payload = json.load(open(cmssw_base + '/src/PandaAnalysis/data/deep/normalization_%s.json'%cat))
         mu = []; sigma = []
         for x in payload:
             mu_ = x['mean']
@@ -66,10 +60,10 @@ def normalize_arrays(data, infilepath):
             sigma.append(sigma_)
         mu = np.array(mu, dtype=np.float32); sigma = np.array(sigma, dtype=np.float32)
 
-        data['pf'] -= mu 
-        data['pf'] /= sigma
+        data[cat] -= mu 
+        data[cat] /= sigma
 
-    if SAVE:
+    if SAVE and (infilepath is not None):
         np.savez(infilepath.replace('.root','.npz'), **data)
     
 
@@ -95,7 +89,8 @@ def run_model(infilepattern, outfilepath):
     for i in xrange(N):
         infilepath = infilepattern % i
         data = tree_to_arrays(infilepath)
-        normalize_arrays(data, infilepath)
+        normalize_arrays(data, 'pf', infilepath)
+        normalize_arrays(data, 'sv', infilepath)
         utils.print_time('preprocessing')
         if INFER:
             pred = infer(data)

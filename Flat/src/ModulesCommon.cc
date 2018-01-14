@@ -55,7 +55,9 @@ void PandaAnalyzer::IncrementAuxFile(bool close)
   tAux->Branch("tau21",&(gt->fj1Tau21),"tau21/f");
   tAux->Branch("tau21SD",&(gt->fj1Tau21SD),"tau21SD/f");
   tAux->Branch("eventNumber",&(gt->eventNumber),"eventNumber/l");
-
+  tAux->Branch("maxcsv",&(gt->fj1MaxCSV),"maxcsv/f");
+  tAux->Branch("mincsv",&(gt->fj1MinCSV),"mincsv/f");
+  tAux->Branch("doubleb",&(gt->fj1DoubleCSV),"doubleb/f");
 
   gt->SetAuxTree(tAux);
 

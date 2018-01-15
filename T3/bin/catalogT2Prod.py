@@ -1,22 +1,30 @@
 #!/usr/bin/env python
 
 from glob import glob
-from os import stat,getenv,system
+from os import stat,getenv,system,path
 from multiprocessing import Pool
 from PandaCore.Tools.process import *
 from PandaCore.Tools.Misc import *
-from re import sub
+from re import sub, match
 from sys import argv
 import argparse
 
 parser = argparse.ArgumentParser(description='make config file')
-parser.add_argument('--catalog',type=str,default='/home/cmsprod/catalog/t2mit/pandaf/004')
+parser.add_argument('--catalog',type=str,default='/home/cmsprod/catalog/t2mit/pandaf/008')
+parser.add_argument('--mc_catalog',type=str,default=None)
+parser.add_argument('--data_catalog',type=str,default=None)
 parser.add_argument('--outfile',type=str)
 parser.add_argument('--include',nargs='+',type=str,default=None)
 parser.add_argument('--exclude',nargs='+',type=str,default=None)
 parser.add_argument('--smartcache',action='store_true')
 parser.add_argument('--force',action='store_true')
 args = parser.parse_args()
+
+if not args.mc_catalog:
+    args.mc_catalog = args.catalog
+if not args.data_catalog:
+    args.data_catalog = args.catalog
+
 
 class CatalogSample:
     def __init__(self,name,dtype,xsec):
@@ -35,11 +43,15 @@ class CatalogSample:
             book_ = '/'.join(args.catalog.split('/')[-2:])
             lines.append('{0:<25} {2:<10} {3:<15} {1}\n'.format(nickname,f,self.dtype,self.xsec)) 
             if smartcache_args is not None:
-                smartcache_args.append('--file %s --dataset %s --book %s'%(f_,ds_,book_))
+                if not path.isfile(f.replace('root://xrootd.cmsaf.mit.edu','/mnt/hadoop/cms')):
+                    smartcache_args.append('/cms/store/user/paus/%s/%s'%(book_,ds_))
         return lines
 
 def smartcache(arguments):
-    system('/usr/local/DynamicData/SmartCache/Client/addDownloadRequest.py %s >/dev/null'%arguments)
+    arguments = ' '.join(arguments)
+    cmd = ('dynamoCache request --datasets %s'%(arguments))
+#    PInfo(argv[0], cmd)
+    system(cmd)
 
 def checkDS(nickname,include,exclude):
   included=False
@@ -64,35 +76,40 @@ samples = {}
 
 could_not_find = []
 
-for d in sorted(glob(args.catalog+'/*')):
-    dirname = d.split('/')[-1]
-    if 'AOD' not in dirname:
-        continue
-    shortname = dirname.split('+')[0]
-    try:
-        properties = processes[shortname]
-        found = True
-    except KeyError:
-        if args.force:
-          found = False
-          properties = (shortname,'MC',1)
-        else:
-          continue
-    dtype = 'MC' if 'MINIAODSIM' in dirname else 'Data'
-    if not checkDS(properties[0],args.include,args.exclude):
-        continue
-    if not found:
-      could_not_find.append(shortname)
-    if properties[0] not in samples:
-        samples[properties[0]] = CatalogSample(*properties)
-    sample = samples[properties[0]]
-    for rfpath in glob(d+'/RawFiles.*'):
-        rawfile = open(rfpath)
-        for line in rawfile:
-            sample.add_file(line.split()[0])
+def cat(catalog, condition): 
+    global samples, could_not_find
+    for d in sorted(glob(catalog+'/*')):
+        dirname = d.split('/')[-1]
+        if 'AOD' not in dirname or not condition(dirname):
+            continue
+        shortname = dirname.split('+')[0]
+        try:
+            properties = processes[shortname]
+            found = True
+        except KeyError:
+            if args.force:
+              found = False
+              properties = (shortname,'MC',1)
+            else:
+              continue
+        dtype = 'MC' if 'MINIAODSIM' in dirname else 'Data'
+        if not checkDS(properties[0],args.include,args.exclude):
+            continue
+        if not found:
+          could_not_find.append(shortname)
+        if properties[0] not in samples:
+            samples[properties[0]] = CatalogSample(*properties)
+        sample = samples[properties[0]]
+        for rfpath in glob(d+'/RawFiles.*'):
+            rawfile = open(rfpath)
+            for line in rawfile:
+                sample.add_file(line.split()[0])
+
+cat(args.mc_catalog, lambda x : bool(match('.*SIM$', x)))
+cat(args.data_catalog, lambda x : bool(match('.*AOD$', x)))
 
 if len(could_not_find)>0:
-    PWarning(argv[0],"Could not properly catalog following files (force=%s)"%('True' if args.force else 'False'))
+    PWarning(argv[0],"Could not properly catalog following datasets (force=%s)"%('True' if args.force else 'False'))
     for c in could_not_find:
         PWarning(argv[0],'\t'+c)
 
@@ -110,6 +127,6 @@ PInfo(argv[0],'Cataloged %i files for %i datasets'%(len(lines),len(samples)))
 PInfo(argv[0],'Output written to '+args.outfile)
 
 if args.smartcache:
+    smartcache_datasets = list(set(smartcache_args))
     PInfo(argv[0],'Making smartcache requests for files')
-    p = Pool(8)
-    p.map(smartcache,smartcache_args)
+    smartcache(smartcache_datasets)

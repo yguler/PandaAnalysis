@@ -11,6 +11,7 @@
 #include <map>
 
 #define NJET 20
+#define NLEP 4
 #define NSUBJET 2
 
 class GeneralTree : public genericTree {
@@ -53,7 +54,6 @@ class GeneralTree : public genericTree {
         bGT0,
         bNTags
       };
-        
       struct BTagParams {
         BTagJet jet;
         BTagTags tag;
@@ -69,6 +69,46 @@ class GeneralTree : public genericTree {
         bool operator>(const BTagParams &o) const {
           return ! operator<(o);
         }
+      };
+      enum csvShift {
+        csvCent=0,
+        csvLFup=9,
+        csvLFdown=10,
+        csvHFup=11,
+        csvHFdown=12,
+        csvHFStats1up=13,
+        csvHFStats1down=14,
+        csvHFStats2up=15,
+        csvHFStats2down=16,
+        csvLFStats1up=17,
+        csvLFStats1down=18,
+        csvLFStats2up=19,
+        csvLFStats2down=20,
+        csvCErr1up=21,
+        csvCErr1down=22,
+        csvCErr2up=23,
+        csvCErr2down=24
+      };
+      // Array of the CSV/CMVA weight enums that can be looped over
+      static const unsigned char nCsvShifts=17;
+      csvShift csvShifts[nCsvShifts] = {
+        csvCent,
+        csvLFup,
+        csvLFdown,
+        csvHFup,
+        csvHFdown,
+        csvHFStats1up,
+        csvHFStats1down,
+        csvHFStats2up,
+        csvHFStats2down,
+        csvLFStats1up,
+        csvLFStats1down,
+        csvLFStats2up,
+        csvLFStats2down,
+        csvCErr1up,
+        csvCErr1down,
+        csvCErr2up,
+        csvCErr2down
       };
         
     private:
@@ -114,6 +154,30 @@ class GeneralTree : public genericTree {
           }
           return s;
         }
+        TString makeCsvWeightString(csvShift shift, bool isCMVA=false) { 
+          TString s = isCMVA? "sf_cmvaWeight_" : "sf_csvWeight_";
+          switch (shift) {
+            case csvCent         :  s += "Cent"         ; break;
+            case csvLFup         :  s += "LFup"         ; break;
+            case csvLFdown       :  s += "LFdown"       ; break;
+            case csvHFup         :  s += "HFup"         ; break;
+            case csvHFdown       :  s += "HFdown"       ; break;
+            case csvHFStats1up   :  s += "HFStats1up"   ; break;
+            case csvHFStats1down :  s += "HFStats1down" ; break;
+            case csvHFStats2up   :  s += "HFStats2up"   ; break;
+            case csvHFStats2down :  s += "HFStats2down" ; break;
+            case csvLFStats1up   :  s += "LFStats1up"   ; break;
+            case csvLFStats1down :  s += "LFStats1down" ; break;
+            case csvLFStats2up   :  s += "LFStats2up"   ; break;
+            case csvLFStats2down :  s += "LFStats2down" ; break;
+            case csvCErr1up      :  s += "CErr1up"      ; break;
+            case csvCErr1down    :  s += "CErr1down"    ; break;
+            case csvCErr2up      :  s += "CErr2up"      ; break;
+            case csvCErr2down    :  s += "CErr2down"    ; break;
+            default              :  s += "Unknown"      ; break;
+          }
+          return s;
+        }
     public:
       GeneralTree();
       ~GeneralTree();
@@ -131,13 +195,15 @@ class GeneralTree : public genericTree {
       std::vector<int> get_orders() const { return orders; }
         
       // public config
-      bool monohiggs=false, vbf=false, fatjet=true;
+      bool monohiggs=false, vbf=false, fatjet=true, leptonic=false, hfCounting=false;
+      bool btagWeights=false, useCMVA=false;
 
 //STARTCUSTOMDEF
       std::map<ECFParams,float> fj1ECFNs;
       std::map<BTagParams,float> sf_btags;
       std::map<BTagParams,float> sf_alt_btags;
       std::map<TString,float> signal_weights;
+      std::map<csvShift,float> sf_csvWeights; // this is called csvWeights, but may actually include CMVA weights instead
 
       float fj1sjPt[NSUBJET];
       float fj1sjEta[NSUBJET];
@@ -151,18 +217,141 @@ class GeneralTree : public genericTree {
       float jetPhi[NJET];
       float jetE[NJET];
       float jetCSV[NJET];
+      float jetCMVA[NJET];
       float jetIso[NJET];
       float jetQGL[NJET];
+      float jetLeadingLepPt[NJET];
+      float jetLeadingLepPtRel[NJET];
+      float jetLeadingLepDeltaR[NJET];
+      float jetLeadingTrkPt[NJET];
+      float jetvtxPt[NJET];
+      float jetvtxMass[NJET];
+      float jetvtx3Dval[NJET];
+      float jetvtx3Derr[NJET];
+      int jetvtxNtrk[NJET];
+      float jetEMFrac[NJET];
+      float jetHadFrac[NJET];
+      int jetNLep[NJET];
+      float jetGenPt[NJET];
+      int jetGenFlavor[NJET];
 
       int hbbjtidx[2];
+      float jetRegFac[2];
 
       float scale[6];
+      
+      float muonPt[NLEP];
+      float muonEta[NLEP];
+      float muonPhi[NLEP];
+      float muonD0[NLEP];
+      float muonDZ[NLEP];
+      float muonSfLoose[NLEP];
+      float muonSfMedium[NLEP];
+      float muonSfTight[NLEP];
+      float muonSfUnc[NLEP];
+      float muonSfReco[NLEP];
+      int muonSelBit[NLEP];
+      int muonPdgId[NLEP];
+      int muonIsSoftMuon[NLEP];
+      int muonIsGlobalMuon[NLEP];
+      int muonIsTrackerMuon[NLEP];
+      int muonNValidMuon[NLEP];
+      int muonNValidPixel[NLEP];
+      int muonTrkLayersWithMmt[NLEP];
+      int muonPixLayersWithMmt[NLEP];
+      int muonNMatched[NLEP];
+      int muonChi2LocalPosition[NLEP];
+      int muonTrkKink[NLEP];
+      float muonValidFraction[NLEP];
+      float muonNormChi2[NLEP];
+      float muonSegmentCompatibility[NLEP];
+
+      float electronPt[NLEP];
+      float electronEta[NLEP];
+      float electronPhi[NLEP];
+      float electronD0[NLEP];
+      float electronDZ[NLEP];
+      float electronSfLoose[NLEP];
+      float electronSfMedium[NLEP];
+      float electronSfTight[NLEP];
+      float electronSfUnc[NLEP];
+      float electronSfReco[NLEP];
+      int electronSelBit[NLEP];
+      int electronPdgId[NLEP];
+      float electronChIsoPh[NLEP];
+      float electronNhIsoPh[NLEP];
+      float electronPhIsoPh[NLEP];
+      float electronEcalIso[NLEP];
+      float electronHcalIso[NLEP];
+      float electronTrackIso[NLEP];
+      float electronIsoPUOffset[NLEP];
+      float electronSieie[NLEP];
+      float electronSipip[NLEP];
+      float electronDEtaInSeed[NLEP];
+      float electronDPhiIn[NLEP];
+      float electronEseed[NLEP];
+      float electronHOverE[NLEP];
+      float electronEcalE[NLEP];
+      float electronTrackP[NLEP];
+      int electronNMissingHits[NLEP];
+      int electronTripleCharge[NLEP];
+
 //ENDCUSTOMDEF
+    float trkmetphi = -1;
+    float sf_zzUnc = -1;
+    float sf_zz = -1;
+    float sf_wz = -1;
+    float sf_zh = -1;
+    float sf_zhUp = -1;
+    float sf_zhDown = -1;
+    float genLep1Pt = -1;
+    float genLep1Eta = -1;
+    float genLep1Phi = -1;
+    int genLep1PdgId = -1;
+    float genLep2Pt = -1;
+    float genLep2Eta = -1;
+    float genLep2Phi = -1;
+    int genLep2PdgId = -1;
+    int looseGenLep1PdgId = -1;
+    int looseGenLep2PdgId = -1;
+    int looseGenLep3PdgId = -1;
+    int looseGenLep4PdgId = -1;
+    int whichRecoil = -1;
+    float genJet1Pt = -1;
+    float genJet2Pt = -1;
+    float genJet1Eta = -1;
+    float genJet2Eta = -1;
+    float genMjj = -1;
+    float sf_qcdV_VBF2lTight = -1;
+    float sf_qcdV_VBF2l = -1;
+    float barrelHTMiss = -1;
+    float barrelJet12Pt = -1;
+    float barrelJet1Pt = -1;
+    float barrelJet1Eta = -1;
+    float barrelHT = -1;
+    float sf_puUp = -1;
+    float sf_puDown = -1;
+    float genMuonPt = -1;
+    float genMuonEta = -1;
+    float genElectronPt = -1;
+    float genElectronEta = -1;
+    float genTauPt = -1;
+    float genTauEta = -1;
+    int badECALFilter = -1;
+    float sf_qcdV_VBFTight = -1;
+    float sf_metTrigVBF = -1;
+    float sf_metTrigZmmVBF = -1;
+    float sumETRaw = -1;
     int jot1VBFID = -1;
     float sf_metTrigZmm = -1;
     float sf_qcdV_VBF = -1;
     int jetNMBtags = -1;
     float pfmetRaw = -1;
+    int nAK8jet = -1;
+    float ak81Pt = -1;
+    float ak81Eta = -1;
+    float ak81Phi = -1;
+    float ak81MaxCSV = -1;
     int nB = -1;
     float fj1MSDScaleUp_sj = -1;
     float fj1MSDScaleDown_sj = -1;
@@ -210,8 +399,6 @@ class GeneralTree : public genericTree {
     float jot12DPhi = -1;
     int isGS = -1;
     float fj1SubMaxCSV = -1;
-    int looseLep1IsHLTSafe = -1;
-    int looseLep2IsHLTSafe = -1;
     int runNumber = -1;
     int lumiNumber = -1;
     ULong64_t eventNumber = -1;
@@ -233,6 +420,7 @@ class GeneralTree : public genericTree {
     float sf_lepTrack = -1;
     float sf_pho = -1;
     float sf_eleTrig = -1;
+    float sf_muTrig = -1;
     float sf_phoTrig = -1;
     float sf_metTrig = -1;
     float sf_pu = -1;
@@ -247,8 +435,10 @@ class GeneralTree : public genericTree {
     float pfmet = -1;
     float pfmetphi = -1;
     float pfmetnomu = -1;
+    float pfmetsig = -1;
     float puppimet = -1;
     float puppimetphi = -1;
+    float puppimetsig = -1;
     float calomet = -1;
     float calometphi = -1;
     float pfcalobalance = -1;
@@ -309,6 +499,7 @@ class GeneralTree : public genericTree {
     float jet1GenPt = -1;
     float jet1Eta = -1;
     float jet1CSV = -1;
+    float jet1CMVA = -1;
     int jet1IsTight = -1;
     int jet2Flav = -1;
     float jet2Phi = -1;
@@ -316,6 +507,15 @@ class GeneralTree : public genericTree {
     float jet2GenPt = -1;
     float jet2Eta = -1;
     float jet2CSV = -1;
+    float jet2CMVA = -1;
+    float jet2EtaUp = -1;
+    float jet2EtaDown = -1;
+    float jet1EtaUp = -1;
+    float jet1EtaDown = -1;
+    float jet1PtUp = -1;
+    float jet1PtDown = -1;
+    float jet2PtUp = -1;
+    float jet2PtDown = -1;
     float isojet1Pt = -1;
     float isojet1CSV = -1;
     int isojet1Flav = -1;
@@ -384,16 +584,6 @@ class GeneralTree : public genericTree {
     int nTightLep = -1;
     int nTightElectron = -1;
     int nTightMuon = -1;
-    int looseLep1PdgId = -1;
-    int looseLep2PdgId = -1;
-    int looseLep1IsTight = -1;
-    int looseLep2IsTight = -1;
-    float looseLep1Pt = -1;
-    float looseLep1Eta = -1;
-    float looseLep1Phi = -1;
-    float looseLep2Pt = -1;
-    float looseLep2Eta = -1;
-    float looseLep2Phi = -1;
     float diLepMass = -1;
     int nTau = -1;
     float mT = -1;
@@ -401,6 +591,8 @@ class GeneralTree : public genericTree {
     float hbbeta = -1;
     float hbbphi = -1;
     float hbbm = -1;
+    float hbbm_reg = -1;
+    float hbbpt_reg = -1;
     float scaleUp = -1;
     float scaleDown = -1;
     float pdfUp = -1;

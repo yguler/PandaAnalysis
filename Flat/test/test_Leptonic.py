@@ -17,30 +17,37 @@ argv = []
 
 import ROOT as root
 from PandaCore.Tools.Load import *
+from PandaAnalysis.Flat.analysis import vv
 
-Load('PandaLeptonicAnalyzer')
+Load('PandaAnalyzer')
 
-skimmer = root.PandaLeptonicAnalyzer(debug_level)
+skimmer = root.PandaAnalyzer(debug_level)
+vv = vv()
+vv.monoh = False
+vv.hbb = False
+vv.recoil = False
+vv.ak8 = False
+vv.btagSFs = True
+vv.btagWeights = True
+vv.useCMVA = True
+vv.complicatedLeptons = True
+vv.hfCounting = True
+vv.reclusterGen = False
+vv.bjetRegression = False
+vv.processType = root.kTT
+vv.PreselectionBit = root.PandaLeptonicAnalyzer.kLepton
+vv.dump()
+skimmer.SetAnalysis(vv)
 
 skimmer.firstEvent=0
-skimmer.lastEvent=20000
+skimmer.lastEvent=1000
 skimmer.isData=False
-skimmer.SetFlag('firstGen',True)
-skimmer.SetFlag('applyEGCorr',False)
-skimmer.SetFlag('applyJSON',False)
-skimmer.SetFlag('lepton',True)
-#skimmer.SetFlag('monohiggs',True)
-if skimmer.isData and False:
+if skimmer.isData:
     with open(getenv('CMSSW_BASE')+'/src/PandaAnalysis/data/certs/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt') as jsonFile:
         payload = json.load(jsonFile)
         for run,lumis in payload.iteritems():
             for l in lumis:
                 skimmer.AddGoodLumiRange(int(run),l[0],l[1])
-skimmer.processType = root.PandaLeptonicAnalyzer.kNone
-#skimmer.processType = root.PandaLeptonicAnalyzer.kZPtCut
-skimmer.SetPreselectionBit(root.PandaLeptonicAnalyzer.kLepton)
-#system("pxrdcp %s input.root '!pfCandidates'"%(torun))
-#fin = root.TFile.Open('input.root')
 fin = root.TFile.Open(torun)
 
 tree = fin.FindObjectAny("events")
@@ -48,7 +55,6 @@ hweights = fin.FindObjectAny("hSumW")
 weights = fin.FindObjectAny('weights')
 if not weights:
     weights = None
-print tree, hweights, weights
 
 skimmer.SetDataDir(getenv('CMSSW_BASE')+'/src/PandaAnalysis/data/')
 skimmer.Init(tree,hweights,weights)

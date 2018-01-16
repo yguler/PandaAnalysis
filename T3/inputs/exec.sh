@@ -12,7 +12,7 @@ mv local*cfg local.cfg
 export X509_USER_PROXY=${PWD}/x509up
 export HOME=.
 
-RELEASE=CMSSW_8_0_26_patch1
+RELEASE=CMSSW_9_2_12
 scram p CMSSW $RELEASE
 tar xzf cmssw.tgz -C $RELEASE
 

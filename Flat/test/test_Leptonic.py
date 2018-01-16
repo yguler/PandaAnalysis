@@ -22,22 +22,8 @@ from PandaAnalysis.Flat.analysis import vv
 Load('PandaAnalyzer')
 
 skimmer = root.PandaAnalyzer(debug_level)
-vv = vv()
-vv.monoh = False
-vv.hbb = False
-vv.recoil = False
-vv.ak8 = False
-vv.btagSFs = True
-vv.btagWeights = True
-vv.useCMVA = True
-vv.complicatedLeptons = True
-vv.hfCounting = True
-vv.reclusterGen = False
-vv.bjetRegression = False
-vv.processType = root.kTT
-vv.PreselectionBit = root.PandaAnalyzer.kLepton
-vv.dump()
-skimmer.SetAnalysis(vv)
+analysis = vv(True)
+skimmer.SetAnalysis(analysis)
 
 skimmer.firstEvent=0
 skimmer.lastEvent=1000

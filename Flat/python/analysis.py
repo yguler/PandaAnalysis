@@ -73,5 +73,6 @@ wlnhbb = lambda v=False : _analysis(
         complicatedLeptons = True,
         hfCounting = True,
         reclusterGen = False,
-        bjetRegression = True
+        bjetRegression = True,
+        varyJES= True
     )

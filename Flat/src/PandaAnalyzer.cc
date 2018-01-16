@@ -111,8 +111,11 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   else if (analysis->fatjet) 
     readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
   
-  if (analysis->recluster || analysis->bjetRegression)
+  if (analysis->monoh || analysis->recluster || analysis->bjetRegression) {
     readlist.push_back("pfCandidates");
+    readlist.push_back("tracks");
+    readlist.push_back("vertices");
+  }
 
   if (analysis->bjetRegression)
     readlist.push_back("secondaryVertices");
@@ -171,7 +174,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   gt->RemoveBranches({"ak81.*"}); // unused
   
-  if (analysis->recluster || analysis->reclusterGen) {
+  if (analysis->recluster || analysis->reclusterGen || analysis->monoh) {
     int activeAreaRepeats = 1;
     double ghostArea = 0.01;
     double ghostEtaMax = 7.0;
@@ -196,6 +199,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     double radius = 0.4;
     jetDefGen = new fastjet::JetDefinition(fastjet::antikt_algorithm,radius);
   }
+  if (analysis-> monoh)
+    softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
 
   // Custom jet pt threshold
   if (analysis->hbb) jetPtThreshold=20;
@@ -1032,7 +1037,8 @@ void PandaAnalyzer::Run()
 
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
-
+    if(!analysis->genOnly && analysis->monoh)
+      JetHbbSoftActivity();
     if (analysis->monoh && !analysis->genOnly)
       GetMETSignificance();
 

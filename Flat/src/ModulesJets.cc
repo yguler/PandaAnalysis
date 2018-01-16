@@ -629,6 +629,7 @@ void PandaAnalyzer::JetHbbSoftActivity() {
   if (gt->hbbm>0.) {
     gt->sumEtSoft1=0; gt->nSoft2=0; gt->nSoft5=0; gt->nSoft10=0;
     // Define the ellipse of particles to forget about
+    // https://math.stackexchange.com/questions/426150/what-is-the-general-equation-of-the-ellipse-that-is-not-in-the-origin-and-rotate 
     // ((x-h)cos(A) + (y-k)sin(A))^2 /a^2 + ((x-h)sin(A) - (y-k)cos(A))^2 /b^2 <=1
     double ellipse_cosA, ellipse_sinA, ellipse_h, ellipse_k, ellipse_a, ellipse_b; {
       double ellipse_alpha;
@@ -639,8 +640,8 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       double phi1MinusPhi2MPP = TVector2::Phi_mpi_pi(phi1MinusPhi2);
       ellipse_alpha = atan2( phi1MinusPhi2, eta1MinusEta2);
       // compute delta R using already computed qty's to save time
-      ellipse_a = sqrt(pow(eta1MinusEta2,2) + pow(TVector2::Phi_mpi_pi(phi1MinusPhi2),2)) + 1.; // dR(b,b)+1
-      ellipse_b = 1.;
+      ellipse_a = (sqrt(pow(eta1MinusEta2,2) + pow(TVector2::Phi_mpi_pi(phi1MinusPhi2),2)) + 1.)/2.; // Major axis 2*a = dR(b,b)+1
+      ellipse_b = 1./2.; // Minor axis 2*b = 1
       ellipse_h = (eta1+eta2)/2.;
       ellipse_k = TVector2::Phi_mpi_pi(phi2 + phi1MinusPhi2MPP/2.);
       ellipse_cosA = cos(ellipse_alpha);
@@ -684,13 +685,13 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       for (int iV=0; iV!=event.vertices.size(); iV++) {
         auto& theVertex = event.vertices[iV];
         float vertexAbsDz = fabs(softTrack->dz(theVertex.position()));
-        //if(DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
+        if(DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
         if(vertexAbsDz >= minAbsDz) continue;
         idxVertexWithMinAbsDz = iV;
         minAbsDz = vertexAbsDz;
       }
       if(idxVertexWithMinAbsDz!=0 || minAbsDz>0.2) continue;
-      //if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
+      if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
       // Need to add High Quality track flags :-)
       bool trackIsInHbbEllipse=false; {
         double ellipse_x = softTrack->eta();
@@ -700,7 +701,7 @@ void PandaAnalyzer::JetHbbSoftActivity() {
           2
         );
         double ellipse_term2 = pow(
-          (TVector2::Phi_mpi_pi(ellipse_x - ellipse_h)*ellipse_sinA + (ellipse_y - ellipse_k)*ellipse_cosA) / ellipse_b,
+          (TVector2::Phi_mpi_pi(ellipse_x - ellipse_h)*ellipse_sinA - (ellipse_y - ellipse_k)*ellipse_cosA) / ellipse_b,
           2
         );
         double ellipse_equation = (ellipse_term1 + ellipse_term2);
@@ -717,7 +718,7 @@ void PandaAnalyzer::JetHbbSoftActivity() {
     for (std::vector<fastjet::PseudoJet>::size_type iSTJ=0; iSTJ<softTrackJets.size(); iSTJ++) {
       if(fabs(softTrackJets[iSTJ].eta()) > 4.7) continue;
       gt->sumEtSoft1 += softTrackJets[iSTJ].Et(); 
-      //if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
+      if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
       if(softTrackJets[iSTJ].pt() >  2.)  gt->nSoft2++; else continue;
       if(softTrackJets[iSTJ].pt() >  5.)  gt->nSoft5++; else continue;
       if(softTrackJets[iSTJ].pt() > 10.) gt->nSoft10++; else continue;

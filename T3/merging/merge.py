@@ -28,7 +28,7 @@ if args.cfg == 'leptonic':
     xsecscale = 1000
 else:
     from PandaCore.Tools.process import *
-    xsecsale = 1
+    xsecscale = 1
 
 sys.path.append('configs/')
 cfg = __import__(args.cfg)

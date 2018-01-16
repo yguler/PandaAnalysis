@@ -131,7 +131,7 @@ private:
         cTrigMET,     //!< MET trigger eff        
         cTrigMETZmm,  //!< Zmumu MET trigger eff
         cTrigEle,     //!< Ele trigger eff        
-        cTrigMu,     //!< Ele trigger eff        
+        cTrigMu,      //!< Mu trigger eff        
         cTrigPho,     //!< Pho trigger eff        
         cZNLO,        //!< NLO weights for QCD Z,W,A,A+2j
         cWNLO,
@@ -212,6 +212,7 @@ private:
     void JetCMVAWeights();
     void JetHbbBasics(panda::Jet&);
     void JetHbbReco();
+    void JetHbbSoftActivity();
     void JetVBFBasics(panda::Jet&);
     void JetVBFSystem();
     void JetVaryJES(panda::Jet&);
@@ -272,6 +273,7 @@ private:
     fastjet::AreaDefinition *areaDef=0;
     fastjet::GhostedAreaSpec *activeArea=0;
     fastjet::JetDefinition *jetDefGen=0;
+    fastjet::JetDefinition *softTrackJetDefinition=0;
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -366,6 +368,7 @@ private:
     float fjmsd, fjpt, fjrawpt, fjeta, fjphi;
     int NPFPROPS = 9, NSVPROPS = 13;
     
+    float minSoftTrackPt=0.3; // 300 MeV
 };
 
 

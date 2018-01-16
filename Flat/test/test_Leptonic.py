@@ -35,7 +35,7 @@ vv.hfCounting = True
 vv.reclusterGen = False
 vv.bjetRegression = False
 vv.processType = root.kTT
-vv.PreselectionBit = root.PandaLeptonicAnalyzer.kLepton
+vv.PreselectionBit = root.PandaAnalyzer.kLepton
 vv.dump()
 skimmer.SetAnalysis(vv)
 

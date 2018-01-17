@@ -14,8 +14,7 @@ argv=[]
 import ROOT as root
 from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import *
-import PandaCore.Tools.job_management as cb
-import PandaAnalysis.Tagging.cfg_v8 as tagcfg
+import PandaCore.Tools.job_config as cb
 import PandaAnalysis.T3.job_utilities as utils
 from PandaAnalysis.Flat.analysis import vv
 
@@ -27,13 +26,14 @@ def fn(input_name, isData, full_path):
     PInfo(sname+'.fn','Starting to process '+input_name)
     # now we instantiate and configure the analyzer
     skimmer = root.PandaAnalyzer()
-    skimmer.SetAnalysis(vv(True))
-    analysis = vv(True)
-    analysis.processType = utils.classify_sample(full_path, isData)	
-    skimmer.isData=isData
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kLepton)
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)
-
+    skimmer.SetPreselectionBit(root.PandaAnalyzer.applyMCTriggers)
+    analysis = vv(True)
+    analysis.processType = utils.classify_sample(full_path, isData)	
+    skimmer.SetAnalysis(analysis)
+    skimmer.isData=isData
+ 
     return utils.run_PandaAnalyzer(skimmer, isData, input_name)
 
 

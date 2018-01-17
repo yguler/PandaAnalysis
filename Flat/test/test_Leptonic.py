@@ -25,10 +25,11 @@ skimmer = root.PandaAnalyzer(debug_level)
 analysis = vv(True)
 skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)
 skimmer.SetPreselectionBit(root.PandaAnalyzer.kLepton)
+skimmer.SetPreselectionBit(root.PandaAnalyzer.applyMCTriggers)
 skimmer.SetAnalysis(analysis)
 
 skimmer.firstEvent=0
-skimmer.lastEvent=1000
+skimmer.lastEvent=10000
 skimmer.isData=False
 if skimmer.isData:
     with open(getenv('CMSSW_BASE')+'/src/PandaAnalysis/data/certs/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt') as jsonFile:

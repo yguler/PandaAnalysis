@@ -60,7 +60,8 @@ public :
      kGenBosonPt =(1<<10),
      kVHBB       =(1<<11),
      kLepton     =(1<<12),
-     kLeptonFake =(1<<13)
+     kLeptonFake =(1<<13),
+     applyMCTriggers=(1<<14)
     };
     
     enum LepSelectionBit {

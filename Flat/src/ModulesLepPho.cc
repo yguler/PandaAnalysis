@@ -104,7 +104,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
     float pt = ele.smearedPt; float eta = ele.eta(); float aeta = fabs(eta);
     if (pt<10 || aeta>2.5 /* || (aeta>1.4442 && aeta<1.566) */) continue;
     if (!ele.veto) continue;
-    if (!ElectronIP(ele.eta(),ele.dxy,ele.dz)) continue;
+    //if (!ElectronIP(ele.eta(),ele.dxy,ele.dz)) continue;
     ele.setPtEtaPhiM(pt,eta,ele.phi(),511e-6);
     unsigned iL=gt->nLooseElectron;
     bool isFake   = ele.hltsafe;

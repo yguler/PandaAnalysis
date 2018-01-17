@@ -31,8 +31,8 @@ def fn(input_name, isData, full_path):
     analysis = vv(True)
     analysis.processType = utils.classify_sample(full_path, isData)	
     skimmer.isData=isData
-    skimmer.SetPreselectionBit(root.PandaAnalyzer.kLepton)
-    skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)
+    skimmer.SetPreselectionBit(root.PandaAnalyzer.kLeptonFake)
+    skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)  
 
     return utils.run_PandaAnalyzer(skimmer, isData, input_name)
 

@@ -59,6 +59,8 @@ public :
      kRecoil50   =(1<<9),
      kGenBosonPt =(1<<10),
      kVHBB       =(1<<11)
+     kLepton     =(1<<12),
+     kLeptonFake =(1<<13)
     };
     
     enum LepSelectionBit {
@@ -77,7 +79,9 @@ public :
         kDoubleEleTrig,
         kEMuTrig,
         kJetHTTrig,
-        kNTrig,
+        kMuFakeTrig,
+        kEleFakeTrig,
+        kNTrig
     };
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -358,7 +362,7 @@ private:
     panda::Jet *jetDown1 = 0, *jetDown2 = 0;
     std::vector<panda::GenJet> genJetsNu;
     float genBosonPtMin, genBosonPtMax;
-    int looseLep1PdgId, looseLep2PdgId;
+    int looseLep1PdgId, looseLep2PdgId, looseLep3PdgId, looseLep4PdgId;
     std::vector<TString> wIDs;
     float *bjetreg_vars = 0;
     float jetPtThreshold=30;

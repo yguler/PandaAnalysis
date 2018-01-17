@@ -108,7 +108,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber", "rho", 
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
-                                     "pfMet", "caloMet", "puppiMet", "rawMet", 
+                                     "pfMet", "caloMet", "puppiMet", "rawMet", "trkMet", 
                                      "recoil","metFilters","trkMet"});
   readlist.setVerbosity(0);
 
@@ -500,7 +500,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
   }
 
   // bjet regression
-  if (analysis->bjetRegression){
+  if (analysis->bjetRegression) {
     bjetreg_vars = new float[10];
 
     bjetreg_reader->AddVariable("jetPt[hbbjtidx[0]]",&bjetreg_vars[0]);
@@ -640,6 +640,21 @@ bool PandaAnalyzer::PassPreselection()
   if (preselBits==0)
     return true;
   bool isGood=false;
+
+  if (preselBits & kLepton) {
+    if (looseLeps.size() >= 2 && looseLeps[0]->pt() > 20 && looseLeps[1]->pt() > 20) isGood = true;
+  }
+  else if (preselBits & kLeptonFake) {
+    bool passFakeTrigger = (gt->trigger & kMuFakeTrig) == kMuFakeTrig || (gt->trigger & kEleFakeTrig) == kEleFakeTrig;
+    if (passFakeTrigger == true) {
+      double mll = 0.0;
+      if (gt->nLooseLep == 2) {
+	mll = gt->diLepMass;
+      }
+      if (mll > 70.0 || gt->nLooseLep == 1) 
+	isGood = true;
+    }
+  }
 
   if (preselBits & kGenBosonPt) {
     if (gt->trueGenBosonPt > 100)
@@ -814,6 +829,8 @@ void PandaAnalyzer::Run()
   std::vector<unsigned int> phoTriggers;
   std::vector<unsigned int> muTriggers;
   std::vector<unsigned int> jetTriggers;
+  std::vector<unsigned int> muFakeTriggers;
+  std::vector<unsigned int> eleFakeTriggers;
 
   if (isData) {
     if (DEBUG) PDebug("PandaAnalyzer::Run","Loading the trigger paths");
@@ -914,6 +931,19 @@ void PandaAnalyzer::Run()
       };
     triggerHandlers[kSingleMuTrig].addTriggers(paths);
     
+    paths = {
+          "HLT_Mu8_TrkIsoVV",
+          "HLT_Mu17_TrkIsoVV"
+    };
+    triggerHandlers[kMuFakeTrig].addTriggers(paths);
+
+    paths = {
+          "HLT_Ele12_CaloIdL_TrackIdL_IsoVL_PFJet30",
+          "HLT_Ele17_CaloIdL_TrackIdL_IsoVL_PFJet30",
+          "HLT_Ele23_CaloIdL_TrackIdL_IsoVL_PFJet30"
+    };
+    triggerHandlers[kEleFakeTrig].addTriggers(paths);
+
     RegisterTriggers();
   }
 
@@ -1057,7 +1087,7 @@ void PandaAnalyzer::Run()
 
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
-    if(!analysis->genOnly && analysis->monoh)
+    if (!analysis->genOnly && analysis->monoh)
       JetHbbSoftActivity();
     if (analysis->monoh && !analysis->genOnly)
       GetMETSignificance();

@@ -269,6 +269,10 @@ inline bool ElectronIP(double eta, double dxy, double dz) {
   }
 }
 
+inline bool MuonIP(double dxy, double dz) {
+  return (dxy < 0.02 && dz < 0.10);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 

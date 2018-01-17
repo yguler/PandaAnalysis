@@ -527,12 +527,12 @@ void PandaAnalyzer::JetHbbReco()
       gt->hbbCosThetaJJ   = hbbsystem.CosTheta();
       // Collins-Soper frame calculation
       if (analysis->bjetRegression) {
-        if(hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) 
+        if (hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) 
           gt->hbbCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughters_corr[0],hbbdaughters_corr[1]);
         else
           gt->hbbCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughters_corr[1],hbbdaughters_corr[0]);
       } else {
-        if(hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) 
+        if (hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) 
           gt->hbbCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughter1,hbbdaughter2);
         else
           gt->hbbCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughter2,hbbdaughter1);
@@ -680,17 +680,17 @@ void PandaAnalyzer::JetHbbSoftActivity() {
     for (auto &softTrackRef : allTracks) {
       softTrack = &softTrackRef;
       bool trackIsSpokenFor=false;
-      if(!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet1Tracks.size(); iJetTrack++) {
-        if(!jet1Tracks.at(iJetTrack).isValid()) continue;
+      if (!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet1Tracks.size(); iJetTrack++) {
+        if (!jet1Tracks.at(iJetTrack).isValid()) continue;
         if (softTrack==jet1Tracks.at(iJetTrack).get()) { trackIsSpokenFor=true; break; }
       }
-      if(!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet2Tracks.size(); iJetTrack++) {
-        if(!jet2Tracks.at(iJetTrack).isValid()) continue;
+      if (!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet2Tracks.size(); iJetTrack++) {
+        if (!jet2Tracks.at(iJetTrack).isValid()) continue;
         if (softTrack==jet2Tracks.at(iJetTrack).get()) { trackIsSpokenFor=true; break; }
       }
-      if(!trackIsSpokenFor) for(int iLep=0; iLep<gt->nLooseLep; iLep++) {
-        if(!looseLeps[iLep]->matchedPF.isValid()) continue;
-        if(softTrack==looseLeps[iLep]->matchedPF.get()) { trackIsSpokenFor=true; break; }
+      if (!trackIsSpokenFor) for (int iLep=0; iLep<gt->nLooseLep; iLep++) {
+        if (!looseLeps[iLep]->matchedPF.isValid()) continue;
+        if (softTrack==looseLeps[iLep]->matchedPF.get()) { trackIsSpokenFor=true; break; }
       }
       if (trackIsSpokenFor) continue;
       if (softTrack->pt() < minSoftTrackPt) continue;
@@ -701,12 +701,12 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       for (int iV=0; iV!=event.vertices.size(); iV++) {
         auto& theVertex = event.vertices[iV];
         float vertexAbsDz = fabs(softTrack->dz(theVertex.position()));
-        if(DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
-        if(vertexAbsDz >= minAbsDz) continue;
+        if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
+        if (vertexAbsDz >= minAbsDz) continue;
         idxVertexWithMinAbsDz = iV;
         minAbsDz = vertexAbsDz;
       }
-      if(idxVertexWithMinAbsDz!=0 || minAbsDz>0.2) continue;
+      if (idxVertexWithMinAbsDz!=0 || minAbsDz>0.2) continue;
       if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
       // Need to add High Quality track flags :-)
       bool trackIsInHbbEllipse=false; {
@@ -732,12 +732,12 @@ void PandaAnalyzer::JetHbbSoftActivity() {
     std::vector<fastjet::PseudoJet> softTrackJets(softTrackSequence.inclusive_jets(1.));
     if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
     for (std::vector<fastjet::PseudoJet>::size_type iSTJ=0; iSTJ<softTrackJets.size(); iSTJ++) {
-      if(fabs(softTrackJets[iSTJ].eta()) > 4.7) continue;
+      if (fabs(softTrackJets[iSTJ].eta()) > 4.7) continue;
       gt->sumEtSoft1 += softTrackJets[iSTJ].Et(); 
       if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
-      if(softTrackJets[iSTJ].pt() >  2.)  gt->nSoft2++; else continue;
-      if(softTrackJets[iSTJ].pt() >  5.)  gt->nSoft5++; else continue;
-      if(softTrackJets[iSTJ].pt() > 10.) gt->nSoft10++; else continue;
+      if (softTrackJets[iSTJ].pt() >  2.)  gt->nSoft2++; else continue;
+      if (softTrackJets[iSTJ].pt() >  5.)  gt->nSoft5++; else continue;
+      if (softTrackJets[iSTJ].pt() > 10.) gt->nSoft10++; else continue;
     }
     tr->TriggerEvent("Soft activity");
   }

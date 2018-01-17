@@ -278,10 +278,10 @@ float PandaAnalyzer::GetMSDCorr(float puppipt, float puppieta)
   float totalWeight = 1.;
 
   genCorr = puppisd_corrGEN->Eval( puppipt );
-  if(fabs(puppieta) <= 1.3){
+  if ( fabs(puppieta) <= 1.3 ){
     recoCorr = puppisd_corrRECO_cen->Eval( puppipt );
   }
-  else{
+  else {
     recoCorr = puppisd_corrRECO_for->Eval( puppipt );
   }
   totalWeight = genCorr * recoCorr;

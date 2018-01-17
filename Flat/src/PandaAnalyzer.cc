@@ -1099,11 +1099,12 @@ void PandaAnalyzer::Run()
         SaveGenLeptons();
 
       SignalInfo();
-
+/*
       if (analysis->complicatedLeptons) 
         GenStudyEWK();
       else
         LeptonSFs();
+*/
 
       PhotonSFs();
 

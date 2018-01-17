@@ -414,16 +414,12 @@ void PandaAnalyzer::GenStudyEWK() {
     auto& part(event.genParticles.at(iG));
     int pdgid = part.pdgid;
     unsigned int abspdgid = abs(pdgid);
-    if ((abspdgid == 11 || abspdgid == 13) 
-	&& (part.finalState) 
-	&& (part.statusFlags == GenParticle::kIsPrompt 
-	    || part.statusFlags == GenParticle::kIsTauDecayProduct 
-	    || part.statusFlags == GenParticle::kIsPromptTauDecayProduct 
-	    || part.statusFlags == GenParticle::kIsDirectTauDecayProduct 
-	    || part.statusFlags == GenParticle::kIsDirectPromptTauDecayProduct 
-	    || (part.parent.isValid() && abs(part.parent->pdgid) == 15)
-	   )
-	)
+     if ((abspdgid == 11 || abspdgid == 13) 
+        && part.finalState 
+	&& (part.testFlag(GenParticle::kIsPrompt)                || part.statusFlags == GenParticle::kIsPrompt ||
+     	    part.testFlag(GenParticle::kIsTauDecayProduct)       || part.testFlag(GenParticle::kIsPromptTauDecayProduct) || 
+     	    part.testFlag(GenParticle::kIsDirectTauDecayProduct) || part.testFlag(GenParticle::kIsDirectPromptTauDecayProduct) ||
+     	   (part.parent.isValid() && abs(part.parent->pdgid) == 15)))
     {
       targetsLepton.push_back(iG);
     }

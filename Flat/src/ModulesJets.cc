@@ -81,6 +81,9 @@ void PandaAnalyzer::JetBasics()
           gt->badECALFilter = 0;
       }
 
+      if (analysis->fatjet)
+        IsoJet(jet);
+
       float csv = (fabs(jet.eta())<2.5) ? jet.csv : -1;
       float cmva = (fabs(jet.eta())<2.5) ? jet.cmva : -1;
       if (fabs(jet.eta())<2.4) {
@@ -145,7 +148,7 @@ void PandaAnalyzer::JetBasics()
     if (analysis->varyJES)
       JetVaryJES(jet);
 
-  } // VJet loop
+  } // jet loop
   gt->barrelHTMiss = vBarrelJets.Pt();
 
   switch (gt->whichRecoil) {

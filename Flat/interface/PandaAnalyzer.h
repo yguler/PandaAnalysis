@@ -38,6 +38,9 @@
 /////////////////////////////////////////////////////////////////////////////
 // some misc definitions
 
+#define NMAXPF 100
+#define NMAXSV 10
+
 
 /////////////////////////////////////////////////////////////////////////////
 // PandaAnalyzer definition
@@ -52,11 +55,12 @@ public :
      kVBF        =(1<<5),
      kRecoil     =(1<<6),
      kFatjet     =(1<<7),
-     kRecoil50   =(1<<8),
-     kGenBosonPt =(1<<9),
-     kVHBB       =(1<<10),
-     kLepton     =(1<<11),
-     kLeptonFake =(1<<12)
+     kFatjet450  =(1<<8),
+     kRecoil50   =(1<<9),
+     kGenBosonPt =(1<<10),
+     kVHBB       =(1<<11),
+     kLepton     =(1<<12),
+     kLeptonFake =(1<<13)
     };
     
     enum LepSelectionBit {
@@ -195,12 +199,15 @@ private:
     void ComplicatedLeptons();
     void EvalBTagSF(std::vector<btagcand> &cands, std::vector<double> &sfs,
                     GeneralTree::BTagShift shift,GeneralTree::BTagJet jettype, bool do2=false);
+    void IncrementAuxFile(bool close=false);
     void FatjetBasics();
     void FatjetMatching();
+    void FatjetPartons();
     void FatjetRecluster();
+    void FillPFTree();
     void GenJetsNu();
     void GenStudyEWK();
-    float GetMSDCorr(Float_t puppipt, Float_t puppieta); // @bmaier: please refactor this
+    float GetMSDCorr(float, float); 
     void HeavyFlavorCounting();
     void IsoJet(panda::Jet&);
     void JetBRegressionInfo(panda::Jet&);
@@ -265,6 +272,7 @@ private:
     
     // fastjet reclustering
     fastjet::JetDefinition *jetDef=0;
+    fastjet::JetDefinition *jetDefKt=0;
     fastjet::contrib::SoftDrop *softDrop=0;
     fastjet::AreaDefinition *areaDef=0;
     fastjet::GhostedAreaSpec *activeArea=0;
@@ -310,9 +318,14 @@ private:
     //////////////////////////////////////////////////////////////////////////////////////
 
     // IO for the analyzer
+    TString fOutPath;
     TFile *fOut=0;     // output file is owned by PandaAnalyzer
     TTree *tOut=0;
     GeneralTree *gt=0; // essentially a wrapper around tOut
+    TString auxFilePath="";
+    unsigned auxCounter=0;
+    TFile *fAux=0; // auxillary file
+    TTree *tAux=0;
     TH1F *hDTotalMCWeight=0;
     TTree *tIn=0;    // input tree to read
     unsigned int preselBits=0;
@@ -352,10 +365,14 @@ private:
     int looseLep1PdgId, looseLep2PdgId, looseLep3PdgId, looseLep4PdgId;
     std::vector<TString> wIDs;
     float *bjetreg_vars = 0;
-
     float jetPtThreshold=30;
-    float minSoftTrackPt=0.3; // 300 MeV
 
+    std::vector<std::vector<float>> pfInfo;
+    std::vector<std::vector<float>> svInfo; 
+    float fjmsd, fjpt, fjrawpt, fjeta, fjphi;
+    int NPFPROPS = 9, NSVPROPS = 13;
+    
+    float minSoftTrackPt=0.3; // 300 MeV
 };
 
 

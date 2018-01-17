@@ -314,7 +314,7 @@ void PandaAnalyzer::QCDUncs()
       gt->pdfDown = 1 - event.genReweight.pdfDW;
       auto &genReweight = event.genReweight;
       for (unsigned iS=0; iS!=6; ++iS) {
-        float s=1;
+        float s = 0;
         switch (iS) {
           case 0:
             s = genReweight.r1f2DW; break;
@@ -331,6 +331,7 @@ void PandaAnalyzer::QCDUncs()
           default:
             break;
         }
+        s += 1;
         gt->scale[iS] = s; 
         gt->scaleUp = max(float(gt->scaleUp),float(s));
         gt->scaleDown = min(float(gt->scaleDown),float(s));

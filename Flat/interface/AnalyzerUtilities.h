@@ -24,12 +24,15 @@ typedef std::vector<fastjet::PseudoJet> VPseudoJet;
 inline VPseudoJet ConvertPFCands(std::vector<const panda::PFCand*> &incoll, bool puppi, double minPt=0.001) {
   VPseudoJet vpj;
   vpj.reserve(incoll.size());
+  int idx = -1;
   for (auto *incand : incoll) {
     double factor = puppi ? incand->puppiW() : 1;
+    idx++;
     if (factor*incand->pt()<minPt)
       continue;
     vpj.emplace_back(factor*incand->px(),factor*incand->py(),
                      factor*incand->pz(),factor*incand->e());
+    vpj.back().set_user_index(idx);
   }
   return vpj;
 }
@@ -90,6 +93,11 @@ public:
   bool btagSFs = true;
   bool btagWeights = false;
   bool complicatedLeptons = false;
+  bool deep = false;
+  bool deepAntiKtSort = false;
+  bool deepKtSort = false;
+  bool deepSVs = false;
+  bool deepTracks = false;
   bool fatjet = true;
   bool firstGen = true;
   bool genOnly = false;

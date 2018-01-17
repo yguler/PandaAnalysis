@@ -37,6 +37,10 @@
 #pragma link C++ class GeneralTree::ECFParams;
 #pragma link C++ class GeneralTree::BTagParams;
 #pragma link C++ class TagTree;
+<<<<<<< HEAD
+=======
+#pragma link C++ class TagTree::ECFParams;
+>>>>>>> sid/master
 #pragma link C++ class genericTree;
 #pragma link C++ class LimitTreeBuilder;
 #pragma link C++ class xformula;

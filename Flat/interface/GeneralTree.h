@@ -110,7 +110,10 @@ class GeneralTree : public genericTree {
         csvCErr2up,
         csvCErr2down
       };
-        
+
+    
+      virtual void SetAuxTree(TTree *t);  
+
     private:
         std::vector<double> betas = {0.5, 1.0, 2.0, 4.0};
         std::vector<int> ibetas = {0,1,2,3};
@@ -301,6 +304,16 @@ class GeneralTree : public genericTree {
       float electronCombIso[NLEP];
 
 //ENDCUSTOMDEF
+    int fj1NBPartons = -1;
+    int fj1NCPartons = -1;
+    float fj1Rho2 = -1;
+    float fj1RawRho2 = -1;
+    float fj1Rho = -1;
+    float fj1RawRho = -1;
+    int fj1NPartons = -1;
+    float fj1PartonM = -1;
+    float fj1PartonPt = -1;
+    float fj1PartonEta = -1;
     float trkmetphi = -1;
     float sf_zzUnc = -1;
     float sf_zz = -1;

@@ -21,8 +21,8 @@ Most of your interaction should only be with `PandaAnalysis`, unless you find a 
 
 ## Producing a flat tree for analysis
 
-For now, there is a core analysis tool (`PandaAnalyzer`) that outputs a data format (`GeneralTree`).
-`PandaAnalyzer` accepts flags to turn on and off analysis-specific calculations, and the corresponding branches are dropped from the output tree.
+There is a core analysis tool (`PandaAnalyzer`) that outputs a data format (`GeneralTree`).
+`PandaAnalyzer` is configured using an `Analysis` class, which can turn on and off analysis-specific calculations and corresponding branches in the output tree.
 The functions are implemented in `PandaAnalysis/Flat/src/Modules*cc`.
 
 For what follows, I'll assume you're inside `$CMSSW_BASE/src/PandaAnalysis`.
@@ -34,14 +34,6 @@ If you want to add a variable, just put it in the config and then run:
 ```
 Any custom code in the class definition will be preserved, and the new variables will be added.
 By default, the new variables are booked always, but if you want to make it conditional (e.g. only if the VBF flag is set), you can modify by hand `GeneralTree::Write`.
-
-### Testing your analyzer
-
-Inside `Flat/test`, there is a testing script that runs as:
-```bash
-./test.py /path/to/input/panda.root [DEBUG_LEVEL]
-```
-You have to open up the script and modify the number of events you want to run, the type of file it is (data, W+jets MC, etc), and what flags are on.
 
 ### Defining your analysis
 
@@ -82,6 +74,14 @@ def fn(input_name, isData, full_path):
     return utils.run_PandaAnalyzer(skimmer, isData, input_name)      # run the analysis 
 ```
 
+### Testing your analyzer
+
+Inside `Flat/test`, there is a testing script that runs as:
+```bash
+./test.py /path/to/input/panda.root [DEBUG_LEVEL]
+```
+You have to open up the script and modify the number of events you want to run, the type of file it is (data, W+jets MC, etc), and what flags are on.
+
 ## Running on the grid
 
 ### Cataloging inputs
@@ -118,6 +118,7 @@ export SUBMIT_LOGDIR="/data/t3serv014/snarayan/condor/"${SUBMIT_NAME}"/logs/"  #
 export SUBMIT_LOGDIR="/data/t3serv014/snarayan/condor/"${SUBMIT_NAME}"/locks/"  # lock directory
 export SUBMIT_OUTDIR="/mnt/hadoop/scratch/snarayan/panda/"${SUBMIT_NAME}"/batch/"  # location of unmerged files
 export PANDA_FLATDIR="${HOME}/home000/store/panda/v_8024_2_0/"   # merged output
+export SUBMIT_CONFIG=T2  # allow running on T3 or T2. if $SUBMIT_CONFIG==T3, then only run on T3
 ```
 
 `T3/inputs/$SUBMIT_TMPL` should be the skimming configuration you wish to run your files through. 

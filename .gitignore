@@ -3,3 +3,5 @@
 *.pcm
 *.bkp
 *.jdl
+test*root
+*.txt

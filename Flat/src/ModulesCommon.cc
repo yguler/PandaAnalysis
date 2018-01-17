@@ -181,7 +181,7 @@ void PandaAnalyzer::GetMETSignificance()
   float puppiEt = 0;
 
   TLorentzVector pfcand(0,0,0,0);
-  for (auto& pfCand : event.pfCandidates){
+  for (auto& pfCand : event.pfCandidates) {
     pfcand.SetPtEtaPhiM(pfCand.pt(),pfCand.eta(),pfCand.phi(),pfCand.m());
     puppiEt += pfcand.Et()*pfCand.puppiW();
     pfEt += pfcand.Et();

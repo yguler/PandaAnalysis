@@ -485,7 +485,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
   }
 
   // bjet regression
-  if (analysis->bjetRegression){
+  if (analysis->bjetRegression) {
     bjetreg_vars = new float[10];
 
     bjetreg_reader->AddVariable("jetPt[hbbjtidx[0]]",&bjetreg_vars[0]);
@@ -626,17 +626,18 @@ bool PandaAnalyzer::PassPreselection()
     return true;
   bool isGood=false;
 
-  if     (preselBits & kLepton) {
-    if(looseLeps.size() >= 2 && looseLeps[0]->pt() > 20 && looseLeps[1]->pt() > 20) isGood = true;
+  if (preselBits & kLepton) {
+    if (looseLeps.size() >= 2 && looseLeps[0]->pt() > 20 && looseLeps[1]->pt() > 20) isGood = true;
   }
-  else if(preselBits & kLeptonFake) {
+  else if (preselBits & kLeptonFake) {
     bool passFakeTrigger = (gt->trigger & kMuFakeTrig) == kMuFakeTrig || (gt->trigger & kEleFakeTrig) == kEleFakeTrig;
-    if(passFakeTrigger == true){
+    if (passFakeTrigger == true) {
       double mll = 0.0;
-      if(gt->nLooseLep == 2){
+      if (gt->nLooseLep == 2) {
 	mll = gt->diLepMass;
       }
-      if(mll > 70.0 || gt->nLooseLep == 1) isGood = true;
+      if (mll > 70.0 || gt->nLooseLep == 1) 
+	isGood = true;
     }
   }
 
@@ -1066,7 +1067,7 @@ void PandaAnalyzer::Run()
 
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
-    if(!analysis->genOnly && analysis->monoh)
+    if (!analysis->genOnly && analysis->monoh)
       JetHbbSoftActivity();
     if (analysis->monoh && !analysis->genOnly)
       GetMETSignificance();

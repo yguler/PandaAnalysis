@@ -4,7 +4,7 @@ import json
 import socket
 from re import sub
 from sys import exit
-from time import clock,time
+from time import clock,time,sleep
 from os import system,getenv,path
 
 import ROOT as root
@@ -92,9 +92,10 @@ def cleanup(fname):
 
 
 # wrapper around hadd
-def hadd(good_inputs):
+def hadd(good_inputs, output='output.root'):
     good_outputs = ' '.join([input_to_output(x) for x in good_inputs])
-    cmd = 'hadd -f output.root ' + good_outputs
+    cmd = 'hadd -f ' + output + ' ' + good_outputs
+    print cmd
     ret = system(cmd)    
     if not ret:
         PInfo(sname+'.hadd','Merging exited with code %i'%ret)
@@ -161,7 +162,7 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=3):
             mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
         else:
             #mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
-            mvargs = 'gfal-copy --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
+            mvargs = 'gfal-copy -f --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
         PInfo(sname+'.stageout',mvargs)
         ret = system(mvargs)
         if not ret:
@@ -169,13 +170,14 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=3):
         else:
             PError(sname+'.stageout','Move exited with code %i'%ret)
             failed = True
-        if not failed:
+        if not failed and False:
             if IS_T3:
                 if not path.isfile('%s/%s'%(outdir,outfilename)):
                     PError(sname+'.stageout','Output file is missing!')
                     failed = True
             else:
                 #lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+                sleep(10)
                 lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
                 PInfo(sname+'.stageout',lsargs)
                 ret = system(lsargs)
@@ -200,6 +202,16 @@ def write_lock(outdir,outfilename,processed):
         flock.write(v+'\n')
     flock.close()
     stageout(outdir,outfilename,outfilename)
+
+
+# make a record in the primary output of what
+# inputs went into it
+def record_inputs(outfilename,processed):
+    fout = root.TFile.Open(outfilename,'UPDATE')
+    names = root.TNamed('record',
+                        ','.join(processed.values()))
+    fout.WriteTObject(names)
+    fout.Close()
 
 
 # classify a sample based on its name
@@ -272,7 +284,7 @@ def run_PandaAnalyzer(skimmer, isData, input_name):
     ret = path.isfile(output_name)
     if ret:
         PInfo(sname+'.run_PandaAnalyzer','Successfully created %s'%(output_name))
-        return True
+        return output_name 
     else:
         PError(sname+'.run_PandaAnalyzer','Failed in creating %s!'%(output_name))
         return False

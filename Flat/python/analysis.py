@@ -11,7 +11,9 @@ def _dump(a):
     for k in dir(a):
         if k[0] == '_':
             continue
-        PInfo('PandaAnalysis.Flat.analysis','    %20s = %s'%(k, 'True' if bool(getattr(a, k)) else 'False'))
+        if type(getattr(a, k)) != int:
+            continue
+        PInfo('PandaAnalysis.Flat.analysis','    %20s = %s'%(k, 'True' if getattr(a, k) else 'False'))
 
 
 
@@ -59,6 +61,18 @@ gghbb = lambda v=False : _analysis(
         recoil = False,
         ak8 = True,
     )
+
+deep = lambda v=False : _analysis(
+        name = 'deep',
+        verbose = v,
+        ak8 = True,
+        deep = True,
+        deepTracks = True,
+        deepSVs = True,
+        deepAntiKtSort = True,
+        btagSFs = False,
+    )
+
 wlnhbb = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,

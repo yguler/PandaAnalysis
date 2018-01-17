@@ -3,14 +3,274 @@
 #include "TMath.h"
 #include <algorithm>
 #include <vector>
+#include <unordered_set>
 
 #define EGMSCALE 1
 
 using namespace panda;
 using namespace std;
 
+struct JetHistory {
+  int user_idx;
+  int child_idx;
+};
 
-float PandaAnalyzer::GetMSDCorr(Float_t puppipt, Float_t puppieta) 
+
+void PandaAnalyzer::FatjetPartons() 
+{
+  gt->fj1NPartons = 0;
+  if (fj1) {
+    unsigned nP = 0;
+    double threshold = 0.2 * fj1->rawPt;
+
+    FatJet *my_fj = fj1; 
+    double dR2 = FATJETMATCHDR2; // put these guys in local scope
+
+    auto matchJet = [my_fj, dR2](const GenParticle &p) -> bool {
+      return DeltaR2(my_fj->eta(), my_fj->phi(), p.eta(), p.phi()) < dR2;
+    };
+
+    unordered_set<const panda::GenParticle*> partons; 
+    for (auto &gen : event.genParticles) {
+      unsigned apdgid = abs(gen.pdgid);
+      if (apdgid > 5 && 
+          apdgid != 21 &&
+          apdgid != 15 &&
+          apdgid != 11 && 
+          apdgid != 13)
+        continue; 
+
+      if (gen.pt() < threshold)
+        continue; 
+
+      if (!matchJet(gen))
+        continue;
+
+      const GenParticle *parent = &gen;
+      const GenParticle *foundParent = NULL;
+      while (parent->parent.isValid()) {
+        parent = parent->parent.get();
+        if (partons.find(parent) != partons.end()) {
+          foundParent = parent;
+          break;
+        }
+      }
+
+
+      GenParticle *dau1 = NULL, *dau2 = NULL;
+      for (auto &child : event.genParticles) {
+        if (!(child.parent.isValid() && 
+              child.parent.get() == &gen))
+          continue; 
+        
+        unsigned child_apdgid = abs(child.pdgid);
+        if (child_apdgid > 5 && 
+            child_apdgid != 21 &&
+            child_apdgid != 15 &&
+            child_apdgid != 11 && 
+            child_apdgid != 13)
+          continue; 
+
+        if (dau1)
+          dau2 = &child;
+        else
+          dau1 = &child;
+
+        if (dau1 && dau2)
+          break;
+      }
+
+      if (dau1 && dau2 && 
+          dau1->pt() > threshold && dau2->pt() > threshold && 
+          matchJet(*dau1) && matchJet(*dau2)) {
+        if (foundParent) {
+          partons.erase(partons.find(foundParent));
+        }
+        partons.insert(dau1);
+        partons.insert(dau2);
+      } else if (foundParent) {
+        continue; 
+      } else {
+        partons.insert(&gen);
+      }
+    }
+
+    gt->fj1NPartons = partons.size();
+
+    TLorentzVector vPartonSum;
+    TLorentzVector vTmp;
+    for (auto *p : partons) {
+      vTmp.SetPtEtaPhiM(p->pt(), p->eta(), p->phi(), p->m());
+      vPartonSum += vTmp;
+
+      unsigned digit3 = (p->pdgid%1000 - p->pdgid%100) / 100;
+      unsigned digit4 = (p->pdgid%10000 - p->pdgid%1000) / 1000;
+      if (p->pdgid == 5 || digit3 == 5 || digit4 == 5)
+        gt->fj1NBPartons++;
+      if (p->pdgid == 4 || digit3 == 4 || digit4 == 4)
+        gt->fj1NCPartons++;
+    }
+    gt->fj1PartonM = vPartonSum.M();
+    gt->fj1PartonPt = vPartonSum.Pt();
+    gt->fj1PartonEta = vPartonSum.Eta();
+  }
+
+}
+
+
+void PandaAnalyzer::FillPFTree() 
+{
+  // this function saves the PF information of the leading fatjet
+  // to a compact 2D array, that is eventually saved to an auxillary
+  // tree/file. this is used as temporary input to the inference step
+  // which then adds a separate tree to the main output. ideally,
+  // this is integrated by use of e.g. lwtnn, but there is a bit of
+  // development needed to support our networks. for the time being
+  // we do it this way. -SMN
+   
+
+  // jet-wide quantities
+  fjpt = -1; fjmsd = -1; fjeta = -1; fjphi = -1; fjphi = -1; fjrawpt = -1;
+  for (unsigned i = 0; i != NMAXPF; ++i) {
+    for (unsigned j = 0; j != NPFPROPS; ++j) {
+      pfInfo[i][j] = 0;
+    }
+  }
+  if (analysis->deepSVs) {
+    for (unsigned i = 0; i != NMAXSV; ++i) {
+      for (unsigned j = 0; j != NSVPROPS; ++j) {
+        svInfo[i][j] = 0;
+      }
+    }}
+
+  if (!fj1)
+    return;
+
+  fjpt = fj1->pt();
+  fjmsd = fj1->mSD;
+  fjeta = fj1->eta();
+  fjphi = fj1->phi();
+  fjrawpt = fj1->rawPt;
+
+  gt->fj1Rho = TMath::Log(TMath::Power(fjmsd,2) / fjpt);
+  gt->fj1RawRho = TMath::Log(TMath::Power(fjmsd,2) / fjrawpt);
+  gt->fj1Rho2 = TMath::Log(TMath::Power(fjmsd,2) / TMath::Power(fjpt,2));
+  gt->fj1RawRho2 = TMath::Log(TMath::Power(fjmsd,2) / TMath::Power(fjrawpt,2));
+
+  // secondary vertices come first so we can link to tracks later
+  std::map<const SecondaryVertex*, std::unordered_set<const PFCand*>> svTracks;
+  std::map<const SecondaryVertex*, int> svIdx;
+  if (analysis->deepSVs) {
+    unsigned idx = 0;
+    for (auto &sv : event.secondaryVertices) {
+      if (idx == NMAXSV)
+        break;
+
+      svInfo[idx][0] = sv.x;
+      svInfo[idx][1] = sv.y;
+      svInfo[idx][2] = sv.z;
+      svInfo[idx][3] = sv.ntrk;
+      svInfo[idx][4] = sv.ndof;
+      svInfo[idx][5] = sv.chi2;
+      svInfo[idx][6] = sv.significance;
+      svInfo[idx][7] = sv.vtx3DVal;
+      svInfo[idx][8] = sv.vtx3DeVal;
+      svInfo[idx][9] = sv.pt();
+      svInfo[idx][10] = sv.eta();
+      svInfo[idx][11] = sv.phi();
+      svInfo[idx][12] = sv.m();
+
+      auto *svPtr = &sv;
+      svIdx[svPtr] = idx;
+      svTracks[svPtr] = {};
+      for (auto pf : sv.daughters) {
+        svTracks[svPtr].insert(pf.get());
+      }
+    }
+  }
+
+
+  std::vector<const PFCand*> sortedC;
+  if (analysis->deepKtSort || analysis->deepAntiKtSort) {
+    VPseudoJet particles = ConvertPFCands(fj1->constituents,analysis->puppi_jets,0.001);
+    fastjet::ClusterSequenceArea seq(particles,
+                                     *(analysis->deepKtSort ? jetDefKt : jetDef),
+                                     *areaDef);
+    VPseudoJet allJets(seq.inclusive_jets(0.));
+  
+    auto &history = seq.history();
+    auto &jets = seq.jets();
+    vector<JetHistory> ordered_jets;
+    for (auto &h : history) {
+      if (h.jetp_index >= 0) {
+        auto &j = jets.at(h.jetp_index);
+        if (j.user_index() >= 0) {
+          JetHistory jh;
+          jh.user_idx = j.user_index();
+          jh.child_idx = h.child;
+          ordered_jets.push_back(jh);
+        }
+      }
+    }
+    sort(ordered_jets.begin(), ordered_jets.end(),
+         [](JetHistory x, JetHistory y) { return x.child_idx < y.child_idx; });
+    for (auto &jh : ordered_jets) {
+      const PFCand *cand = fj1->constituents.at(jh.user_idx).get();
+      sortedC.push_back(cand);
+    }
+  } else {
+    for (auto ref : fj1->constituents)
+      sortedC.push_back(ref.get());
+    sort(sortedC.begin(), sortedC.end(),
+         [](const PFCand *x, const PFCand *y) { return x->pt() > y->pt(); });
+  }
+
+  unsigned idx = 0;
+  for (auto *cand : sortedC) {
+    if (idx == NMAXPF)
+      break;
+    pfInfo[idx][0] = cand->pt() * cand->puppiW() / fjrawpt;
+    pfInfo[idx][1] = cand->eta() - fj1->eta();
+    pfInfo[idx][2] = SignedDeltaPhi(cand->phi(), fj1->phi());
+    pfInfo[idx][3] = cand->m();
+    pfInfo[idx][4] = cand->e();
+    pfInfo[idx][5] = cand->ptype;
+    pfInfo[idx][6] = cand->puppiW();
+    pfInfo[idx][7] = cand->puppiWNoLep(); 
+    pfInfo[idx][8] = cand->hCalFrac;
+    if (analysis->deepTracks) {
+      if (cand->track.isValid())  {
+        TVector3 pca = cand->pca();
+        pfInfo[idx][9] = pca.Perp();
+        pfInfo[idx][10] = pca.Z();
+        pfInfo[idx][11] = cand->track->ptError();
+        pfInfo[idx][12] = cand->track->dxy();
+        pfInfo[idx][13] = cand->track->dz();
+        pfInfo[idx][14] = cand->track->dPhi();
+        pfInfo[idx][15] = cand->q();
+        if (analysis->deepSVs) {
+          for (auto &iter : svTracks) {
+            if (iter.second.find(cand) != iter.second.end()) {
+              TVector3 pos = iter.first->position();
+              pfInfo[idx][16] = svIdx[iter.first] + 1; // offset from 0 value
+              pfInfo[idx][17] = cand->dxy(pos);
+              pfInfo[idx][18] = cand->dz(pos); 
+              break;
+            }
+          }
+        }
+      }
+    }
+    idx++;
+  }
+
+
+  tr->TriggerEvent("pf tree");
+
+}
+
+
+float PandaAnalyzer::GetMSDCorr(float puppipt, float puppieta) 
 {
 
   float genCorr  = 1.;
@@ -18,7 +278,7 @@ float PandaAnalyzer::GetMSDCorr(Float_t puppipt, Float_t puppieta)
   float totalWeight = 1.;
 
   genCorr = puppisd_corrGEN->Eval( puppipt );
-  if( fabs(puppieta) <= 1.3 ){
+  if(fabs(puppieta) <= 1.3){
     recoCorr = puppisd_corrRECO_cen->Eval( puppipt );
   }
   else{
@@ -43,6 +303,8 @@ void PandaAnalyzer::FatjetBasics()
     float ptcut = 200;
     if (analysis->monoh)
       ptcut = 200;
+    if (analysis->deep)
+      ptcut = 400;
 
     if (pt<ptcut || fabs(eta)>2.4 || !fj.monojet)
       continue;
@@ -179,8 +441,8 @@ void PandaAnalyzer::FatjetBasics()
         }
       }
 
+      gt->fj1DoubleCSV = fj.double_sub;
       if (analysis->monoh) {
-        gt->fj1DoubleCSV = fj.double_sub;
         for (unsigned int iSJ=0; iSJ!=fj.subjets.size(); ++iSJ) {
           auto& subjet = fj.subjets.objAt(iSJ);
           gt->fj1sjPt[iSJ]=subjet.pt();
@@ -456,59 +718,61 @@ void PandaAnalyzer::FatjetMatching()
     gt->fj1Nbs=bs_inside_cone;
     gt->fj1gbb=has_gluon_splitting;
 
-    // now get the subjet btag SFs
-    vector<btagcand> sj_btagcands;
-    vector<double> sj_sf_cent, sj_sf_bUp, sj_sf_bDown, sj_sf_mUp, sj_sf_mDown;
-    unsigned int nSJ = fj1->subjets.size();
-    for (unsigned int iSJ=0; iSJ!=nSJ; ++iSJ) {
-      auto& subjet = fj1->subjets.objAt(iSJ);
-      int flavor=0;
-      for (auto& gen : event.genParticles) {
-        int apdgid = abs(gen.pdgid);
-        if (apdgid==0 || (apdgid>5 && apdgid!=21)) // light quark or gluon
-          continue;
-        double dr2 = DeltaR2(subjet.eta(),subjet.phi(),gen.eta(),gen.phi());
-        if (dr2<0.09) {
-          if (apdgid==4 || apdgid==5) {
-            flavor=apdgid;
-            break;
-          } else {
-            flavor=0;
+    if (analysis->btagSFs) {
+      // now get the subjet btag SFs
+      vector<btagcand> sj_btagcands;
+      vector<double> sj_sf_cent, sj_sf_bUp, sj_sf_bDown, sj_sf_mUp, sj_sf_mDown;
+      unsigned int nSJ = fj1->subjets.size();
+      for (unsigned int iSJ=0; iSJ!=nSJ; ++iSJ) {
+        auto& subjet = fj1->subjets.objAt(iSJ);
+        int flavor=0;
+        for (auto& gen : event.genParticles) {
+          int apdgid = abs(gen.pdgid);
+          if (apdgid==0 || (apdgid>5 && apdgid!=21)) // light quark or gluon
+            continue;
+          double dr2 = DeltaR2(subjet.eta(),subjet.phi(),gen.eta(),gen.phi());
+          if (dr2<0.09) {
+            if (apdgid==4 || apdgid==5) {
+              flavor=apdgid;
+              break;
+            } else {
+              flavor=0;
+            }
           }
+        } // finding the subjet flavor
+
+        float pt = subjet.pt();
+        float btagUncFactor = 1;
+        float eta = subjet.eta();
+        double eff(1),sf(1),sfUp(1),sfDown(1);
+        unsigned int binpt = btagpt.bin(pt);
+        unsigned int bineta = btageta.bin(fabs(eta));
+        if (flavor==5) {
+          eff = beff[bineta][binpt];
+        } else if (flavor==4) {
+          eff = ceff[bineta][binpt];
+        } else {
+          eff = lfeff[bineta][binpt];
         }
-      } // finding the subjet flavor
+        CalcBJetSFs(bSubJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
+        sj_btagcands.push_back(btagcand(iSJ,flavor,eff,sf,sfUp,sfDown));
+        sj_sf_cent.push_back(sf);
+        if (flavor>0) {
+          sj_sf_bUp.push_back(sfUp); sj_sf_bDown.push_back(sfDown);
+          sj_sf_mUp.push_back(sf); sj_sf_mDown.push_back(sf);
+        } else {
+          sj_sf_bUp.push_back(sf); sj_sf_bDown.push_back(sf);
+          sj_sf_mUp.push_back(sfUp); sj_sf_mDown.push_back(sfDown);
+        }
 
-      float pt = subjet.pt();
-      float btagUncFactor = 1;
-      float eta = subjet.eta();
-      double eff(1),sf(1),sfUp(1),sfDown(1);
-      unsigned int binpt = btagpt.bin(pt);
-      unsigned int bineta = btageta.bin(fabs(eta));
-      if (flavor==5) {
-        eff = beff[bineta][binpt];
-      } else if (flavor==4) {
-        eff = ceff[bineta][binpt];
-      } else {
-        eff = lfeff[bineta][binpt];
-      }
-      CalcBJetSFs(bSubJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
-      sj_btagcands.push_back(btagcand(iSJ,flavor,eff,sf,sfUp,sfDown));
-      sj_sf_cent.push_back(sf);
-      if (flavor>0) {
-        sj_sf_bUp.push_back(sfUp); sj_sf_bDown.push_back(sfDown);
-        sj_sf_mUp.push_back(sf); sj_sf_mDown.push_back(sf);
-      } else {
-        sj_sf_bUp.push_back(sf); sj_sf_bDown.push_back(sf);
-        sj_sf_mUp.push_back(sfUp); sj_sf_mDown.push_back(sfDown);
-      }
+      } // loop over subjets
 
-    } // loop over subjets
-
-    EvalBTagSF(sj_btagcands,sj_sf_cent,GeneralTree::bCent,GeneralTree::bSubJet);
-    EvalBTagSF(sj_btagcands,sj_sf_bUp,GeneralTree::bBUp,GeneralTree::bSubJet);
-    EvalBTagSF(sj_btagcands,sj_sf_bDown,GeneralTree::bBDown,GeneralTree::bSubJet);
-    EvalBTagSF(sj_btagcands,sj_sf_mUp,GeneralTree::bMUp,GeneralTree::bSubJet);
-    EvalBTagSF(sj_btagcands,sj_sf_mDown,GeneralTree::bMDown,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_cent,GeneralTree::bCent,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_bUp,GeneralTree::bBUp,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_bDown,GeneralTree::bBDown,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_mUp,GeneralTree::bMUp,GeneralTree::bSubJet);
+      EvalBTagSF(sj_btagcands,sj_sf_mDown,GeneralTree::bMDown,GeneralTree::bSubJet);
+    }
 
   }
 

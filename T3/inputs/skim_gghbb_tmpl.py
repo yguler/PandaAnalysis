@@ -27,6 +27,7 @@ def fn(input_name, isData, full_path):
     PInfo(sname+'.fn','Starting to process '+input_name)
     # now we instantiate and configure the analyzer
     skimmer = root.PandaAnalyzer()
+    skimmer.SetPreselectionBit(root.PandaAnalyzer.kFatjet)
     analysis = gghbb(True)
     analysis.processType = utils.classify_sample(full_path, isData)
     skimmer.SetAnalysis(analysis)

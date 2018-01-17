@@ -62,6 +62,7 @@ void PandaAnalyzer::ResetBranches()
 
 void PandaAnalyzer::SetOutputFile(TString fOutName) 
 {
+  fOutPath = fOutName;
   fOut = new TFile(fOutName,"RECREATE");
   fOut->cd();
   tOut = new TTree("events","events");
@@ -75,6 +76,11 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
   gt->hfCounting     = analysis->hfCounting;
   gt->btagWeights    = analysis->btagWeights;
   gt->useCMVA        = analysis->useCMVA;
+
+  if (analysis->deep) {
+    auxFilePath = fOutName.ReplaceAll(".root","_pf_%u.root");
+    IncrementAuxFile();
+  }
 
   // fill the signal weights
   for (auto& id : wIDs) 
@@ -111,13 +117,14 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   else if (analysis->fatjet) 
     readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
   
-  if (analysis->monoh || analysis->recluster || analysis->bjetRegression) {
+  if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->monoh) {
     readlist.push_back("pfCandidates");
-    readlist.push_back("tracks");
-    readlist.push_back("vertices");
+  }
+  if (analysis->deepTracks || analysis->bjetRegression || analysis->monoh) {
+    readlist += {"tracks","vertices"};
   }
 
-  if (analysis->bjetRegression)
+  if (analysis->bjetRegression || analysis->deepSVs)
     readlist.push_back("secondaryVertices");
 
   if (isData) {
@@ -137,7 +144,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   hDTotalMCWeight->SetDirectory(0);
   hDTotalMCWeight->SetBinContent(1,hweights->GetBinContent(1));
 
-  if (weightNames) {
+  if (weightNames && analysis->processType==kSignal) { // hack?
     if (weightNames->GetEntries()!=377 && weightNames->GetEntries()!=22) {
       PError("PandaAnalyzer::Init",
           TString::Format("Reweighting failed because only found %u weights!",
@@ -174,7 +181,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   gt->RemoveBranches({"ak81.*"}); // unused
   
-  if (analysis->recluster || analysis->reclusterGen || analysis->monoh) {
+  if (analysis->recluster || analysis->reclusterGen || analysis->deep || analysis->monoh) {
     int activeAreaRepeats = 1;
     double ghostArea = 0.01;
     double ghostEtaMax = 7.0;
@@ -184,15 +191,34 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   if (!analysis->fatjet && !analysis->ak8) {
     gt->RemoveBranches({"fj1.*"});
-  } else if (analysis->recluster) {
+  } else if (analysis->recluster || analysis->deep) {
     double radius = 1.5;
     double sdZcut = 0.15;
     double sdBeta = 1.;
-    jetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm,radius);
+    if (analysis->ak8) {
+      radius = 0.8;
+      sdZcut = 0.1;
+      sdBeta = 0.;
+      jetDef = new fastjet::JetDefinition(fastjet::antikt_algorithm,radius);
+      jetDefKt = new fastjet::JetDefinition(fastjet::kt_algorithm,radius);
+    } else {
+      radius = 1.5;
+      sdZcut = 0.15;
+      sdBeta = 1.;
+      jetDef = new fastjet::JetDefinition(fastjet::cambridge_algorithm,radius);
+      jetDefKt = new fastjet::JetDefinition(fastjet::kt_algorithm,radius);
+    }
     softDrop = new fastjet::contrib::SoftDrop(sdBeta,sdZcut,radius);
   } else { 
     std::vector<TString> droppable = {"fj1NConst","fj1NSDConst","fj1EFrac100","fj1SDEFrac100"};
     gt->RemoveBranches(droppable);
+  }
+
+  if (analysis->deepTracks) {
+    NPFPROPS += 7;
+    if (analysis->deepSVs) {
+      NPFPROPS += 3;
+    }
   }
 
   if (analysis->reclusterGen) {
@@ -236,14 +262,22 @@ void PandaAnalyzer::Terminate()
 {
   fOut->WriteTObject(tOut);
   fOut->Close();
+  fOut = 0; tOut = 0;
 
+
+  IncrementAuxFile(true);
+
+  for (unsigned i = 0; i != cN; ++i) {
+    delete h1Corrs[i];
+    h1Corrs[i] = 0;
+  }
+  for (unsigned i = 0; i != cN; ++i) {
+    delete h2Corrs[i];
+    h2Corrs[i] = 0;
+  }
   for (auto *f : fCorrs)
     if (f)
       f->Close();
-  for (auto *h : h1Corrs)
-    delete h;
-  for (auto *h : h2Corrs)
-    delete h;
 
   delete btagCalib;
   delete sj_btagCalib;
@@ -267,10 +301,12 @@ void PandaAnalyzer::Terminate()
   delete activeArea;
   delete areaDef;
   delete jetDef;
+  delete jetDefKt;
   delete jetDefGen;
   delete softDrop;
 
   delete hDTotalMCWeight;
+
   if (DEBUG) PDebug("PandaAnalyzer::Terminate","Finished with output");
 }
 
@@ -417,27 +453,6 @@ void PandaAnalyzer::SetDataDir(const char *s)
     OpenCorrection(cVBFTight_ZllNLO,dirPath+"vbf16/kqcd/mjj/merged_zll.root","h_kfactors_cc",1);
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded VBF k factors");
-    /*
-    TFile *fKFactor_VBFZ = new TFile(dirPath+"vbf16/kqcd/kfactor_VBF_zjets_v2.root");
-    h1Corrs[cVBF_ZNLO] = new THCorr1((TH1D*)fKFactor_VBFZ->Get("bosonPt_NLO_vbf_relaxed"));
-    h1Corrs[cVBF_ZNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFZ->Get("bosonPt_LO_vbf_relaxed"));
-    h1Corrs[cVBF_ZNLO]->GetHist()->Multiply((TH1D*)fKFactor_VBFZ->Get("bosonPt_LO_monojet"));
-    h1Corrs[cVBF_ZNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFZ->Get("bosonPt_NLO_monojet"));
-    h1Corrs[cVBFTight_ZNLO] = new THCorr1((TH1D*)fKFactor_VBFZ->Get("bosonPt_NLO_vbf"));
-    h1Corrs[cVBFTight_ZNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFZ->Get("bosonPt_LO_vbf"));
-    h1Corrs[cVBFTight_ZNLO]->GetHist()->Multiply((TH1D*)fKFactor_VBFZ->Get("bosonPt_LO_monojet"));
-    h1Corrs[cVBFTight_ZNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFZ->Get("bosonPt_NLO_monojet"));
-
-    TFile *fKFactor_VBFW = new TFile(dirPath+"vbf16/kqcd/kfactor_VBF_wjets_v2.root");
-    h1Corrs[cVBF_WNLO] = new THCorr1((TH1D*)fKFactor_VBFW->Get("bosonPt_NLO_vbf_relaxed"));
-    h1Corrs[cVBF_WNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFW->Get("bosonPt_LO_vbf_relaxed"));
-    h1Corrs[cVBF_WNLO]->GetHist()->Multiply((TH1D*)fKFactor_VBFW->Get("bosonPt_LO_monojet"));
-    h1Corrs[cVBF_WNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFW->Get("bosonPt_NLO_monojet"));
-    h1Corrs[cVBFTight_WNLO] = new THCorr1((TH1D*)fKFactor_VBFW->Get("bosonPt_NLO_vbf"));
-    h1Corrs[cVBFTight_WNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFW->Get("bosonPt_LO_vbf"));
-    h1Corrs[cVBFTight_WNLO]->GetHist()->Multiply((TH1D*)fKFactor_VBFW->Get("bosonPt_LO_monojet"));
-    h1Corrs[cVBFTight_WNLO]->GetHist()->Divide((TH1D*)fKFactor_VBFW->Get("bosonPt_NLO_monojet"));
-    */
 
     OpenCorrection(cVBF_EWKZ,dirPath+"vbf16/kewk/kFactor_ZToNuNu_pT_Mjj.root",
                    "TH2F_kFactor",2);
@@ -633,6 +648,11 @@ bool PandaAnalyzer::PassPreselection()
 
   if (preselBits & kFatjet) {
     if (gt->fj1Pt>250)
+      isGood = true;
+  }
+
+  if (preselBits & kFatjet450) {
+    if (gt->fj1RawPt>400 && gt->fj1MSD>10)
       isGood = true;
   }
 
@@ -1095,6 +1115,14 @@ void PandaAnalyzer::Run()
     
     if (analysis->genOnly && !PassPreselection()) // only check gen presel here
       continue;
+
+    if (analysis->deep) {
+      FatjetPartons();
+      FillPFTree();
+      tAux->Fill();
+      if (tAux->GetEntriesFast() == 2500)
+        IncrementAuxFile();
+    }
 
     gt->Fill();
 

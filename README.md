@@ -11,7 +11,7 @@ cd CMSSW_9_3_0_patch1/src
 cmsenv
 git clone https://github.com/PandaPhysics/PandaTree
 git clone https://github.com/sidnarayanan/PandaCore
-git clone https://github.com/sidnarayanan/PandaAnalysis
+git lfs clone https://github.com/sidnarayanan/PandaAnalysis
 PandaCore/bin/genDict -f -j8                                          # I typically add PandaCore/bin to my $PATH
 scram b -j8
 ```

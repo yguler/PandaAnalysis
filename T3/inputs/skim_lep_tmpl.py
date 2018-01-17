@@ -34,7 +34,7 @@ def fn(input_name, isData, full_path):
     #    analysis.reclusterGen = True # only turn on if necessary
     skimmer.isData=isData
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kLepton)
-    skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)  
+    skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)
 
     return utils.run_PandaAnalyzer(skimmer, isData, input_name)
 

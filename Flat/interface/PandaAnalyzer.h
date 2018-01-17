@@ -60,8 +60,7 @@ public :
      kGenBosonPt =(1<<10),
      kVHBB       =(1<<11),
      kLepton     =(1<<12),
-     kLeptonFake =(1<<13),
-     applyMCTriggers=(1<<14)
+     kLeptonFake =(1<<13)
     };
     
     enum LepSelectionBit {
@@ -105,6 +104,7 @@ public :
 
     // public configuration
     void SetAnalysis(Analysis *a) { analysis = a; }
+    void SetApplyMCTriggers(bool b) { applyMCTriggers = b; }
     bool isData=false;              // to do gen matching, etc
     int firstEvent=-1;
     int lastEvent=-1;               // max events to process; -1=>all
@@ -260,6 +260,7 @@ private:
     Analysis *analysis = 0; //!< configure what to run
     TimeReporter *tr = 0; //!< profile time usage
     float FATJETMATCHDR2 = 2.25;
+    bool applyMCTriggers = false;
 
     //////////////////////////////////////////////////////////////////////////////////////
 

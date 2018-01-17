@@ -25,7 +25,7 @@ skimmer = root.PandaAnalyzer(debug_level)
 analysis = vv(True)
 skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)
 skimmer.SetPreselectionBit(root.PandaAnalyzer.kLepton)
-skimmer.SetPreselectionBit(root.PandaAnalyzer.applyMCTriggers)
+skimmer.SetApplyMCTriggers(True)
 skimmer.SetAnalysis(analysis)
 
 skimmer.firstEvent=0

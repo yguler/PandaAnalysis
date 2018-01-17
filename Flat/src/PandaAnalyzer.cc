@@ -127,7 +127,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   if (analysis->bjetRegression || analysis->deepSVs)
     readlist.push_back("secondaryVertices");
 
-  if (isData || (preselBits & applyMCTriggers)) {
+  if (isData || applyMCTriggers) {
     readlist.push_back("triggers");
   }
 
@@ -834,7 +834,7 @@ void PandaAnalyzer::Run()
   std::vector<unsigned int> muFakeTriggers;
   std::vector<unsigned int> eleFakeTriggers;
 
-  if (isData || (preselBits & applyMCTriggers)) {
+  if (isData || applyMCTriggers) {
     if (DEBUG) PDebug("PandaAnalyzer::Run","Loading the trigger paths");
     std::vector<TString> paths;
     paths = {
@@ -1007,19 +1007,6 @@ void PandaAnalyzer::Run()
     gt->metFilter = (gt->metFilter==1 && !event.metFilters.badPFMuons) ? 1 : 0;
     gt->metFilter = (gt->metFilter==1 && !event.metFilters.badChargedHadrons) ? 1 : 0;
 
-    // save triggers
-    if (isData || (preselBits & applyMCTriggers)) {
-      for (unsigned iT = 0; iT != kNTrig; ++iT) {
-        auto &th = triggerHandlers.at(iT);
-        for (auto iP : th.indices) {
-          if (event.triggerFired(iP)) {
-              gt->trigger |= (1 << iT);
-              break;
-          }
-        }
-      }
-    }
-
     if (isData) {
       // check the json
       if (!PassGoodLumis(gt->runNumber,gt->lumiNumber))
@@ -1030,6 +1017,19 @@ void PandaAnalyzer::Run()
       gt->sf_pu = GetCorr(cPU,gt->pu);
       gt->sf_puUp = GetCorr(cPUUp,gt->pu);
       gt->sf_puDown = GetCorr(cPUDown,gt->pu);
+    }
+
+    // save triggers
+    if (isData || applyMCTriggers) {
+      for (unsigned iT = 0; iT != kNTrig; ++iT) {
+        auto &th = triggerHandlers.at(iT);
+        for (auto iP : th.indices) {
+          if (event.triggerFired(iP)) {
+              gt->trigger |= (1 << iT);
+              break;
+          }
+        }
+      }
     }
 
     if (analysis->rerunJES)

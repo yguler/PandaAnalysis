@@ -114,7 +114,7 @@ class GeneralLeptonicTree : public genericTree {
     float mcWeight = 1;
     int trigger = 0;
     int metFilter = 0;
-    int egmFilter = 0;
+    float zPos = 0;
 
     int nLooseLep = 0;
     int looseGenLep1PdgId = 0;
@@ -141,6 +141,18 @@ class GeneralLeptonicTree : public genericTree {
     float looseLep2Phi = -1;
     float looseLep3Phi = -1;
     float looseLep4Phi = -1;
+    float looseLep1RegPt = -1;
+    float looseLep2RegPt = -1;
+    float looseLep3RegPt = -1;
+    float looseLep4RegPt = -1;
+    float looseLep1SmePt = -1;
+    float looseLep2SmePt = -1;
+    float looseLep3SmePt = -1;
+    float looseLep4SmePt = -1;
+    float looseLep1SCEta = -1;
+    float looseLep2SCEta = -1;
+    float looseLep3SCEta = -1;
+    float looseLep4SCEta = -1;
 
     int nJet = 0;
     int jetNLBtags = 0;
@@ -236,28 +248,6 @@ class GeneralLeptonicTree : public genericTree {
     float sf_zhUp = 1.0;
     float sf_zhDown = 1.0;
     float sf_tt = 1.0;
-
-    float sf_trk1 = 1.0;
-    float sf_trk2 = 1.0;
-    float sf_trk3 = 1.0;
-    float sf_trk4 = 1.0;
-    float sf_loose1 = 1.0;
-    float sf_loose2 = 1.0;
-    float sf_loose3 = 1.0;
-    float sf_loose4 = 1.0;
-    float sf_medium1 = 1.0;
-    float sf_medium2 = 1.0;
-    float sf_medium3 = 1.0;
-    float sf_medium4 = 1.0;
-    float sf_tight1 = 1.0;
-    float sf_tight2 = 1.0;
-    float sf_tight3 = 1.0;
-    float sf_tight4 = 1.0;
-
-    float sf_unc1 = 1.0;
-    float sf_unc2 = 1.0;
-    float sf_unc3 = 1.0;
-    float sf_unc4 = 1.0;
 
 };
 

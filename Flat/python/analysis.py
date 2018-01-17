@@ -76,3 +76,19 @@ wlnhbb = lambda v=False : _analysis(
         bjetRegression = True,
         varyJES= True
     )
+vv = lambda v=False : _analysis(
+        name = 'vv',
+        verbose = v,
+        monoh = False,
+        hbb = False,
+        recoil = False,
+        ak8 = False,
+        fatjet = False,
+        btagSFs = True,
+        btagWeights = True,
+        useCMVA = True,
+        complicatedLeptons = True,
+        hfCounting = True,
+        reclusterGen = False,
+        bjetRegression = False
+    )

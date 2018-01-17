@@ -1,7 +1,6 @@
 #include "PandaAnalysis/Flat/interface/AnalyzerUtilities.h"
 #include "PandaAnalysis/Flat/interface/GeneralTree.h"
 #include "PandaAnalysis/Flat/interface/TagTree.h"
-#include "PandaAnalysis/Flat/interface/GeneralLeptonicTree.h"
 #include "PandaAnalysis/Flat/interface/JetCorrector.h"
 #include "PandaAnalysis/Flat/interface/LimitTreeBuilder.h"
 #include "PandaAnalysis/Flat/interface/PandaAnalyzer.h"
@@ -39,7 +38,6 @@
 #pragma link C++ class GeneralTree::BTagParams;
 #pragma link C++ class TagTree;
 #pragma link C++ class TagTree::ECFParams;
-#pragma link C++ class GeneralLeptonicTree;
 #pragma link C++ class genericTree;
 #pragma link C++ class LimitTreeBuilder;
 #pragma link C++ class xformula;

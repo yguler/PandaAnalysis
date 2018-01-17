@@ -58,7 +58,7 @@ public :
      kFatjet450  =(1<<8),
      kRecoil50   =(1<<9),
      kGenBosonPt =(1<<10),
-     kVHBB       =(1<<11)
+     kVHBB       =(1<<11),
      kLepton     =(1<<12),
      kLeptonFake =(1<<13)
     };

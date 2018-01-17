@@ -145,13 +145,14 @@ The clean argument will make sure to wipe out all staging directories to ensure 
 
 To check the status of your jobs, simply do:
 ```bash
-./task.py --check [--silent] [--force] [--nfiles NFILES]
+./task.py --check [--silent] [--force] [--nfiles NFILES] [--monitor NSECONDS]
 ```
 Note that the above command overwrites `$SUBMIT_WORKDIR/local.cfg`, with the intention of preparing it for resubmission.
 The file will be recreated as a configuration to rerun files that are not present in the output and not running.
-The option `--silent` will skip the per-sample breakdown.
-The option `--nfiles` will repackage `local.cfg` into a different number of files per job.
-The option `--force` will re-catalog files that are incomplete, not just missing.
+- The option `--silent` will skip the per-sample breakdown.
+- The option `--nfiles` will repackage `local.cfg` into a different number of files per job.
+- The option `--force` will re-catalog files that are incomplete, not just missing.
+- The option `--monitor` will capture the terminal screen and refresh the status if either (a) a job has completed succesfully or (b) `NSECONDS` has elapsed since the last refresh.
 
 To resubmit missing files, simply do
 ```bash

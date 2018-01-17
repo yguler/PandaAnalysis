@@ -10,7 +10,7 @@ using namespace panda;
 using namespace std;
 
 void PandaAnalyzer::SimpleLeptons() {
-  looseLep1PdgId=-1, looseLep2PdgId=-1, looseLep3PdgId=-1, looseLep4PdgId=-1;
+  looseLep1PdgId=-1; looseLep2PdgId=-1;
   //electrons
   for (auto& ele : event.electrons) {
     float pt = ele.pt(); float eta = ele.eta(); float aeta = fabs(eta);
@@ -35,7 +35,7 @@ void PandaAnalyzer::SimpleLeptons() {
     matchLeps.push_back(&ele);
     matchEles.push_back(&ele);
     gt->nLooseElectron++;
-    if (gt->nLooseElectron>=NLEP) break;
+    if (gt->nLooseElectron>=2) break;
   }
   // muons
   for (auto& mu : event.muons) {
@@ -61,7 +61,7 @@ void PandaAnalyzer::SimpleLeptons() {
     TVector2 vMu; vMu.SetMagPhi(pt,mu.phi());
     vMETNoMu += vMu;
     gt->nLooseMuon++;
-    if (gt->nLooseMuon>=NLEP) break;
+    if (gt->nLooseMuon>=2) break;
   }
   gt->pfmetnomu = vMETNoMu.Mod();
 
@@ -79,15 +79,11 @@ void PandaAnalyzer::SimpleLeptons() {
     panda::Lepton* lep1 = looseLeps[0];
     gt->mT = MT(lep1->pt(),lep1->phi(),gt->pfmet,gt->pfmetphi);
   }
-  panda::Muon *mu1=0, *mu2=0, *mu3=0, *mu4=0; panda::Electron *ele1=0, *ele2=0, *ele3=0, *ele4=0;
+  panda::Muon *mu1=0, *mu2=0; panda::Electron *ele1=0, *ele2=0;
   if (gt->nLooseLep>0) { mu1 = dynamic_cast<panda::Muon*>(looseLeps[0]); ele1 = dynamic_cast<panda::Electron*>(looseLeps[0]); };
   if (gt->nLooseLep>1) { mu2 = dynamic_cast<panda::Muon*>(looseLeps[1]); ele2 = dynamic_cast<panda::Electron*>(looseLeps[1]); };
-  if (gt->nLooseLep>2) { mu3 = dynamic_cast<panda::Muon*>(looseLeps[2]); ele3 = dynamic_cast<panda::Electron*>(looseLeps[2]); };
-  if (gt->nLooseLep>3) { mu4 = dynamic_cast<panda::Muon*>(looseLeps[3]); ele4 = dynamic_cast<panda::Electron*>(looseLeps[3]); };
-  if (mu1) looseLep1PdgId = mu1->charge*-13; else if(ele1) looseLep1PdgId = ele1->charge*-11;
-  if (mu2) looseLep2PdgId = mu2->charge*-13; else if(ele2) looseLep2PdgId = ele2->charge*-11;
-  if (mu3) looseLep3PdgId = mu3->charge*-13; else if(ele3) looseLep3PdgId = ele3->charge*-11;
-  if (mu4) looseLep4PdgId = mu4->charge*-13; else if(ele4) looseLep4PdgId = ele4->charge*-11;
+  if (mu1) looseLep1PdgId = mu1->charge*-13; else if (ele1) looseLep1PdgId = ele1->charge*-11;
+  if (mu2) looseLep2PdgId = mu2->charge*-13; else if (ele2) looseLep2PdgId = ele2->charge*-11;
   if (gt->nLooseLep>1 && looseLep1PdgId+looseLep2PdgId==0) {
     TLorentzVector v1,v2;
     panda::Lepton *lep1=looseLeps[0], *lep2=looseLeps[1];
@@ -131,23 +127,24 @@ void PandaAnalyzer::ComplicatedLeptons() {
     gt->electronSfReco[iL]       = GetCorr(cEleReco, eta, pt);
     gt->electronSelBit[iL]       = eleSelBit;
     gt->electronPdgId[iL]        = ele.charge*-11;
-    gt->electronChIsoPh[iL]      = ele.chIsoPh;
-    gt->electronNhIsoPh[iL]      = ele.nhIsoPh;
-    gt->electronPhIsoPh[iL]      = ele.phIsoPh;
-    gt->electronEcalIso[iL]      = ele.ecalIso;
-    gt->electronHcalIso[iL]      = ele.hcalIso;
-    gt->electronTrackIso[iL]     = ele.trackIso;
-    gt->electronIsoPUOffset[iL]  = ele.isoPUOffset;
-    gt->electronSieie[iL]        = ele.sieie;
-    gt->electronSipip[iL]        = ele.sipip;
-    gt->electronDEtaInSeed[iL]   = ele.dEtaInSeed;
-    gt->electronDPhiIn[iL]       = ele.dPhiIn;
-    gt->electronEseed[iL]        = ele.eseed;
-    gt->electronHOverE[iL]       = ele.hOverE;
-    gt->electronEcalE[iL]        = ele.ecalE;
-    gt->electronTrackP[iL]       = ele.trackP;
-    gt->electronNMissingHits[iL] = ele.nMissingHits;
+    //gt->electronChIsoPh[iL]      = ele.chIsoPh;
+    //gt->electronNhIsoPh[iL]      = ele.nhIsoPh;
+    //gt->electronPhIsoPh[iL]      = ele.phIsoPh;
+    //gt->electronEcalIso[iL]      = ele.ecalIso;
+    //gt->electronHcalIso[iL]      = ele.hcalIso;
+    //gt->electronTrackIso[iL]     = ele.trackIso;
+    //gt->electronIsoPUOffset[iL]  = ele.isoPUOffset;
+    //gt->electronSieie[iL]        = ele.sieie;
+    //gt->electronSipip[iL]        = ele.sipip;
+    //gt->electronDEtaInSeed[iL]   = ele.dEtaInSeed;
+    //gt->electronDPhiIn[iL]       = ele.dPhiIn;
+    //gt->electronEseed[iL]        = ele.eseed;
+    //gt->electronHOverE[iL]       = ele.hOverE;
+    //gt->electronEcalE[iL]        = ele.ecalE;
+    //gt->electronTrackP[iL]       = ele.trackP;
+    //gt->electronNMissingHits[iL] = ele.nMissingHits;
     gt->electronTripleCharge[iL] = ele.tripleCharge;
+    gt->electronCombIso[iL] = ele.combIso();
     looseLeps.push_back(&ele);
     matchLeps.push_back(&ele);
     matchEles.push_back(&ele);
@@ -163,7 +160,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
     double ptCorrection=1;
     if (isData) { // perform the rochester correction on the actual particle
       ptCorrection=rochesterCorrection->kScaleDT((int)mu.charge, pt, eta, mu.phi(), 0, 0);
-    } else if(pt>0) { // perform the rochester correction to the simulated particle
+    } else if (pt>0) { // perform the rochester correction to the simulated particle
       // attempt gen-matching to a final state muon
       bool muonIsTruthMatched=false; TLorentzVector genP4; panda::GenParticle genParticle;
       for (unsigned iG = 0; iG != event.genParticles.size() && !muonIsTruthMatched; ++iG) {
@@ -207,18 +204,19 @@ void PandaAnalyzer::ComplicatedLeptons() {
     gt->muonSelBit[iL]               = muSelBit;
     gt->muonPdgId[iL]                = mu.charge*-13;
     gt->muonIsSoftMuon[iL]           = mu.soft;
-    gt->muonIsGlobalMuon[iL]         = mu.global;
-    gt->muonIsTrackerMuon[iL]        = mu.tracker;
-    gt->muonNValidMuon[iL]           = mu.nValidMuon;
-    gt->muonNValidPixel[iL]          = mu.nValidPixel;
-    gt->muonTrkLayersWithMmt[iL]     = mu.trkLayersWithMmt;
-    gt->muonPixLayersWithMmt[iL]     = mu.pixLayersWithMmt;
-    gt->muonNMatched[iL]             = mu.nMatched;
-    gt->muonChi2LocalPosition[iL]    = mu.chi2LocalPosition;
-    gt->muonTrkKink[iL]              = mu.trkKink;
-    gt->muonValidFraction[iL]        = mu.validFraction;
-    gt->muonNormChi2[iL]             = mu.normChi2;
-    gt->muonSegmentCompatibility[iL] = mu.segmentCompatibility;
+    gt->muonCombIso[iL]              = mu.combIso();
+    //gt->muonIsGlobalMuon[iL]         = mu.global;
+    //gt->muonIsTrackerMuon[iL]        = mu.tracker;
+    //gt->muonNValidMuon[iL]           = mu.nValidMuon;
+    //gt->muonNValidPixel[iL]          = mu.nValidPixel;
+    //gt->muonTrkLayersWithMmt[iL]     = mu.trkLayersWithMmt;
+    //gt->muonPixLayersWithMmt[iL]     = mu.pixLayersWithMmt;
+    //gt->muonNMatched[iL]             = mu.nMatched;
+    //gt->muonChi2LocalPosition[iL]    = mu.chi2LocalPosition;
+    //gt->muonTrkKink[iL]              = mu.trkKink;
+    //gt->muonValidFraction[iL]        = mu.validFraction;
+    //gt->muonNormChi2[iL]             = mu.normChi2;
+    //gt->muonSegmentCompatibility[iL] = mu.segmentCompatibility;
     looseLeps.push_back(&mu);
     matchLeps.push_back(&mu);
     TVector2 vMu; vMu.SetMagPhi(pt,mu.phi());
@@ -247,10 +245,10 @@ void PandaAnalyzer::ComplicatedLeptons() {
   if (gt->nLooseLep>1) { mu2 = dynamic_cast<panda::Muon*>(looseLeps[1]); ele2 = dynamic_cast<panda::Electron*>(looseLeps[1]); };
   if (gt->nLooseLep>2) { mu3 = dynamic_cast<panda::Muon*>(looseLeps[2]); ele3 = dynamic_cast<panda::Electron*>(looseLeps[2]); };
   if (gt->nLooseLep>3) { mu4 = dynamic_cast<panda::Muon*>(looseLeps[3]); ele4 = dynamic_cast<panda::Electron*>(looseLeps[3]); };
-  if (mu1) looseLep1PdgId = mu1->charge*-13; else if(ele1) looseLep1PdgId = ele1->charge*-11;
-  if (mu2) looseLep2PdgId = mu2->charge*-13; else if(ele2) looseLep2PdgId = ele2->charge*-11;
-  if (mu3) looseLep3PdgId = mu3->charge*-13; else if(ele3) looseLep3PdgId = ele3->charge*-11;
-  if (mu4) looseLep4PdgId = mu4->charge*-13; else if(ele4) looseLep4PdgId = ele4->charge*-11;
+  if (mu1) looseLep1PdgId = mu1->charge*-13; else if (ele1) looseLep1PdgId = ele1->charge*-11;
+  if (mu2) looseLep2PdgId = mu2->charge*-13; else if (ele2) looseLep2PdgId = ele2->charge*-11;
+  if (mu3) looseLep3PdgId = mu3->charge*-13; else if (ele3) looseLep3PdgId = ele3->charge*-11;
+  if (mu4) looseLep4PdgId = mu4->charge*-13; else if (ele4) looseLep4PdgId = ele4->charge*-11;
   if (gt->nLooseLep>1 && looseLep1PdgId+looseLep2PdgId==0) {
     TLorentzVector v1,v2;
     panda::Lepton *lep1=looseLeps[0], *lep2=looseLeps[1];

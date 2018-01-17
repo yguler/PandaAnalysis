@@ -18,10 +18,10 @@ float PandaAnalyzer::GetMSDCorr(Float_t puppipt, Float_t puppieta)
   float totalWeight = 1.;
 
   genCorr = puppisd_corrGEN->Eval( puppipt );
-  if( fabs(puppieta) <= 1.3 ){
+  if ( fabs(puppieta) <= 1.3 ){
     recoCorr = puppisd_corrRECO_cen->Eval( puppipt );
   }
-  else{
+  else {
     recoCorr = puppisd_corrRECO_for->Eval( puppipt );
   }
   totalWeight = genCorr * recoCorr;
@@ -67,7 +67,7 @@ void PandaAnalyzer::FatjetBasics()
       gt->fj1RawPt = rawpt;
 
       // do a bit of jet energy scaling
-      if (analysis->varyJES) {
+      if (analysis->rerunJES) {
         double scaleUnc = (fj.ptCorrUp - gt->fj1Pt) / gt->fj1Pt; 
         gt->fj1PtScaleUp   = gt->fj1Pt  * (1 + 2*scaleUnc);
         gt->fj1PtScaleDown  = gt->fj1Pt  * (1 - 2*scaleUnc);

@@ -14,7 +14,7 @@ argv=[]
 import ROOT as root
 from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import *
-import PandaCore.Tools.job_config as cb
+import PandaCore.Tools.job_management as cb
 import PandaAnalysis.Tagging.cfg_v8 as tagcfg
 import PandaAnalysis.T3.job_utilities as utils
 from PandaAnalysis.Flat.analysis import vv
@@ -30,8 +30,6 @@ def fn(input_name, isData, full_path):
     skimmer.SetAnalysis(vv(True))
     analysis = vv(True)
     analysis.processType = utils.classify_sample(full_path, isData)	
-    #if analysis.processType == root.kTT or analysis.processType == root.kSignal:
-    #    analysis.reclusterGen = True # only turn on if necessary
     skimmer.isData=isData
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kLepton)
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)
@@ -39,26 +37,9 @@ def fn(input_name, isData, full_path):
     return utils.run_PandaAnalyzer(skimmer, isData, input_name)
 
 
-def add_bdt():
-    # now run the BDT
-    Load('TMVABranchAdder')
-    ba = root.TMVABranchAdder()
-    ba.treename = 'events'
-    ba.defaultValue = -1.2
-    ba.presel = 'fj1ECFN_2_4_20>0'
-    for v in tagcfg.variables:
-        ba.AddVariable(v[0],v[2])
-    for v in tagcfg.formulae:
-        ba.AddFormula(v[0],v[2])
-    for s in tagcfg.spectators:
-        ba.AddSpectator(s[0])
-    ba.BookMVA('top_ecf_bdt',data_dir+'/trainings/top_ecfbdt_v8_BDT.weights.xml')
-    ba.RunFile('output.root')
-
-
 if __name__ == "__main__":
     sample_list = cb.read_sample_config('local.cfg',as_dict=False)
-    to_run = None #sample_list[which]
+    to_run = None 
     for s in sample_list:
         if which==s.get_id():
             to_run = s

@@ -111,8 +111,11 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   else if (analysis->fatjet) 
     readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
   
-  if (analysis->recluster || analysis->bjetRegression)
+  if (analysis->monoh || analysis->recluster || analysis->bjetRegression) {
     readlist.push_back("pfCandidates");
+    readlist.push_back("tracks");
+    readlist.push_back("vertices");
+  }
 
   if (analysis->bjetRegression)
     readlist.push_back("secondaryVertices");
@@ -171,7 +174,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   gt->RemoveBranches({"ak81.*"}); // unused
   
-  if (analysis->recluster || analysis->reclusterGen) {
+  if (analysis->recluster || analysis->reclusterGen || analysis->monoh) {
     int activeAreaRepeats = 1;
     double ghostArea = 0.01;
     double ghostEtaMax = 7.0;
@@ -196,6 +199,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     double radius = 0.4;
     jetDefGen = new fastjet::JetDefinition(fastjet::antikt_algorithm,radius);
   }
+  if (analysis-> monoh)
+    softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
 
   // Custom jet pt threshold
   if (analysis->hbb) jetPtThreshold=20;
@@ -480,7 +485,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
   }
 
   // bjet regression
-  if (analysis->bjetRegression){
+  if (analysis->bjetRegression) {
     bjetreg_vars = new float[10];
 
     bjetreg_reader->AddVariable("jetPt[hbbjtidx[0]]",&bjetreg_vars[0]);
@@ -621,17 +626,18 @@ bool PandaAnalyzer::PassPreselection()
     return true;
   bool isGood=false;
 
-  if     (preselBits & kLepton) {
-    if(looseLeps.size() >= 2 && looseLeps[0]->pt() > 20 && looseLeps[1]->pt() > 20) isGood = true;
+  if (preselBits & kLepton) {
+    if (looseLeps.size() >= 2 && looseLeps[0]->pt() > 20 && looseLeps[1]->pt() > 20) isGood = true;
   }
-  else if(preselBits & kLeptonFake) {
+  else if (preselBits & kLeptonFake) {
     bool passFakeTrigger = (gt->trigger & kMuFakeTrig) == kMuFakeTrig || (gt->trigger & kEleFakeTrig) == kEleFakeTrig;
-    if(passFakeTrigger == true){
+    if (passFakeTrigger == true) {
       double mll = 0.0;
-      if(gt->nLooseLep == 2){
+      if (gt->nLooseLep == 2) {
 	mll = gt->diLepMass;
       }
-      if(mll > 70.0 || gt->nLooseLep == 1) isGood = true;
+      if (mll > 70.0 || gt->nLooseLep == 1) 
+	isGood = true;
     }
   }
 
@@ -1061,7 +1067,8 @@ void PandaAnalyzer::Run()
 
     if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
       continue;
-
+    if (!analysis->genOnly && analysis->monoh)
+      JetHbbSoftActivity();
     if (analysis->monoh && !analysis->genOnly)
       GetMETSignificance();
 

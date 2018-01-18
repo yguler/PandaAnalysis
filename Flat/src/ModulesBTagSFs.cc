@@ -113,23 +113,8 @@ void PandaAnalyzer::JetBtagSFs()
         bool isIsoJet=false;
         if (std::find(isoJets.begin(), isoJets.end(), jet) != isoJets.end())
           isIsoJet = true;
-        int flavor=0;
-        float genpt=0;
-        for (auto& gen : event.genParticles) {
-          int apdgid = abs(gen.pdgid);
-          if (apdgid==0 || (apdgid>5 && apdgid!=21)) // light quark or gluon
-            continue;
-          double dr2 = DeltaR2(jet->eta(),jet->phi(),gen.eta(),gen.phi());
-          if (dr2<0.09) {
-            genpt = gen.pt();
-            if (apdgid==4 || apdgid==5) {
-              flavor=apdgid;
-              break;
-            } else {
-              flavor=0;
-            }
-          }
-        } // finding the jet flavor
+        int flavor = centralJetGenFlavors.at(iJ);
+        // float genpt = centralJetGenPts.at(iJ); // not needed right now but it's here if it becomes needed
         float pt = jet->pt();
         float btagUncFactor = 1;
         float eta = jet->eta();
@@ -142,13 +127,6 @@ void PandaAnalyzer::JetBtagSFs()
           eff = ceff[bineta][binpt];
         else
           eff = lfeff[bineta][binpt];
-        if (jet==centralJets.at(0)) {
-          gt->jet1Flav = flavor;
-          gt->jet1GenPt = genpt;
-        } else if (jet==centralJets.at(1)) {
-          gt->jet2Flav = flavor;
-          gt->jet2GenPt = genpt;
-        }
         if (isIsoJet) {
           if (jet==isoJets.at(0))
             gt->isojet1Flav = flavor;
@@ -196,28 +174,16 @@ void PandaAnalyzer::JetCMVAWeights()
   jetCSVs.reserve(centralJets.size());
   jetCMVAs.reserve(centralJets.size());
   jetFlavors.reserve(centralJets.size());
-  for (auto *jet : centralJets) {
+  unsigned int nJ = centralJets.size();
+  for (unsigned int iJ=0; iJ!=nJ; ++iJ) {
+    panda::Jet *jet = centralJets.at(iJ);
     jetPts.push_back(jet->pt());
     jetEtas.push_back(jet->eta());
     jetCSVs.push_back(jet->csv);
     jetCMVAs.push_back(jet->cmva);
-    int flavor = 0;
-    float pt = 0;
-    for (auto &gen : event.ak4GenJets) {
-      if (DeltaR2(gen.eta(), gen.phi(), jet->eta(), jet->phi()) < 0.09) {
-        flavor=gen.pdgid;
-        pt=gen.pt();
-        break;
-      }
-    }
+    int flavor = centralJetGenFlavors.at(iJ);
+    //float genpt = centralJetGenPts.at(iJ);
     jetFlavors.push_back(flavor);
-    // Set jetGenPt, jetGenFlavor for these central jets, this will be overwritten later if reclusterGen is turned on
-    for (unsigned i = 0; i != cleanedJets.size(); ++i) {
-      panda::Jet *jot = cleanedJets.at(i);
-      if(jet!=jot) continue;
-      gt->jetGenPt[i] = pt;
-      gt->jetGenFlavor[i] = flavor;
-    }
   }
   // throwaway addresses
   double csvWgtHF, csvWgtLF, csvWgtCF, cmvaWgtHF, cmvaWgtLF, cmvaWgtCF;

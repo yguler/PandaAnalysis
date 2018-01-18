@@ -102,6 +102,6 @@ vv = lambda v=False : _analysis(
         useCMVA = True,
         complicatedLeptons = True,
         hfCounting = True,
-        reclusterGen = True,
+        reclusterGen = False,
         bjetRegression = False
     )

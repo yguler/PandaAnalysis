@@ -113,8 +113,8 @@ void PandaAnalyzer::JetBtagSFs()
         bool isIsoJet=false;
         if (std::find(isoJets.begin(), isoJets.end(), jet) != isoJets.end())
           isIsoJet = true;
-        int flavor = centralJetGenFlavors.at(iJ);
-        // float genpt = centralJetGenPts.at(iJ); // not needed right now but it's here if it becomes needed
+        int flavor = centralJetGenFlavors[jet];
+        // float genpt = centralJetGenPts[jet]; // not needed right now but it's here if it becomes needed
         float pt = jet->pt();
         float btagUncFactor = 1;
         float eta = jet->eta();
@@ -134,7 +134,7 @@ void PandaAnalyzer::JetBtagSFs()
             gt->isojet2Flav = flavor;
 
           CalcBJetSFs(bJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
-          btagcands.push_back(btagcand(iJ,flavor,eff,sf,sfUp,sfDown));
+          btagcands.emplace_back(iJ,flavor,eff,sf,sfUp,sfDown);
           sf_cent.push_back(sf);
 
           if (flavor>0) {
@@ -181,19 +181,19 @@ void PandaAnalyzer::JetCMVAWeights()
     jetEtas.push_back(jet->eta());
     jetCSVs.push_back(jet->csv);
     jetCMVAs.push_back(jet->cmva);
-    int flavor = centralJetGenFlavors.at(iJ);
-    //float genpt = centralJetGenPts.at(iJ);
+    int flavor = centralJetGenFlavors[jet];
+    //float genpt = centralJetGenPts[jet];
     jetFlavors.push_back(flavor);
   }
   // throwaway addresses
   double csvWgtHF, csvWgtLF, csvWgtCF, cmvaWgtHF, cmvaWgtLF, cmvaWgtCF;
   for (unsigned iShift=0; iShift<GeneralTree::nCsvShifts; iShift++) {
-    GeneralTree::csvShift theShift = gt->csvShifts[iShift];
+    GeneralTree::csvShift shift = gt->csvShifts[iShift];
     if (analysis->useCMVA) {
-      gt->sf_csvWeights[theShift] = cmvaReweighter->getCSVWeight(jetPts,jetEtas,jetCMVAs,jetFlavors, theShift, cmvaWgtHF, cmvaWgtLF, cmvaWgtCF);
+      gt->sf_csvWeights[shift] = cmvaReweighter->getCSVWeight(jetPts,jetEtas,jetCMVAs,jetFlavors, shift, cmvaWgtHF, cmvaWgtLF, cmvaWgtCF);
     }
     else 
-      gt->sf_csvWeights[theShift] = csvReweighter->getCSVWeight(jetPts,jetEtas,jetCSVs,jetFlavors, theShift, csvWgtHF, csvWgtLF, csvWgtCF);
+      gt->sf_csvWeights[shift] = csvReweighter->getCSVWeight(jetPts,jetEtas,jetCSVs,jetFlavors, shift, csvWgtHF, csvWgtLF, csvWgtCF);
   }
 
 }

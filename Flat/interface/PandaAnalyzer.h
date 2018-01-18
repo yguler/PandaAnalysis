@@ -366,6 +366,8 @@ private:
     TLorentzVector vpuppiUW, vpuppiUZ, vpuppiUA, vpuppiU;
     panda::FatJet *fj1 = 0;
     std::vector<panda::Jet*> cleanedJets, isoJets, btaggedJets, centralJets;
+    std::map<panda::Jet*,int> centralJetGenFlavors;
+    std::map<panda::Jet*,float> centralJetGenPts;
     std::vector<int> btagindices;
     TLorentzVector vJet, vBarrelJets;
     panda::FatJetCollection *fatjets = 0;

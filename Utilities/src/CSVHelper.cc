@@ -234,7 +234,7 @@ CSVHelper::getCSVWeight(std::vector<double> jetPts, std::vector<double> jetEtas,
           iPt=nHFptBins-1;
         }
         //int useCSVBin = (csv >= 0.) ? h_csv_wgt_hf[iSysHF][iPt]->FindBin(csv) : 1;
-        int useCSVBin = max(h_csv_wgt_hf[iSysHF][iPt]->FindBin(csv), 1);
+        int useCSVBin = TMath::Max(h_csv_wgt_hf[iSysHF][iPt]->FindBin(csv), 1);
         double iCSVWgtHF = h_csv_wgt_hf[iSysHF][iPt]->GetBinContent(useCSVBin);
         if (iCSVWgtHF != 0)
           csvWgthf *= iCSVWgtHF;
@@ -245,7 +245,7 @@ CSVHelper::getCSVWeight(std::vector<double> jetPts, std::vector<double> jetEtas,
           iPt=nHFptBins-1;
         }
         //int useCSVBin = (csv >= 0.) ? c_csv_wgt_hf[iSysC][iPt]->FindBin(csv) : 1;
-        int useCSVBin = max(c_csv_wgt_hf[iSysC][iPt]->FindBin(csv), 1);
+        int useCSVBin = TMath::Max(c_csv_wgt_hf[iSysC][iPt]->FindBin(csv), 1);
         double iCSVWgtC = c_csv_wgt_hf[iSysC][iPt]->GetBinContent(useCSVBin);
         if (iCSVWgtC != 0)
           csvWgtC *= iCSVWgtC;
@@ -253,7 +253,7 @@ CSVHelper::getCSVWeight(std::vector<double> jetPts, std::vector<double> jetEtas,
         if (iPt >= 3)
           iPt = 3; /// [30-40], [40-60] and [60-10000] only 3 Pt bins for lf
         //int useCSVBin = (csv >= 0.) ? h_csv_wgt_lf[iSysLF][iPt][iEta]->FindBin(csv) : 1;
-        int useCSVBin = max(h_csv_wgt_lf[iSysLF][iPt][iEta]->FindBin(csv), 1);
+        int useCSVBin = TMath::Max(h_csv_wgt_lf[iSysLF][iPt][iEta]->FindBin(csv), 1);
         double iCSVWgtLF = h_csv_wgt_lf[iSysLF][iPt][iEta]->GetBinContent(useCSVBin);
         if (iCSVWgtLF != 0)
           csvWgtlf *= iCSVWgtLF;

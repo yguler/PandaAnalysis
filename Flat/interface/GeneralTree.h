@@ -72,6 +72,8 @@ class GeneralTree : public genericTree {
       };
       enum csvShift {
         csvCent=0,
+        csvJESup=7,
+        csvJESdown=8,
         csvLFup=9,
         csvLFdown=10,
         csvHFup=11,
@@ -90,9 +92,11 @@ class GeneralTree : public genericTree {
         csvCErr2down=24
       };
       // Array of the CSV/CMVA weight enums that can be looped over
-      static const unsigned char nCsvShifts=17;
+      static const unsigned char nCsvShifts=19;
       csvShift csvShifts[nCsvShifts] = {
         csvCent,
+        csvJESup,
+        csvJESdown,
         csvLFup,
         csvLFdown,
         csvHFup,
@@ -161,6 +165,8 @@ class GeneralTree : public genericTree {
           TString s = isCMVA? "sf_cmvaWeight_" : "sf_csvWeight_";
           switch (shift) {
             case csvCent         :  s += "Cent"         ; break;
+            case csvJESup        :  s += "JESup"        ; break;
+            case csvJESdown      :  s += "JESdown"      ; break;
             case csvLFup         :  s += "LFup"         ; break;
             case csvLFdown       :  s += "LFdown"       ; break;
             case csvHFup         :  s += "HFup"         ; break;

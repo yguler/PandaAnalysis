@@ -88,7 +88,7 @@ wlnhbb = lambda v=False : _analysis(
         reclusterGen = False,
         bjetRegression = True,
         varyJES = True,
-        rerunJES = True
+        rerunJES = True,
         jetFlavorPartons = False,
         jetFlavorJets = True,
     )

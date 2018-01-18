@@ -96,6 +96,7 @@ public:
   bool complicatedLeptons = false;
   bool deep = false;
   bool deepAntiKtSort = false;
+  bool deepGen = false;
   bool deepKtSort = false;
   bool deepSVs = false;
   bool deepTracks = false;
@@ -104,6 +105,8 @@ public:
   bool genOnly = false;
   bool hbb = false;
   bool hfCounting = false;
+  bool jetFlavorPartons = true;
+  bool jetFlavorJets = false;
   bool monoh = false;
   bool puppi_jets = true;
   bool recluster = false;

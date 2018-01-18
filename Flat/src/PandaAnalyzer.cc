@@ -69,7 +69,7 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
 
   fOut->WriteTObject(hDTotalMCWeight);    
 
-  gt->monohiggs      = analysis->monoh;
+  gt->monohiggs      = analysis->monoh || analysis->hbb;
   gt->vbf            = analysis->vbf;
   gt->fatjet         = analysis->fatjet;
   gt->leptonic       = analysis->complicatedLeptons;
@@ -117,10 +117,10 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   else if (analysis->fatjet) 
     readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
   
-  if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->monoh) {
+  if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->hbb) {
     readlist.push_back("pfCandidates");
   }
-  if (analysis->deepTracks || analysis->bjetRegression || analysis->monoh) {
+  if (analysis->deepTracks || analysis->bjetRegression || analysis->hbb) {
     readlist += {"tracks","vertices"};
   }
 
@@ -183,7 +183,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   gt->RemoveBranches({"ak81.*"}); // unused
   
-  if (analysis->recluster || analysis->reclusterGen || analysis->deep || analysis->monoh) {
+  if (analysis->recluster || analysis->reclusterGen || analysis->deep || analysis->deepGen || analysis->hbb) {
     int activeAreaRepeats = 1;
     double ghostArea = 0.01;
     double ghostEtaMax = 7.0;
@@ -227,7 +227,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     double radius = 0.4;
     jetDefGen = new fastjet::JetDefinition(fastjet::antikt_algorithm,radius);
   }
-  if (analysis-> monoh)
+  if (analysis->hbb)
     softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
 
   // Custom jet pt threshold
@@ -522,7 +522,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
   }
 
 
-  if (analysis->monoh) {
+  if (analysis->monoh || analysis->hbb) {
     // mSD corr
     MSDcorr = new TFile(dirPath+"/puppiCorr.root");
     puppisd_corrGEN = (TF1*)MSDcorr->Get("puppiJECcorr_gen");;
@@ -1096,7 +1096,7 @@ void PandaAnalyzer::Run()
       // first identify interesting jets
       JetBasics();
 
-      if (analysis->monoh) {
+      if (analysis->hbb) {
         // Higgs reconstruction for resolved analysis - highest pt pair of b jets
         JetHbbReco();
       }
@@ -1104,12 +1104,14 @@ void PandaAnalyzer::Run()
       Taus();
     }
 
-    if (!analysis->genOnly && !PassPreselection()) // only check reco presel here
-      continue;
-    if (!analysis->genOnly && analysis->monoh)
-      JetHbbSoftActivity();
-    if (analysis->monoh && !analysis->genOnly)
-      GetMETSignificance();
+    if (!analysis->genOnly) {
+      if (!PassPreselection()) // only check reco presel here
+        continue;
+      if (analysis->hbb) {
+        JetHbbSoftActivity();
+        GetMETSignificance();
+      }
+    }
 
     if (!isData) {
       if (!analysis->genOnly) {

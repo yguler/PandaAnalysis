@@ -75,6 +75,48 @@ void PandaAnalyzer::JetBasics()
 
     if (jet.pt()>jetPtThreshold) { // nominal jets
       cleanedJets.push_back(&jet);
+
+      // get jet flavor
+      int flavor=0;
+      float genpt=0;
+      if (analysis->jetFlavorPartons) {
+        // her we try to match to hard partons
+        for (auto& gen : event.genParticles) {
+          int apdgid = abs(gen.pdgid);
+          if (apdgid==0 || (apdgid>5 && apdgid!=21)) // light quark or gluon
+            continue;
+          double dr2 = DeltaR2(jet.eta(),jet.phi(),gen.eta(),gen.phi());
+          if (dr2<0.09) {
+            genpt = gen.pt();
+            if (apdgid==4 || apdgid==5) {
+              flavor=apdgid;
+              break;
+            } else {
+              flavor=0;
+            }
+          }
+        } 
+      } else if (analysis->jetFlavorJets) {
+        // or we can match to gen jets (probably better)
+        for (auto &gen : event.ak4GenJets) {
+          if (DeltaR2(gen.eta(), gen.phi(), jet.eta(), jet.phi()) < 0.09) {
+            int apdgid = abs(gen.pdgid);
+            genpt = gen.pt();
+            if (apdgid == 4 || apdgid == 5) {
+              flavor = apdgid;
+              break;
+            } else {
+              flavor = 0;
+            }
+          }
+        }
+      }
+      
+      // Set jetGenPt, jetGenFlavor for these jets
+      // This will be overwritten later if reclusterGen is turned on
+      gt->jetGenFlavor[cleanedJets.size()-1] = flavor;
+      gt->jetGenPt    [cleanedJets.size()-1] = genpt ;
+
       if (cleanedJets.size()<3) {
         bool isBad = GetCorr(cBadECALJets,jet.eta(),jet.phi()) > 0;
         if (isBad)
@@ -87,7 +129,9 @@ void PandaAnalyzer::JetBasics()
       float csv = (fabs(jet.eta())<2.5) ? jet.csv : -1;
       float cmva = (fabs(jet.eta())<2.5) ? jet.cmva : -1;
       if (fabs(jet.eta())<2.4) {
-        centralJets.push_back(&jet);
+        centralJets.push_back(&jet  );
+        centralJetGenFlavors[&jet] = flavor;
+        centralJetGenPts[&jet] = genpt;
         if (centralJets.size()==1) {
           jet1 = &jet;
           gt->jet1Pt = jet.pt();
@@ -96,6 +140,8 @@ void PandaAnalyzer::JetBasics()
           gt->jet1CSV = csv;
           gt->jet1CMVA = cmva;
           gt->jet1IsTight = jet.monojet ? 1 : 0;
+          gt->jet1Flav = flavor;
+          gt->jet1GenPt = genpt;
         } else if (centralJets.size()==2) {
           jet2 = &jet;
           gt->jet2Pt = jet.pt();
@@ -103,6 +149,8 @@ void PandaAnalyzer::JetBasics()
           gt->jet2Phi = jet.phi();
           gt->jet2CSV = csv;
           gt->jet2CMVA = cmva;
+          gt->jet2Flav = flavor;
+          gt->jet2GenPt = genpt;
         }
       }
 

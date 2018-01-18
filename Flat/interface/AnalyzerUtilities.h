@@ -95,6 +95,7 @@ public:
   bool complicatedLeptons = false;
   bool deep = false;
   bool deepAntiKtSort = false;
+  bool deepGen = false;
   bool deepKtSort = false;
   bool deepSVs = false;
   bool deepTracks = false;

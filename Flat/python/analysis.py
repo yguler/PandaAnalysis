@@ -76,19 +76,18 @@ deep = lambda v=False : _analysis(
 wlnhbb = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,
-        monoh = True,
         hbb = True,
         recoil = True,
-        ak8 = True,
         fatjet = True,
-        btagSFs = True,
+        btagSFs = False,
         btagWeights = True,
         useCMVA = True,
         complicatedLeptons = True,
         hfCounting = True,
         reclusterGen = False,
         bjetRegression = True,
-        varyJES= True
+        varyJES = True,
+        rerunJES = True
     )
 vv = lambda v=False : _analysis(
         name = 'vv',
@@ -103,6 +102,6 @@ vv = lambda v=False : _analysis(
         useCMVA = True,
         complicatedLeptons = True,
         hfCounting = True,
-        reclusterGen = False,
+        reclusterGen = True,
         bjetRegression = False
     )

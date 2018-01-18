@@ -67,7 +67,8 @@ public :
      kLoose   =(1<<0),
      kFake    =(1<<1),
      kMedium  =(1<<2),
-     kTight   =(1<<3)
+     kTight   =(1<<3),
+     kDxyz    =(1<<4)
     };
 
     enum TriggerBits {

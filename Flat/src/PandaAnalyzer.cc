@@ -127,9 +127,11 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   if (analysis->bjetRegression || analysis->deepSVs)
     readlist.push_back("secondaryVertices");
 
-  if (isData) {
+  if (isData || analysis->applyMCTriggers) {
     readlist.push_back("triggers");
-  } else {
+  }
+
+  if (!isData) {
     readlist.push_back("genParticles");
     readlist.push_back("genReweight");
     readlist.push_back("ak4GenJets");
@@ -822,8 +824,6 @@ void PandaAnalyzer::Run()
     rng=TRandom3(3393); //Dylan's b-day
   }
 
-
-
   std::vector<unsigned int> metTriggers;
   std::vector<unsigned int> eleTriggers;
   std::vector<unsigned int> phoTriggers;
@@ -832,7 +832,7 @@ void PandaAnalyzer::Run()
   std::vector<unsigned int> muFakeTriggers;
   std::vector<unsigned int> eleFakeTriggers;
 
-  if (isData) {
+  if (isData || analysis->applyMCTriggers) {
     if (DEBUG) PDebug("PandaAnalyzer::Run","Loading the trigger paths");
     std::vector<TString> paths;
     paths = {
@@ -853,7 +853,18 @@ void PandaAnalyzer::Run()
 
     if (analysis->complicatedLeptons)
       paths = {
-            "HLT_Ele27_WPTight_Gsf",
+          "HLT_Ele25_eta2p1_WPTight_Gsf",
+	  "HLT_Ele27_eta2p1_WPLoose_Gsf",
+	  "HLT_Ele27_WPTight_Gsf",
+	  "HLT_Ele30_WPTight_Gsf",
+	  "HLT_Ele35_WPLoose_Gsf",
+          "HLT_Ele27_WP85_Gsf",
+          "HLT_Ele27_WPLoose_Gsf",
+          "HLT_Ele105_CaloIdVT_GsfTrkIdT",
+          "HLT_Ele115_CaloIdVT_GsfTrkIdT",
+          "HLT_Ele27_eta2p1_WPTight_Gsf",
+          "HLT_Ele32_eta2p1_WPTight_Gsf",
+          "HLT_ECALHT800"
       };
     else
       paths = {
@@ -867,31 +878,31 @@ void PandaAnalyzer::Run()
             "HLT_Ele35_WPLoose_Gsf",
             "HLT_ECALHT800"
       };
-    
     triggerHandlers[kSingleEleTrig].addTriggers(paths);
     
     paths = {
-          "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL",
-          "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL",
-          "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
-          "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ"
+	  "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL",
+	  "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL",
+	  "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
+	  "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ"
     };
     triggerHandlers[kDoubleMuTrig].addTriggers(paths);
+
     paths = {
-          "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
-          "HLT_DoubleEle24_22_eta2p1_WPLoose_Gsf"
+	  "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
+	  "HLT_DoubleEle24_22_eta2p1_WPLoose_Gsf"
     };
     triggerHandlers[kDoubleEleTrig].addTriggers(paths);
     
     paths = {
-          "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
-          "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL",
-          "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
-          "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL",
-          "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL_DZ",
-          "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL",
-          "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
-          "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL"
+	  "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
+	  "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL",
+	  "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
+	  "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL",
+	  "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL_DZ",
+	  "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL",
+	  "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
+	  "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL"
     };
     triggerHandlers[kEMuTrig].addTriggers(paths);
 
@@ -920,8 +931,12 @@ void PandaAnalyzer::Run()
 
     if (analysis->complicatedLeptons)
       paths = {
-            "HLT_IsoMu24",
-            "HLT_IsoTkMu24"
+	  "HLT_IsoMu24",
+	  "HLT_IsoTkMu24",
+	  "HLT_IsoMu22",
+	  "HLT_IsoTkMu22",
+	  "HLT_Mu45_eta2p1",
+	  "HLT_Mu50"
       };
     else
       paths = {
@@ -1004,12 +1019,21 @@ void PandaAnalyzer::Run()
     gt->metFilter = (event.metFilters.pass()) ? 1 : 0;
     gt->metFilter = (gt->metFilter==1 && !event.metFilters.badPFMuons) ? 1 : 0;
     gt->metFilter = (gt->metFilter==1 && !event.metFilters.badChargedHadrons) ? 1 : 0;
+
     if (isData) {
       // check the json
       if (!PassGoodLumis(gt->runNumber,gt->lumiNumber))
         continue;
 
-      // save triggers
+    } else { // !isData
+      gt->sf_npv = GetCorr(cNPV,gt->npv);
+      gt->sf_pu = GetCorr(cPU,gt->pu);
+      gt->sf_puUp = GetCorr(cPUUp,gt->pu);
+      gt->sf_puDown = GetCorr(cPUDown,gt->pu);
+    }
+
+    // save triggers
+    if (isData || analysis->applyMCTriggers) {
       for (unsigned iT = 0; iT != kNTrig; ++iT) {
         auto &th = triggerHandlers.at(iT);
         for (auto iP : th.indices) {
@@ -1019,11 +1043,6 @@ void PandaAnalyzer::Run()
           }
         }
       }
-    } else { // !isData
-      gt->sf_npv = GetCorr(cNPV,gt->npv);
-      gt->sf_pu = GetCorr(cPU,gt->pu);
-      gt->sf_puUp = GetCorr(cPUUp,gt->pu);
-      gt->sf_puDown = GetCorr(cPUDown,gt->pu);
     }
 
     if (analysis->rerunJES)
@@ -1119,11 +1138,6 @@ void PandaAnalyzer::Run()
         SaveGenLeptons();
 
       SignalInfo();
-
-      if (analysis->complicatedLeptons) 
-        GenStudyEWK();
-      else
-        LeptonSFs();
 
       PhotonSFs();
 

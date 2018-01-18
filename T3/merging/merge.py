@@ -30,7 +30,7 @@ else:
     from PandaCore.Tools.process import *
     xsecscale = 1
 
-sys.path.append('configs/')
+sys.path.append('PandaAnalysis/T3/merging/configs/')
 cfg = __import__(args.cfg)
 
 Load('Normalizer')

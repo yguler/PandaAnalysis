@@ -16,7 +16,7 @@ struct JetHistory {
 };
 
 
-void PandaAnalyzer::GenFatJets()
+void PandaAnalyzer::GenFatJet()
 {
 
   std::vector<fastjet::PseudoJet> finalStates;
@@ -80,6 +80,91 @@ void PandaAnalyzer::GenFatJets()
   genJetInfo.tau2sd = tauN(2, sdConstituents);
   genJetInfo.tau3sd = tauN(3, sdConstituents);
 
+  // now we have to count the number of prongs 
+  float dR2 = FATJETMATCHDR2;
+  auto matchJet = [genJetInfo, dR2](const GenParticle &p) -> bool {
+    return DeltaR2(genJetInfo.eta, genJetInfo.phi, p.eta(), p.phi()) < dR2;
+  };
+  float threshold = genJetInfo.pt * 0.2;
+  unordered_set<const GenParticle*> partons; 
+  for (auto &gen : event.genParticles) {
+    unsigned apdgid = abs(gen.pdgid);
+    if (apdgid > 5 && 
+        apdgid != 21 &&
+        apdgid != 15 &&
+        apdgid != 11 && 
+        apdgid != 13)
+      continue; 
+
+    if (gen.pt() < threshold)
+      continue; 
+
+    if (!matchJet(gen))
+      continue;
+
+    const GenParticle *parent = &gen;
+    const GenParticle *foundParent = NULL;
+    while (parent->parent.isValid()) {
+      parent = parent->parent.get();
+      if (partons.find(parent) != partons.end()) {
+        foundParent = parent;
+        break;
+      }
+    }
+
+
+    GenParticle *dau1 = NULL, *dau2 = NULL;
+    for (auto &child : event.genParticles) {
+      if (!(child.parent.isValid() && 
+            child.parent.get() == &gen))
+        continue; 
+      
+      unsigned child_apdgid = abs(child.pdgid);
+      if (child_apdgid > 5 && 
+          child_apdgid != 21 &&
+          child_apdgid != 15 &&
+          child_apdgid != 11 && 
+          child_apdgid != 13)
+        continue; 
+
+      if (dau1)
+        dau2 = &child;
+      else
+        dau1 = &child;
+
+      if (dau1 && dau2)
+        break;
+    }
+
+    if (dau1 && dau2 && 
+        dau1->pt() > threshold && dau2->pt() > threshold && 
+        matchJet(*dau1) && matchJet(*dau2)) {
+      if (foundParent) {
+        partons.erase(partons.find(foundParent));
+      }
+      partons.insert(dau1);
+      partons.insert(dau2);
+    } else if (foundParent) {
+      continue; 
+    } else {
+      partons.insert(&gen);
+    }
+  }
+
+  genJetInfo.nprongs = partons.size();
+
+  TLorentzVector vPartonSum;
+  TLorentzVector vTmp;
+  for (auto *p : partons) {
+    vTmp.SetPtEtaPhiM(p->pt(), p->eta(), p->phi(), p->m());
+    vPartonSum += vTmp;
+  }
+  genJetInfo.partonm = vPartonSum.M();
+  genJetInfo.partonpt = vPartonSum.Pt();
+
+  std::map<const GenParticle*, unsigned> partonToIdx;
+  for (auto &parton : partons) 
+    partonToIdx[parton] = partonToIdx.size(); // just some arbitrary ordering 
 
   // now we fill the particles
   nC = std::min(nC, (unsigned)NMAXPF);
@@ -93,7 +178,8 @@ void PandaAnalyzer::GenFatJets()
     genJetInfo.particles[iC][5] = survived[iC] ? 1 : 0;
 
     unsigned ptype = 0;
-    int pdgid = event.genParticles.at(c.user_index()).pdgId;
+    GenParticle &gen = event.genParticles.at(c.user_index());
+    int pdgid = gen.pdgId;
     unsigned apdgid = abs(pdgid);
     if (apdgid == 11) {
       ptype = 1 * sign(pdgid * -11);
@@ -112,12 +198,19 @@ void PandaAnalyzer::GenFatJets()
       else 
         ptype = 6;
     }
-
     genJetInfo.particles[iC][6] = ptype;
-  }
 
-  // now we have to count the number of prongs 
-  
+    const GenParticle *parent = &gen;
+    int parent_idx = -1;
+    while (parent->parent.isValid()) {
+      parent = parent->parent.get();
+      if (partons.find(parent) != partons.end()) {
+        parent_idx = partonToIdx[parent];
+        break;
+      }
+    }
+    genJetInfo.particles[iC][7] = parent_idx;
+  }
 
 
   tr->TriggerEvent("gen fat jets");

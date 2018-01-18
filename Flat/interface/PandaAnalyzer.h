@@ -186,6 +186,7 @@ private:
       float tau3, tau2, tau1;
       float tau3sd, tau2sd, tau1sd;
       int nprongs;
+      float partonpt, partonm;
       std::vector<std::vector<float>> particles;
     };
 
@@ -383,7 +384,7 @@ private:
     int NPFPROPS = 9, NSVPROPS = 13;
 
     GenJetInfo genJetInfo;
-    int NGENPROPS = 7; 
+    int NGENPROPS = 8; 
     
     float minSoftTrackPt=0.3; // 300 MeV
 };

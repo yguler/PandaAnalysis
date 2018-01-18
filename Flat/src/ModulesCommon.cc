@@ -31,6 +31,8 @@ void PandaAnalyzer::IncrementGenAuxFile(bool close)
 
   tAux->Branch("eventNumber",&(gt->eventNumber),"eventNumber/l");
   tAux->Branch("nprongs",&(genJetInfo.nprongs),"nprongs/I");
+  tAux->Branch("partonpt",&(genJetInfo.partonpt),"partonpt/F");
+  tAux->Branch("partonm",&(genJetInfo.partonm),"partonm/F");
   tAux->Branch("pt",&(genJetInfo.pt),"pt/F");
   tAux->Branch("msd",&(genJetInfo.msd),"msd/F");
   tAux->Branch("eta",&(genJetInfo.eta),"eta/F");

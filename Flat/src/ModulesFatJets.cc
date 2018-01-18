@@ -24,11 +24,13 @@ void PandaAnalyzer::GenFatJet()
   for (auto &p : event.genParticles) {
     idx++;
     unsigned apdgid = abs(p.pdgid);
+    if (!p.finalState)
+      continue;
     if (apdgid == 12 ||
         apdgid == 14 ||
-        apdgid == 15)
+        apdgid == 16)
       continue; 
-    if (p.finalState && p.pt() > 0.001) {
+    if (p.pt() > 0.001) {
       finalStates.emplace_back(p.px(), p.py(), p.pz(), p.e());
       finalStates.back().set_user_index(idx);
     }

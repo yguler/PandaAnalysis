@@ -71,6 +71,7 @@ deep = lambda v=False : _analysis(
         deepSVs = True,
         deepAntiKtSort = True,
         btagSFs = False,
+        jetFlavorPartons = False,
     )
 
 wlnhbb = lambda v=False : _analysis(
@@ -88,7 +89,10 @@ wlnhbb = lambda v=False : _analysis(
         bjetRegression = True,
         varyJES = True,
         rerunJES = True
+        jetFlavorPartons = False,
+        jetFlavorJets = True,
     )
+
 vv = lambda v=False : _analysis(
         name = 'vv',
         verbose = v,

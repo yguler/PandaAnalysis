@@ -202,23 +202,32 @@ void PandaAnalyzer::JetCMVAWeights()
     jetCSVs.push_back(jet->csv);
     jetCMVAs.push_back(jet->cmva);
     int flavor = 0;
+    float pt = 0;
     for (auto &gen : event.ak4GenJets) {
       if (DeltaR2(gen.eta(), gen.phi(), jet->eta(), jet->phi()) < 0.09) {
         flavor=gen.pdgid;
+        pt=gen.pt();
         break;
       }
     }
     jetFlavors.push_back(flavor);
+    // Set jetGenPt, jetGenFlavor for these central jets, this will be overwritten later if reclusterGen is turned on
+    for (unsigned i = 0; i != cleanedJets.size(); ++i) {
+      panda::Jet *jot = cleanedJets.at(i);
+      if(jet!=jot) continue;
+      gt->jetGenPt[i] = pt;
+      gt->jetGenFlavor[i] = flavor;
+    }
   }
   // throwaway addresses
   double csvWgtHF, csvWgtLF, csvWgtCF, cmvaWgtHF, cmvaWgtLF, cmvaWgtCF;
   for (unsigned iShift=0; iShift<GeneralTree::nCsvShifts; iShift++) {
-    GeneralTree::csvShift shift = gt->csvShifts[iShift];
+    GeneralTree::csvShift theShift = gt->csvShifts[iShift];
     if (analysis->useCMVA) {
-      gt->sf_csvWeights[shift] = cmvaReweighter->getCSVWeight(jetPts,jetEtas,jetCMVAs,jetFlavors, shift, cmvaWgtHF, cmvaWgtLF, cmvaWgtCF);
+      gt->sf_csvWeights[theShift] = cmvaReweighter->getCSVWeight(jetPts,jetEtas,jetCMVAs,jetFlavors, theShift, cmvaWgtHF, cmvaWgtLF, cmvaWgtCF);
     }
     else 
-      gt->sf_csvWeights[shift] = csvReweighter->getCSVWeight(jetPts,jetEtas,jetCSVs,jetFlavors, shift, csvWgtHF, csvWgtLF, csvWgtCF);
+      gt->sf_csvWeights[theShift] = csvReweighter->getCSVWeight(jetPts,jetEtas,jetCSVs,jetFlavors, theShift, csvWgtHF, csvWgtLF, csvWgtCF);
   }
 
 }

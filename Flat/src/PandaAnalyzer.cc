@@ -651,10 +651,10 @@ bool PandaAnalyzer::PassPreselection()
     if (passFakeTrigger == true) {
       double mll = 0.0;
       if (gt->nLooseLep == 2) {
-	mll = gt->diLepMass;
+        mll = gt->diLepMass;
       }
       if (mll > 70.0 || gt->nLooseLep == 1) 
-	isGood = true;
+        isGood = true;
     }
   }
 
@@ -854,10 +854,10 @@ void PandaAnalyzer::Run()
     if (analysis->complicatedLeptons)
       paths = {
           "HLT_Ele25_eta2p1_WPTight_Gsf",
-	  "HLT_Ele27_eta2p1_WPLoose_Gsf",
-	  "HLT_Ele27_WPTight_Gsf",
-	  "HLT_Ele30_WPTight_Gsf",
-	  "HLT_Ele35_WPLoose_Gsf",
+          "HLT_Ele27_eta2p1_WPLoose_Gsf",
+          "HLT_Ele27_WPTight_Gsf",
+          "HLT_Ele30_WPTight_Gsf",
+          "HLT_Ele35_WPLoose_Gsf",
           "HLT_Ele27_WP85_Gsf",
           "HLT_Ele27_WPLoose_Gsf",
           "HLT_Ele105_CaloIdVT_GsfTrkIdT",
@@ -881,28 +881,28 @@ void PandaAnalyzer::Run()
     triggerHandlers[kSingleEleTrig].addTriggers(paths);
     
     paths = {
-	  "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL",
-	  "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL",
-	  "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
-	  "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ"
+          "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL",
+          "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL",
+          "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",
+          "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ"
     };
     triggerHandlers[kDoubleMuTrig].addTriggers(paths);
 
     paths = {
-	  "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
-	  "HLT_DoubleEle24_22_eta2p1_WPLoose_Gsf"
+          "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_DoubleEle24_22_eta2p1_WPLoose_Gsf"
     };
     triggerHandlers[kDoubleEleTrig].addTriggers(paths);
     
     paths = {
-	  "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
-	  "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL",
-	  "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
-	  "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL",
-	  "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL_DZ",
-	  "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL",
-	  "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
-	  "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL"
+          "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_Mu12_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL",
+          "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL",
+          "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_Mu23_TrkIsoVVL_Ele8_CaloIdL_TrackIdL_IsoVL",
+          "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",
+          "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL"
     };
     triggerHandlers[kEMuTrig].addTriggers(paths);
 
@@ -931,12 +931,12 @@ void PandaAnalyzer::Run()
 
     if (analysis->complicatedLeptons)
       paths = {
-	  "HLT_IsoMu24",
-	  "HLT_IsoTkMu24",
-	  "HLT_IsoMu22",
-	  "HLT_IsoTkMu22",
-	  "HLT_Mu45_eta2p1",
-	  "HLT_Mu50"
+          "HLT_IsoMu24",
+          "HLT_IsoTkMu24",
+          "HLT_IsoMu22",
+          "HLT_IsoTkMu22",
+          "HLT_Mu45_eta2p1",
+          "HLT_Mu50"
       };
     else
       paths = {

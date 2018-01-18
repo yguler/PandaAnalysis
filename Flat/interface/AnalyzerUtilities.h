@@ -89,6 +89,7 @@ public:
   TString name;
   ProcessType processType=kNoProcess;
   bool ak8 = false;
+  bool applyMCTriggers = false;
   bool bjetRegression = false;
   bool btagSFs = true;
   bool btagWeights = false;
@@ -112,7 +113,6 @@ public:
   bool useCMVA = false;
   bool varyJES = false;
   bool vbf = false;
-  bool applyMCTriggers = false;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////

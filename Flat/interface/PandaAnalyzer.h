@@ -209,11 +209,13 @@ private:
     void EvalBTagSF(std::vector<btagcand> &cands, std::vector<double> &sfs,
                     GeneralTree::BTagShift shift,GeneralTree::BTagJet jettype, bool do2=false);
     void IncrementAuxFile(bool close=false);
+    void IncrementGenAuxFile(bool close=false);
     void FatjetBasics();
     void FatjetMatching();
     void FatjetPartons();
     void FatjetRecluster();
     void FillPFTree();
+    void GenFatJet();
     void GenJetsNu();
     void GenStudyEWK();
     float GetMSDCorr(float, float); 

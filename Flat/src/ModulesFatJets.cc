@@ -73,17 +73,18 @@ void PandaAnalyzer::GenFatJet()
   }
 
   // get tau  
-  genJetInfo.tau1 = tauN(1, allConstituents);
-  genJetInfo.tau2 = tauN(2, allConstituents);
-  genJetInfo.tau3 = tauN(3, allConstituents);
-  genJetInfo.tau1sd = tauN(1, sdConstituents);
-  genJetInfo.tau2sd = tauN(2, sdConstituents);
-  genJetInfo.tau3sd = tauN(3, sdConstituents);
+  genJetInfo.tau1 = tauN->getTau(1, allConstituents);
+  genJetInfo.tau2 = tauN->getTau(2, allConstituents);
+  genJetInfo.tau3 = tauN->getTau(3, allConstituents);
+  genJetInfo.tau1sd = tauN->getTau(1, sdConstituents);
+  genJetInfo.tau2sd = tauN->getTau(2, sdConstituents);
+  genJetInfo.tau3sd = tauN->getTau(3, sdConstituents);
 
   // now we have to count the number of prongs 
   float dR2 = FATJETMATCHDR2;
-  auto matchJet = [genJetInfo, dR2](const GenParticle &p) -> bool {
-    return DeltaR2(genJetInfo.eta, genJetInfo.phi, p.eta(), p.phi()) < dR2;
+  float base_eta = genJetInfo.eta, base_phi = genJetInfo.phi;
+  auto matchJet = [base_eta, base_phi, dR2](const GenParticle &p) -> bool {
+    return DeltaR2(base_eta, base_phi, p.eta(), p.phi()) < dR2;
   };
   float threshold = genJetInfo.pt * 0.2;
   unordered_set<const GenParticle*> partons; 
@@ -179,7 +180,7 @@ void PandaAnalyzer::GenFatJet()
 
     unsigned ptype = 0;
     GenParticle &gen = event.genParticles.at(c.user_index());
-    int pdgid = gen.pdgId;
+    int pdgid = gen.pdgid;
     unsigned apdgid = abs(pdgid);
     if (apdgid == 11) {
       ptype = 1 * sign(pdgid * -11);

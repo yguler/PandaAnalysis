@@ -25,7 +25,7 @@ void PandaAnalyzer::IncrementGenAuxFile(bool close)
   
   genJetInfo.particles.resize(NMAXPF);
   for (unsigned i = 0; i != NMAXPF; ++i) {
-    pfInfo[i].resize(NPROPS);
+    genJetInfo.particles[i].resize(NGENPROPS);
   }
   tAux->Branch("kinematics",&(genJetInfo.particles));
 

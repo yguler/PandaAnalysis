@@ -16,6 +16,7 @@
 #include "fastjet/AreaDefinition.hh"
 #include "fastjet/ClusterSequenceArea.hh"
 #include "fastjet/contrib/SoftDrop.hh"
+#include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/MeasureDefinition.hh"
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -95,6 +96,7 @@ public:
   bool complicatedLeptons = false;
   bool deep = false;
   bool deepAntiKtSort = false;
+  bool deepGen = false;
   bool deepKtSort = false;
   bool deepSVs = false;
   bool deepTracks = false;

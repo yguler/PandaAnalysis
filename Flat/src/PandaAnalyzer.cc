@@ -127,7 +127,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   if (analysis->bjetRegression || analysis->deepSVs)
     readlist.push_back("secondaryVertices");
 
-  if (isData || applyMCTriggers) {
+  if (isData || analysis->applyMCTriggers) {
     readlist.push_back("triggers");
   }
 
@@ -824,8 +824,6 @@ void PandaAnalyzer::Run()
     rng=TRandom3(3393); //Dylan's b-day
   }
 
-
-
   std::vector<unsigned int> metTriggers;
   std::vector<unsigned int> eleTriggers;
   std::vector<unsigned int> phoTriggers;
@@ -834,7 +832,7 @@ void PandaAnalyzer::Run()
   std::vector<unsigned int> muFakeTriggers;
   std::vector<unsigned int> eleFakeTriggers;
 
-  if (isData || applyMCTriggers) {
+  if (isData || analysis->applyMCTriggers) {
     if (DEBUG) PDebug("PandaAnalyzer::Run","Loading the trigger paths");
     std::vector<TString> paths;
     paths = {
@@ -1020,7 +1018,7 @@ void PandaAnalyzer::Run()
     }
 
     // save triggers
-    if (isData || applyMCTriggers) {
+    if (isData || analysis->applyMCTriggers) {
       for (unsigned iT = 0; iT != kNTrig; ++iT) {
         auto &th = triggerHandlers.at(iT);
         for (auto iP : th.indices) {

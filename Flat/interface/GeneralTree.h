@@ -165,8 +165,8 @@ class GeneralTree : public genericTree {
           TString s = isCMVA? "sf_cmvaWeight_" : "sf_csvWeight_";
           switch (shift) {
             case csvCent         :  s += "Cent"         ; break;
-            case csvLFup         :  s += "JESup"        ; break;
-            case csvLFdown       :  s += "JESdown"      ; break;
+            case csvJESup        :  s += "JESup"        ; break;
+            case csvJESdown      :  s += "JESdown"      ; break;
             case csvLFup         :  s += "LFup"         ; break;
             case csvLFdown       :  s += "LFdown"       ; break;
             case csvHFup         :  s += "HFup"         ; break;

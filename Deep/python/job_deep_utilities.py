@@ -11,16 +11,16 @@ from os import getenv, environ
 from PandaCore.Tools.Misc import *
 environ['KERAS_BACKEND'] = 'tensorflow'
 from keras.models import Model, load_model
-import job_utilities as utils
+import PandaAnalysis.T3.job_utilities as utils
 from glob import glob
 
 cmssw_base = getenv('CMSSW_BASE')
-sname = 'T3.job_deep_utilities'
+sname = 'Deep.job_deep_utilities'
 
 SAVE = False
 STORE = False
 NORM = True
-INFER = True
+INFER = False
 
 singleton_branches = ['msd','pt', 'rawpt', 'eta', 'phi',  'eventNumber',
                       'partonM', 'partonPt', 'partonEta', 'nPartons',

@@ -73,6 +73,14 @@ deep = lambda v=False : _analysis(
         btagSFs = False,
     )
 
+deepgen = lambda v=False : _analysis(
+        name = 'deepgen',
+        verbose = v,
+        ak8 = True,
+        deepGen = True,
+        btagSFs = False,
+    )
+
 wlnhbb = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,
@@ -90,19 +98,12 @@ wlnhbb = lambda v=False : _analysis(
         bjetRegression = True,
         varyJES= True
     )
+
 vv = lambda v=False : _analysis(
         name = 'vv',
         verbose = v,
-        monoh = False,
-        hbb = False,
         recoil = False,
-        ak8 = False,
         fatjet = False,
         btagSFs = True,
-        btagWeights = True,
-        useCMVA = True,
         complicatedLeptons = True,
-        hfCounting = True,
-        reclusterGen = False,
-        bjetRegression = False
     )

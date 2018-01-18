@@ -4,7 +4,7 @@ from sys import argv, stdout, exit
 from os import getenv, system 
 from glob import glob 
 import numpy as np 
-from NH1 import NH1
+from PandaAnalysis.Deep.NH1 import NH1
 import json 
 from pprint import pprint
 

@@ -18,7 +18,7 @@ from PandaCore.Tools.Load import *
 import PandaCore.Tools.job_config as cb
 import PandaAnalysis.Tagging.cfg_v8 as tagcfg
 import PandaAnalysis.T3.job_utilities as utils
-import PandaAnalysis.T3.job_deep_utilities as deep_utils
+import PandaAnalysis.Deep.job_deep_utilities as deep_utils
 from PandaAnalysis.Flat.analysis import deep
 
 deep_utils.STORE = True

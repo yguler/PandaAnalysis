@@ -58,9 +58,10 @@ public :
      kFatjet450  =(1<<8),
      kRecoil50   =(1<<9),
      kGenBosonPt =(1<<10),
-     kVHBB       =(1<<11),
-     kLepton     =(1<<12),
-     kLeptonFake =(1<<13)
+     kGenFatJet  =(1<<11),
+     kVHBB       =(1<<12),
+     kLepton     =(1<<13),
+     kLeptonFake =(1<<14)
     };
     
     enum LepSelectionBit {
@@ -181,12 +182,12 @@ private:
     };
 
     struct GenJetInfo {
-      float pt, eta, phi, m;
-      float msd;
-      float tau3, tau2, tau1;
-      float tau3sd, tau2sd, tau1sd;
-      int nprongs;
-      float partonpt, partonm;
+      float pt=0, eta=0, phi=0, m=0;
+      float msd=0;
+      float tau3=0, tau2=0, tau1=0;
+      float tau3sd=0, tau2sd=0, tau1sd=0;
+      int nprongs=0;
+      float partonpt=0, partonm=0;
       std::vector<std::vector<float>> particles;
     };
 
@@ -214,6 +215,7 @@ private:
     void FatjetMatching();
     void FatjetPartons();
     void FatjetRecluster();
+    void FillGenTree();
     void FillPFTree();
     void GenFatJet();
     void GenJetsNu();

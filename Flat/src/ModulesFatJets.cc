@@ -16,8 +16,20 @@ struct JetHistory {
 };
 
 
-void PandaAnalyzer::GenFatJet()
+void PandaAnalyzer::FillGenTree()
 {
+  genJetInfo.pt = -1; genJetInfo.eta = -1; genJetInfo.phi = -1; genJetInfo.m = -1;
+  genJetInfo.msd = -1;
+  genJetInfo.tau3 = -1; genJetInfo.tau2 = -1; genJetInfo.tau1 = -1;
+  genJetInfo.tau3sd = -1; genJetInfo.tau2sd = -1; genJetInfo.tau1sd = -1;
+  genJetInfo.nprongs = -1;
+  genJetInfo.partonpt = -1; genJetInfo.partonm = -1;
+  gt->genFatJetPt = 0;
+  for (unsigned i = 0; i != NMAXPF; ++i) {
+    for (unsigned j = 0; j != NGENPROPS; ++j) {
+      genJetInfo.particles[i][j] = 0;
+    }
+  }
 
   std::vector<fastjet::PseudoJet> finalStates;
   unsigned idx = -1;
@@ -36,23 +48,24 @@ void PandaAnalyzer::GenFatJet()
     }
   }
 
-
   // cluster the  jet 
   fastjet::ClusterSequenceArea seq(finalStates, *jetDef, *areaDef);
   std::vector<fastjet::PseudoJet> allJets(seq.inclusive_jets(0.01));
 
   if (allJets.size() == 0) {
-    tr->TriggerEvent("gen fat jets");
+    tr->TriggerEvent("fill gen tree");
     return;
   }
 
   fastjet::PseudoJet &fullJet = allJets.at(0);
-  if (fullJet.perp() < 450) {
-    tr->TriggerEvent("gen fat jets");
+  gt->genFatJetPt = fullJet.perp();
+  if (gt->genFatJetPt < 450) {
+    tr->TriggerEvent("fill gen tree");
     return;
   }
+
   VPseudoJet allConstituents = fastjet::sorted_by_pt(fullJet.constituents());
-  genJetInfo.pt = fullJet.perp();
+  genJetInfo.pt = gt->genFatJetPt;
   genJetInfo.m = fullJet.m();
   genJetInfo.eta = fullJet.eta();
   genJetInfo.phi = fullJet.phi();
@@ -215,8 +228,7 @@ void PandaAnalyzer::GenFatJet()
     genJetInfo.particles[iC][7] = parent_idx;
   }
 
-
-  tr->TriggerEvent("gen fat jets");
+  tr->TriggerEvent("fill gen tree");
 }
 
 
@@ -467,8 +479,6 @@ void PandaAnalyzer::FillPFTree()
     }
     idx++;
   }
-
-  tAux->Fill();
 
   tr->TriggerEvent("pf tree");
 

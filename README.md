@@ -3,6 +3,22 @@
 Throughout this readme, I will refer to several user-defined environment variables. 
 These are typically defined in `T3/setup.sh`, but the user can define things elswhere.
 
+## Collaboration
+
+PandaAnalysis is a semi-collaborative project.
+By this, I mean it was originally written by me, for me, to do my physics analyses.
+However, it has proven useful to other people, and I welcome collaboration!
+If you find a core bug in the code, please open a github issue to the relevant project, and I will look at it.
+If you want to implement something for your use case, you can open a github issue, and depending on the complexity, I may be able to help you.
+However, the general model for extending this package is pull request/review/merge. 
+
+Here are the general rules for contribution:
+- Your changes should not affect other analyses, unless explicitly agreed upon. This not only refers to the output information, but also the performance and memory usage.
+- Test your code. I've resisted implementing CI because I have faith in you. Make sure it compiles and runs a reasonable test suite, which can be found in `PandaAnalysis/Flat/test/`
+- Stick to the coding conventions of the project (spaces always, 2/4 for C/python, `if (` over `if(`, etc). Make sure everything is indented to the same level where appropriate.
+- Code should be readable: no super long lines, use whitespace when it helps, etc.
+- Absolutely no articles (definite or indefinite) in variable names :D. 
+
 ## Installation
 
 ```bash
@@ -150,27 +166,37 @@ To check the status of your jobs, simply do:
 ```
 Note that the above command overwrites `$SUBMIT_WORKDIR/local.cfg`, with the intention of preparing it for resubmission.
 The file will be recreated as a configuration to rerun files that are not present in the output and not running.
-- The option `--silent` will skip the per-sample breakdown.
-- The option `--nfiles` will repackage `local.cfg` into a different number of files per job.
-- The option `--force` will re-catalog files that are incomplete, not just missing.
-- The option `--monitor` will capture the terminal screen and refresh the status if either (a) a job has completed succesfully or (b) `NSECONDS` has elapsed since the last refresh.
+- `--silent` will skip the per-sample breakdown.
+- `--nfiles` will repackage `local.cfg` into a different number of files per job.
+- `--force` will re-catalog files that are incomplete, not just missing.
+- `--monitor` will capture the terminal screen and refresh the status if either (a) a job has completed succesfully or (b) `NSECONDS` has elapsed since the last refresh.
 
 To resubmit missing files, simply do
 ```bash
 ./task.py --silent
 ```
 In the case that you are using the `--force` option, make sure you have no running jobs before resubmitting, or you may end up with duplicated outputs.
+Forcing resubmission is generally discouraged and is largely included for historical reasons.
+The job framework is robust enough at this point that forcing should not be necessary.
+
+If you are having lots of failures, it may be interesting to analyze the logs located in `$SUBMIT_LOGDIR`. 
+You can do this manually, or:
+```bash
+./analyzeLogs.py [--dump]
+```
+This will print to screen a basic analysis of the errors observed, which errors are correlated, and how frequently they occur.
+If the `--dump` flag is passed, then a directory `log_dumps/` is created, containing detailed information on each failure class (where it failed and on for what inputs).
 
 
 ## Merging
 
 Make sure `$PANDA_FLATDIR` exists. Then, go into `T3/merging` and do:
 ```bash
-./merge.py [--cfg CONFIG] TTbar_Powheg
+./merge.py [--cfg CONFIG] [--silent] TTbar_Powheg
 ```
 to merge the Powheg TT sample, for example. 
 If provided, `CONFIG` is the module that is imported from `configs/`. 
-The default is `common.py`, but there are others, like `leptonic.py`.
+The default is `common`, but there are others, like `leptonic`.
 To merge en-masse (e.g. many many signal outputs), you can do something like:
 ```bash
 submit --exec merge.py --arglist list_of_signals.txt
@@ -182,6 +208,6 @@ You can check the status of the jobs by doing
 check --cache <cache_directory> [--resubmit_failed]
 ```
 The last flag is optional and will resubmit anything that failed (exited without code 0).
-Important: the `submit` and `check` executables are very generic and don't know anything about the code they are running.
-For them, "success" simply means exited with code 0.
+NB: the `submit` and `check` executables are very generic and don't know anything about the code they are running.
+For them, "success" simply means "exited with code 0".
 So it is important to check that the output looks sane to you.

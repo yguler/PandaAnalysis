@@ -4,7 +4,7 @@ from sys import argv, exit
 import numpy as np 
 from os import getenv, system
 from PandaCore.Tools.Misc import PInfo, PDebug 
-import PandaAnalysis.T3.job_deep_utilities as deep_utils
+import PandaAnalysis.Deep.job_deep_utilities as deep_utils
 from glob import glob 
 
 NORM = True

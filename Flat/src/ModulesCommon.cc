@@ -46,6 +46,8 @@ void PandaAnalyzer::IncrementGenAuxFile(bool close)
   tAux->Branch("tau1sd",&(genJetInfo.tau1sd),"tau1sd/F");
 
   fOut->cd();
+
+  tr->TriggerEvent("increment aux file");
 }
 
 void PandaAnalyzer::IncrementAuxFile(bool close)
@@ -101,6 +103,8 @@ void PandaAnalyzer::IncrementAuxFile(bool close)
   gt->SetAuxTree(tAux);
 
   fOut->cd();
+
+  tr->TriggerEvent("increment aux file");
 }
 
 void PandaAnalyzer::RegisterTriggers() 

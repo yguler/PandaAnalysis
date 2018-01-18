@@ -9,6 +9,43 @@
 using namespace panda;
 using namespace std;
 
+void PandaAnalyzer::IncrementGenAuxFile(bool close)
+{
+  if (fAux) {
+    fAux->WriteTObject(tAux, "inputs", "Overwrite");
+    fAux->Close();
+  }
+  if (close)
+    return;
+
+  TString path = TString::Format(auxFilePath.Data(),auxCounter++);
+  fAux = TFile::Open(path.Data(), "RECREATE");
+  if (DEBUG) PDebug("PandaAnalyzer::IncrementAuxFile", "Opening "+path);
+  tAux = new TTree("inputs","inputs");
+  
+  genJetInfo.particles.resize(NMAXPF);
+  for (unsigned i = 0; i != NMAXPF; ++i) {
+    pfInfo[i].resize(NPROPS);
+  }
+  tAux->Branch("kinematics",&(genJetInfo.particles));
+
+  tAux->Branch("eventNumber",&(gt->eventNumber),"eventNumber/l");
+  tAux->Branch("nprongs",&(genJetInfo.nprongs),"nprongs/I");
+  tAux->Branch("pt",&(genJetInfo.pt),"pt/F");
+  tAux->Branch("msd",&(genJetInfo.msd),"msd/F");
+  tAux->Branch("eta",&(genJetInfo.eta),"eta/F");
+  tAux->Branch("phi",&(genJetInfo.phi),"phi/F");
+  tAux->Branch("m",&(genJetInfo.m),"m/F");
+  tAux->Branch("tau3",&(genJetInfo.tau3),"tau3/F");
+  tAux->Branch("tau2",&(genJetInfo.tau2),"tau2/F");
+  tAux->Branch("tau1",&(genJetInfo.tau1),"tau1/F");
+  tAux->Branch("tau3sd",&(genJetInfo.tau3sd),"tau3sd/F");
+  tAux->Branch("tau2sd",&(genJetInfo.tau2sd),"tau2sd/F");
+  tAux->Branch("tau1sd",&(genJetInfo.tau1sd),"tau1sd/F");
+
+  fOut->cd();
+}
+
 void PandaAnalyzer::IncrementAuxFile(bool close)
 {
   if (fAux) {

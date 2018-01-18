@@ -16,6 +16,114 @@ struct JetHistory {
 };
 
 
+void PandaAnalyzer::GenFatJets()
+{
+
+  std::vector<fastjet::PseudoJet> finalStates;
+  unsigned idx = -1;
+  for (auto &p : event.genParticles) {
+    idx++;
+    unsigned apdgid = abs(p.pdgid);
+    if (apdgid == 12 ||
+        apdgid == 14 ||
+        apdgid == 15)
+      continue; 
+    if (p.finalState && p.pt() > 0.001) {
+      finalStates.emplace_back(p.px(), p.py(), p.pz(), p.e());
+      finalStates.back().set_user_index(idx);
+    }
+  }
+
+
+  // cluster the  jet 
+  fastjet::ClusterSequenceArea seq(finalStates, *jetDef, *areaDef);
+  std::vector<fastjet::PseudoJet> allJets(seq.inclusive_jets(0.01));
+
+  if (allJets.size() == 0) {
+    tr->TriggerEvent("gen fat jets");
+    return;
+  }
+
+  fastjet::PseudoJet &fullJet = allJets.at(0);
+  if (fullJet.perp() < 450) {
+    tr->TriggerEvent("gen fat jets");
+    return;
+  }
+  VPseudoJet allConstituents = fastjet::sorted_by_pt(fullJet.constituents());
+  genJetInfo.pt = fullJet.perp();
+  genJetInfo.m = fullJet.m();
+  genJetInfo.eta = fullJet.eta();
+  genJetInfo.phi = fullJet.phi();
+
+  // softdrop the jet
+  fastjet::PseudoJet sdJet = (*softDrop)(fullJet);
+  VPseudoJet sdConstituents = fastjet::sorted_by_pt(sdJet.constituents());
+  genJetInfo.msd = sdJet.m();
+  std::vector<bool> survived(allConstituents.size());
+  unsigned nC = allConstituents.size();
+  for (unsigned iC = 0; iC != nC; ++iC) {
+    unsigned idx = allConstituents.at(iC).user_index();
+    survived[iC] = false;
+    for (auto &sdc : sdConstituents) {
+      if (idx == sdc.user_index()) {
+        survived[iC] = true; 
+        break;
+      }
+    }
+  }
+
+  // get tau  
+  genJetInfo.tau1 = tauN(1, allConstituents);
+  genJetInfo.tau2 = tauN(2, allConstituents);
+  genJetInfo.tau3 = tauN(3, allConstituents);
+  genJetInfo.tau1sd = tauN(1, sdConstituents);
+  genJetInfo.tau2sd = tauN(2, sdConstituents);
+  genJetInfo.tau3sd = tauN(3, sdConstituents);
+
+
+  // now we fill the particles
+  nC = std::min(nC, (unsigned)NMAXPF);
+  for (unsigned iC = 0; iC != nC; ++iC) {
+    fastjet::PseudoJet &c = allConstituents.at(iC);
+    genJetInfo.particles[iC][0] = c.perp() / fullJet.perp();
+    genJetInfo.particles[iC][1] = c.eta() - fullJet.eta();
+    genJetInfo.particles[iC][2] = SignedDeltaPhi(c.phi(), fullJet.phi());
+    genJetInfo.particles[iC][3] = c.m();
+    genJetInfo.particles[iC][4] = c.e();
+    genJetInfo.particles[iC][5] = survived[iC] ? 1 : 0;
+
+    unsigned ptype = 0;
+    int pdgid = event.genParticles.at(c.user_index()).pdgId;
+    unsigned apdgid = abs(pdgid);
+    if (apdgid == 11) {
+      ptype = 1 * sign(pdgid * -11);
+    } else if (apdgid == 13) {
+      ptype = 2 * sign(pdgid * -13);
+    } else if (apdgid == 22) {
+      ptype = 3;
+    } else {
+      float q = pdgToQ[apdgid];
+      if (apdgid != pdgid)
+        q *= -1;
+      if (q == 0) 
+        ptype = 4;
+      else if (q > 0) 
+        ptype = 5;
+      else 
+        ptype = 6;
+    }
+
+    genJetInfo.particles[iC][6] = ptype;
+  }
+
+  // now we have to count the number of prongs 
+  
+
+
+  tr->TriggerEvent("gen fat jets");
+}
+
+
 void PandaAnalyzer::FatjetPartons() 
 {
   gt->fj1NPartons = 0;
@@ -264,6 +372,7 @@ void PandaAnalyzer::FillPFTree()
     idx++;
   }
 
+  tAux->Fill();
 
   tr->TriggerEvent("pf tree");
 
@@ -502,7 +611,6 @@ void PandaAnalyzer::FatjetRecluster()
     }
     tr->TriggerSubEvent("fatjet reclustering");
   }
-
 }
 
 void PandaAnalyzer::FatjetMatching() 

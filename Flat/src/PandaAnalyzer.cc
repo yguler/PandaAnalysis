@@ -191,7 +191,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   if (!analysis->fatjet && !analysis->ak8) {
     gt->RemoveBranches({"fj1.*"});
-  } else if (analysis->recluster || analysis->deep) {
+  } else if (analysis->recluster || analysis->deep || analysis->deepGen) {
     double radius = 1.5;
     double sdZcut = 0.15;
     double sdBeta = 1.;
@@ -209,6 +209,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
       jetDefKt = new fastjet::JetDefinition(fastjet::kt_algorithm,radius);
     }
     softDrop = new fastjet::contrib::SoftDrop(sdBeta,sdZcut,radius);
+    tauN = new fastjet::contrib::Njettiness(fastjet::contrib::OnePass_KT_Axes(), 
+                                            fastjet::contrib::NormalizedMeasure(1., radius));
   } else { 
     std::vector<TString> droppable = {"fj1NConst","fj1NSDConst","fj1EFrac100","fj1SDEFrac100"};
     gt->RemoveBranches(droppable);
@@ -587,6 +589,21 @@ void PandaAnalyzer::SetDataDir(const char *s)
     }
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded JES/R");
+  }
+
+
+  if (analysis->deepGen) {
+    TFile *fcharges = TFile::Open((dirPath + "/deep/charges.root").Data());
+    TTree *tcharges = (TTree*)(fcharges->Get("charges"));
+    pdgToQ.clear();
+    int pdg = 0; float q = 0;
+    tcharges->SetBranchAddress("pdgid",&pdg);
+    tcharges->SetBranchAddress("q",&q);
+    for (unsigned i = 0; i != tcharges->GetEntriesFast(); ++i) {
+      tcharges->GetEntry(i);
+      pdgToQ[pdg] = q;
+    }
+    fcharges->Close();
   }
 
 }
@@ -1149,7 +1166,6 @@ void PandaAnalyzer::Run()
     if (analysis->deep) {
       FatjetPartons();
       FillPFTree();
-      tAux->Fill();
       if (tAux->GetEntriesFast() == 2500)
         IncrementAuxFile();
     }

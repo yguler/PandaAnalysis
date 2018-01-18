@@ -180,6 +180,14 @@ private:
             double eff, sf, sfup, sfdown;
     };
 
+    struct GenJetInfo {
+      float pt, eta, phi, m;
+      float msd;
+      float tau3, tau2, tau1;
+      float tau3sd, tau2sd, tau1sd;
+      int nprongs;
+      std::vector<std::vector<float>> particles;
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -269,11 +277,13 @@ private:
         //!< private function to match a jet; returns NULL if not found
     std::map<int,std::vector<LumiRange>> goodLumis;
     std::vector<panda::Particle*> matchPhos, matchEles, matchLeps;
+    std::map<int, int> pdgToQ; 
     
     // fastjet reclustering
     fastjet::JetDefinition *jetDef=0;
     fastjet::JetDefinition *jetDefKt=0;
     fastjet::contrib::SoftDrop *softDrop=0;
+    fastjet::contrib::Njettiness *tauN=0;
     fastjet::AreaDefinition *areaDef=0;
     fastjet::GhostedAreaSpec *activeArea=0;
     fastjet::JetDefinition *jetDefGen=0;
@@ -371,6 +381,9 @@ private:
     std::vector<std::vector<float>> svInfo; 
     float fjmsd, fjpt, fjrawpt, fjeta, fjphi;
     int NPFPROPS = 9, NSVPROPS = 13;
+
+    GenJetInfo genJetInfo;
+    int NGENPROPS = 7; 
     
     float minSoftTrackPt=0.3; // 300 MeV
 };

@@ -16,6 +16,7 @@
 #include "fastjet/AreaDefinition.hh"
 #include "fastjet/ClusterSequenceArea.hh"
 #include "fastjet/contrib/SoftDrop.hh"
+#include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/MeasureDefinition.hh"
 
 ////////////////////////////////////////////////////////////////////////////////////

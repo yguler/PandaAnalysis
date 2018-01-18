@@ -69,7 +69,7 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
 
   fOut->WriteTObject(hDTotalMCWeight);    
 
-  gt->monohiggs      = analysis->monoh || analysis->hbb;
+  gt->monohiggs      = (analysis->monoh || analysis->hbb);
   gt->vbf            = analysis->vbf;
   gt->fatjet         = analysis->fatjet;
   gt->leptonic       = analysis->complicatedLeptons;
@@ -82,6 +82,11 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
     IncrementAuxFile();
   }
 
+  if (analysis->deepGen) {
+    auxFilePath = fOutName.ReplaceAll(".root","_gen_%u.root");
+    IncrementGenAuxFile();
+  }
+
   // fill the signal weights
   for (auto& id : wIDs) 
     gt->signal_weights[id] = 1;
@@ -89,7 +94,7 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
   // Build the input tree here 
   gt->WriteTree(tOut);
 
-  if (DEBUG) PDebug("PandaAnalyzer::SetOutputFile","Created output in "+fOutName);
+  if (DEBUG) PDebug("PandaAnalyzer::SetOutputFile","Created output in "+fOutPath);
 }
 
 
@@ -193,7 +198,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   if (!analysis->fatjet && !analysis->ak8) {
     gt->RemoveBranches({"fj1.*"});
-  } else if (analysis->recluster || analysis->deep) {
+  } else if (analysis->recluster || analysis->deep || analysis->deepGen) {
     double radius = 1.5;
     double sdZcut = 0.15;
     double sdBeta = 1.;
@@ -211,6 +216,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
       jetDefKt = new fastjet::JetDefinition(fastjet::kt_algorithm,radius);
     }
     softDrop = new fastjet::contrib::SoftDrop(sdBeta,sdZcut,radius);
+    tauN = new fastjet::contrib::Njettiness(fastjet::contrib::OnePass_KT_Axes(), 
+                                            fastjet::contrib::NormalizedMeasure(1., radius));
   } else { 
     std::vector<TString> droppable = {"fj1NConst","fj1NSDConst","fj1EFrac100","fj1SDEFrac100"};
     gt->RemoveBranches(droppable);
@@ -267,7 +274,10 @@ void PandaAnalyzer::Terminate()
   fOut = 0; tOut = 0;
 
 
-  IncrementAuxFile(true);
+  if (analysis->deep)
+    IncrementAuxFile(true);
+  if (analysis->deepGen)
+    IncrementGenAuxFile(true);
 
   for (unsigned i = 0; i != cN; ++i) {
     delete h1Corrs[i];
@@ -591,6 +601,21 @@ void PandaAnalyzer::SetDataDir(const char *s)
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded JES/R");
   }
 
+
+  if (analysis->deepGen) {
+    TFile *fcharges = TFile::Open((dirPath + "/deep/charges.root").Data());
+    TTree *tcharges = (TTree*)(fcharges->Get("charges"));
+    pdgToQ.clear();
+    int pdg = 0; float q = 0;
+    tcharges->SetBranchAddress("pdgid",&pdg);
+    tcharges->SetBranchAddress("q",&q);
+    for (unsigned i = 0; i != tcharges->GetEntriesFast(); ++i) {
+      tcharges->GetEntry(i);
+      pdgToQ[pdg] = q;
+    }
+    fcharges->Close();
+  }
+
 }
 
 
@@ -646,8 +671,9 @@ bool PandaAnalyzer::PassPreselection()
   if (preselBits & kLepton) {
     if (looseLeps.size() >= 2 && looseLeps[0]->pt() > 20 && looseLeps[1]->pt() > 20) isGood = true;
   }
+
   else if (preselBits & kLeptonFake) {
-    bool passFakeTrigger = (gt->trigger & kMuFakeTrig) == kMuFakeTrig || (gt->trigger & kEleFakeTrig) == kEleFakeTrig;
+    bool passFakeTrigger = (gt->trigger & kMuFakeTrig) != 0 || (gt->trigger & kEleFakeTrig) != 0;
     if (passFakeTrigger == true) {
       double mll = 0.0;
       if (gt->nLooseLep == 2) {
@@ -670,6 +696,11 @@ bool PandaAnalyzer::PassPreselection()
 
   if (preselBits & kFatjet450) {
     if (gt->fj1RawPt>400 && gt->fj1MSD>10)
+      isGood = true;
+  }
+
+  if (preselBits & kGenFatJet) {
+    if (gt->genFatJetPt>400)
       isGood = true;
   }
 
@@ -748,7 +779,7 @@ bool PandaAnalyzer::PassPreselection()
       (gt->hbbpt>50 || (gt->nFatjet>0 && gt->fj1Pt>200))
     ) isGood=true;
   }
-  // anded with the rest
+
   if (preselBits & kPassTrig) {
     isGood &= (!isData) || (gt->trigger != 0);
   }
@@ -1070,6 +1101,15 @@ void PandaAnalyzer::Run()
 
     tr->TriggerEvent("met");
 
+    // do this up here before the preselection
+    if (analysis->deepGen) {
+      FillGenTree();
+      tAux->Fill();
+      if (tAux->GetEntriesFast() == 2500)
+        IncrementGenAuxFile();
+    }
+
+
     if (!analysis->genOnly) {
       // electrons and muons
       if (analysis->complicatedLeptons) {
@@ -1102,14 +1142,13 @@ void PandaAnalyzer::Run()
       }
 
       Taus();
-    }
 
-    if (!analysis->genOnly) {
       if (!PassPreselection()) // only check reco presel here
-        continue;
+	continue;
+
       if (analysis->hbb) {
-        JetHbbSoftActivity();
-        GetMETSignificance();
+	JetHbbSoftActivity();
+	GetMETSignificance();
       }
     }
 
@@ -1143,10 +1182,7 @@ void PandaAnalyzer::Run()
 
       PhotonSFs();
 
-      QCDUncs();
-      SignalReweights();
-
-      if (analysis->reclusterGen && analysis->monoh) {
+      if (analysis->reclusterGen && analysis->hbb) {
         GenJetsNu();
         MatchGenJets(genJetsNu);
       }

@@ -58,9 +58,10 @@ public :
      kFatjet450  =(1<<8),
      kRecoil50   =(1<<9),
      kGenBosonPt =(1<<10),
-     kVHBB       =(1<<11),
-     kLepton     =(1<<12),
-     kLeptonFake =(1<<13)
+     kGenFatJet  =(1<<11),
+     kVHBB       =(1<<12),
+     kLepton     =(1<<13),
+     kLeptonFake =(1<<14)
     };
     
     enum LepSelectionBit {
@@ -181,6 +182,15 @@ private:
             double eff, sf, sfup, sfdown;
     };
 
+    struct GenJetInfo {
+      float pt=0, eta=0, phi=0, m=0;
+      float msd=0;
+      float tau3=0, tau2=0, tau1=0;
+      float tau3sd=0, tau2sd=0, tau1sd=0;
+      int nprongs=0;
+      float partonpt=0, partonm=0;
+      std::vector<std::vector<float>> particles;
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -201,11 +211,14 @@ private:
     void EvalBTagSF(std::vector<btagcand> &cands, std::vector<double> &sfs,
                     GeneralTree::BTagShift shift,GeneralTree::BTagJet jettype, bool do2=false);
     void IncrementAuxFile(bool close=false);
+    void IncrementGenAuxFile(bool close=false);
     void FatjetBasics();
     void FatjetMatching();
     void FatjetPartons();
     void FatjetRecluster();
+    void FillGenTree();
     void FillPFTree();
+    void GenFatJet();
     void GenJetsNu();
     void GenStudyEWK();
     float GetMSDCorr(float, float); 
@@ -270,11 +283,13 @@ private:
         //!< private function to match a jet; returns NULL if not found
     std::map<int,std::vector<LumiRange>> goodLumis;
     std::vector<panda::Particle*> matchPhos, matchEles, matchLeps;
+    std::map<int, int> pdgToQ; 
     
     // fastjet reclustering
     fastjet::JetDefinition *jetDef=0;
     fastjet::JetDefinition *jetDefKt=0;
     fastjet::contrib::SoftDrop *softDrop=0;
+    fastjet::contrib::Njettiness *tauN=0;
     fastjet::AreaDefinition *areaDef=0;
     fastjet::GhostedAreaSpec *activeArea=0;
     fastjet::JetDefinition *jetDefGen=0;
@@ -374,6 +389,9 @@ private:
     std::vector<std::vector<float>> svInfo; 
     float fjmsd, fjpt, fjrawpt, fjeta, fjphi;
     int NPFPROPS = 9, NSVPROPS = 13;
+
+    GenJetInfo genJetInfo;
+    int NGENPROPS = 8; 
     
     float minSoftTrackPt=0.3; // 300 MeV
 };

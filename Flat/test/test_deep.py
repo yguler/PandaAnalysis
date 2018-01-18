@@ -17,18 +17,15 @@ argv = []
 
 import ROOT as root
 from PandaCore.Tools.Load import *
-from PandaAnalysis.Flat.analysis import deep, gghbb
+from PandaAnalysis.Flat.analysis import deep, deepgen
 import PandaAnalysis.T3.job_utilities as utils
-import PandaAnalysis.T3.job_deep_utilities as deep_utils
 
 Load('PandaAnalyzer')
 
 skimmer = root.PandaAnalyzer(debug_level)
-deep = deep()
-#deep.deepSVs = False
-#deep.deepTracks = False
-deep.processType=root.kTop
-skimmer.SetAnalysis(deep)
+a = deepgen()
+a.processType=root.kTop
+skimmer.SetAnalysis(a)
 
 skimmer.firstEvent=0
 skimmer.lastEvent=10

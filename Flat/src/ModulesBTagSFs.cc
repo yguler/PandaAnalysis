@@ -156,7 +156,7 @@ void PandaAnalyzer::JetBtagSFs()
             gt->isojet2Flav = flavor;
 
           CalcBJetSFs(bJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
-          btagcands.push_back(btagcand(iJ,flavor,eff,sf,sfUp,sfDown));
+          btagcands.emplace_back(iJ,flavor,eff,sf,sfUp,sfDown);
           sf_cent.push_back(sf);
 
           if (flavor>0) {

@@ -108,4 +108,5 @@ vv = lambda v=False : _analysis(
         fatjet = False,
         btagSFs = True,
         complicatedLeptons = True,
+        applyMCTriggers = True,
     )

@@ -18,13 +18,7 @@ parser.add_argument('--include',nargs='+',type=str,default=None)
 parser.add_argument('--exclude',nargs='+',type=str,default=None)
 parser.add_argument('--smartcache',action='store_true')
 parser.add_argument('--force',action='store_true')
-parser.add_argument('--cfg', type=str, default='common')
 args = parser.parse_args()
-
-if args.cfg == 'leptonic':
-    from PandaCore.Tools.process_leptonic import *
-else:
-    from PandaCore.Tools.process import *
 
 if not args.mc_catalog:
     args.mc_catalog = args.catalog

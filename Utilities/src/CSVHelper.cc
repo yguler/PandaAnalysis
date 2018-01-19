@@ -205,55 +205,58 @@ CSVHelper::getCSVWeight(std::vector<double> jetPts, std::vector<double> jetEtas,
       int iPt = -1;
       int iEta = -1;
       if (jetPt >= 19.99 && jetPt < 30)
-	iPt = 0;
+        iPt = 0;
       else if (jetPt >= 30 && jetPt < 40)
-	iPt = 1;
+        iPt = 1;
       else if (jetPt >= 40 && jetPt < 60)
-	iPt = 2;
+        iPt = 2;
       else if (jetPt >= 60 && jetPt < 100)
-	iPt = 3;
+        iPt = 3;
       else if (jetPt >= 100 && jetPt < 160)
-	iPt = 4;
+        iPt = 4;
       else if (jetPt >= 160)
-	iPt = 5;
+        iPt = 5;
       
       if (jetAbsEta >= 0 && jetAbsEta < 0.8)
-	iEta = 0;
+        iEta = 0;
       else if (jetAbsEta >= 0.8 && jetAbsEta < 1.6)
-	iEta = 1;
+        iEta = 1;
       else if (jetAbsEta >= 1.6 && jetAbsEta < 2.41)
-	iEta = 2;
+        iEta = 2;
       
       if (iPt < 0 || iEta < 0)
-	std::cout << "Error, couldn't find Pt, Eta bins for this b-flavor jet, jetPt = " << jetPt
-		  << ", jetAbsEta = " << jetAbsEta << std::endl;
+        std::cout << "Error, couldn't find Pt, Eta bins for this b-flavor jet, jetPt = " << jetPt
+                  << ", jetAbsEta = " << jetAbsEta << std::endl;
       
       if (abs(flavor) == 5) {
-	// RESET iPt to maximum pt bin (only 5 bins for new SFs)
-	if(iPt>=nHFptBins){
-	  iPt=nHFptBins-1;
-	}
-	int useCSVBin = (csv >= 0.) ? h_csv_wgt_hf[iSysHF][iPt]->FindBin(csv) : 1;
-	double iCSVWgtHF = h_csv_wgt_hf[iSysHF][iPt]->GetBinContent(useCSVBin);
-	if (iCSVWgtHF != 0)
-	  csvWgthf *= iCSVWgtHF;
-	
+        // RESET iPt to maximum pt bin (only 5 bins for new SFs)
+        if(iPt>=nHFptBins){
+          iPt=nHFptBins-1;
+        }
+        //int useCSVBin = (csv >= 0.) ? h_csv_wgt_hf[iSysHF][iPt]->FindBin(csv) : 1;
+        int useCSVBin = TMath::Max(h_csv_wgt_hf[iSysHF][iPt]->FindBin(csv), 1);
+        double iCSVWgtHF = h_csv_wgt_hf[iSysHF][iPt]->GetBinContent(useCSVBin);
+        if (iCSVWgtHF != 0)
+          csvWgthf *= iCSVWgtHF;
+        
       } else if (abs(flavor) == 4) {
-	// RESET iPt to maximum pt bin (only 5 bins for new SFs)
-	if(iPt>=nHFptBins){
-	  iPt=nHFptBins-1;
-	}
-	int useCSVBin = (csv >= 0.) ? c_csv_wgt_hf[iSysC][iPt]->FindBin(csv) : 1;
-	double iCSVWgtC = c_csv_wgt_hf[iSysC][iPt]->GetBinContent(useCSVBin);
-	if (iCSVWgtC != 0)
-	  csvWgtC *= iCSVWgtC;
+        // RESET iPt to maximum pt bin (only 5 bins for new SFs)
+        if(iPt>=nHFptBins){
+          iPt=nHFptBins-1;
+        }
+        //int useCSVBin = (csv >= 0.) ? c_csv_wgt_hf[iSysC][iPt]->FindBin(csv) : 1;
+        int useCSVBin = TMath::Max(c_csv_wgt_hf[iSysC][iPt]->FindBin(csv), 1);
+        double iCSVWgtC = c_csv_wgt_hf[iSysC][iPt]->GetBinContent(useCSVBin);
+        if (iCSVWgtC != 0)
+          csvWgtC *= iCSVWgtC;
       } else {
-	if (iPt >= 3)
-	  iPt = 3; /// [30-40], [40-60] and [60-10000] only 3 Pt bins for lf
-	int useCSVBin = (csv >= 0.) ? h_csv_wgt_lf[iSysLF][iPt][iEta]->FindBin(csv) : 1;
-	double iCSVWgtLF = h_csv_wgt_lf[iSysLF][iPt][iEta]->GetBinContent(useCSVBin);
-	if (iCSVWgtLF != 0)
-	  csvWgtlf *= iCSVWgtLF;
+        if (iPt >= 3)
+          iPt = 3; /// [30-40], [40-60] and [60-10000] only 3 Pt bins for lf
+        //int useCSVBin = (csv >= 0.) ? h_csv_wgt_lf[iSysLF][iPt][iEta]->FindBin(csv) : 1;
+        int useCSVBin = TMath::Max(h_csv_wgt_lf[iSysLF][iPt][iEta]->FindBin(csv), 1);
+        double iCSVWgtLF = h_csv_wgt_lf[iSysLF][iPt][iEta]->GetBinContent(useCSVBin);
+        if (iCSVWgtLF != 0)
+          csvWgtlf *= iCSVWgtLF;
       }
     }
     

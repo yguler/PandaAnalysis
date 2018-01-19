@@ -16,62 +16,38 @@ import ROOT as root
 from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import *
 import PandaCore.Tools.job_config as cb
-import PandaAnalysis.Tagging.cfg_v8 as tagcfg
 import PandaAnalysis.T3.job_utilities as utils
-import PandaAnalysis.T3.job_deep_utilities as deep_utils
-from PandaAnalysis.Flat.analysis import gghbb
+import PandaAnalysis.Deep.job_deepgen_utilities as deep_utils
+from PandaAnalysis.Flat.analysis import deepgen
 
 deep_utils.STORE = True
 deep_utils.SAVE = True
 deep_utils.INFER = False
+deep_utils.NORM = False # temporary, need to recalculate normalizations
 
 Load('PandaAnalyzer')
 data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'
-
-class BDTAdder(object):
-    def __init__(self):
-        Load('TMVABranchAdder')
-        self.ba = root.TMVABranchAdder()
-        self.ba.defaultValue = -1.2
-        self.ba.presel = 'fj1ECFN_2_4_20>0'
-        for v in tagcfg.variables:
-            self.ba.AddVariable(v[0],v[2])
-        for v in tagcfg.formulae:
-            self.ba.AddFormula(v[0],v[2])
-        for s in tagcfg.spectators:
-            self.ba.AddSpectator(s[0])
-        self.ba.BookMVA('top_ecf_bdt',data_dir+'/trainings/top_ecfbdt_v8_BDT.weights.xml')
-    def __call__(self, fname='output.root', tname='events'):
-        # now run the BDT
-        self.ba.treename = tname
-        self.ba.RunFile(fname)
-
-add_bdt = BDTAdder() #backwards compatability
 
 def fn(input_name, isData, full_path):
     
     PInfo(sname+'.fn','Starting to process '+input_name)
     # now we instantiate and configure the analyzer
     skimmer = root.PandaAnalyzer()
-    hbb = gghbb()
-    hbb.deep = True
-    hbb.deepAntiKtSort = True
-    hbb.dump()
-    skimmer.SetAnalysis(hbb)
-    skimmer.isData=isData
+
     processType = utils.classify_sample(full_path, isData)
     if processType == root.kSignal:
         processType = root.kTop
-    skimmer.processType=processType 
-    skimmer.SetPreselectionBit(root.PandaAnalyzer.kFatjet450)
+    analysis = deepgen() 
+    analysis.processType=processType 
+    analysis.dump()
+    skimmer.SetAnalysis(analysis)
+    skimmer.isData=isData
+    skimmer.SetPreselectionBit(root.PandaAnalyzer.kGenFatJet)
 
     outpath = utils.run_PandaAnalyzer(skimmer, isData, input_name)
-    utils.print_time('analyzing '+input_name)
     if not outpath:
         return False 
-    for f in glob('*_pf_*.root'):
-        add_bdt(f, 'inputs')
-    deep_utils.run_model(outpath.replace('.root','_pf_%i.root'), outpath)
+    deep_utils.run_model(outpath.replace('.root','_gen_%i.root'), outpath)
     return True
 
 
@@ -94,16 +70,7 @@ if __name__ == "__main__":
     utils.main(to_run, processed, fn)
 
     utils.hadd(processed.keys())
-    if deep_utils.STORE and False:
-        utils.hadd([x.replace('output_','') for x in glob('*pf*.root')], 'arrays.root')
-        utils.cleanup('*pf*.root')
     utils.print_time('hadd')
-
-    add_bdt()
-    utils.print_time('bdt')
-
-    # utils.record_inputs('output.root',processed)
-    # utils.print_time('record inputs')
 
     ret = utils.stageout(outdir,outfilename)
     if deep_utils.STORE and False:
@@ -123,7 +90,6 @@ if __name__ == "__main__":
             deep_utils.np.savez('merged_arrays.npz', **merged_data)
             utils.print_time('merging npz')
             ret = max(ret, utils.stageout(outdir, outfilename.replace('.root', '.npz'), 'merged_arrays.npz'))
-            #    utils.stageout(outdir,outfilename.replace('.root','.npz'),'arrays.npz')
         utils.cleanup('*.npz')
     utils.print_time('stageout and cleanup')
     if not ret:

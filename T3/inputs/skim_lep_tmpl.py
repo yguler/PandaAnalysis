@@ -29,7 +29,7 @@ def fn(input_name, isData, full_path):
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kLepton)
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)
     analysis = vv(True)
-    analysis.processType = utils.classify_sample(full_path, isData)	
+    analysis.processType = utils.classify_sample(full_path, isData)
     skimmer.SetAnalysis(analysis)
     skimmer.isData=isData
  

@@ -16,6 +16,7 @@
 #include "fastjet/AreaDefinition.hh"
 #include "fastjet/ClusterSequenceArea.hh"
 #include "fastjet/contrib/SoftDrop.hh"
+#include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/MeasureDefinition.hh"
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -89,12 +90,14 @@ public:
   TString name;
   ProcessType processType=kNoProcess;
   bool ak8 = false;
+  bool applyMCTriggers = false;
   bool bjetRegression = false;
   bool btagSFs = true;
   bool btagWeights = false;
   bool complicatedLeptons = false;
   bool deep = false;
   bool deepAntiKtSort = false;
+  bool deepGen = false;
   bool deepKtSort = false;
   bool deepSVs = false;
   bool deepTracks = false;
@@ -103,6 +106,8 @@ public:
   bool genOnly = false;
   bool hbb = false;
   bool hfCounting = false;
+  bool jetFlavorPartons = true;
+  bool jetFlavorJets = false;
   bool monoh = false;
   bool puppi_jets = true;
   bool recluster = false;
@@ -112,7 +117,6 @@ public:
   bool useCMVA = false;
   bool varyJES = false;
   bool vbf = false;
-  bool applyMCTriggers = false;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////

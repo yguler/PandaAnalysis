@@ -21,7 +21,7 @@ void PandaAnalyzer::SimpleLeptons() {
     bool isFake   = ele.hltsafe;
     bool isMedium = ele.medium;
     bool isTight  = ele.tight;
-    bool isDxyz   = ElectronIP(ele.eta(),ele.dxy,ele.dz);
+    bool isDxyz   = true; // already selected on this 
     if (isTight) gt->nTightElectron++;
     int eleSelBit            = kLoose;
     if (isFake  ) eleSelBit |= kFake;
@@ -44,9 +44,9 @@ void PandaAnalyzer::SimpleLeptons() {
     float pt = mu.pt(); float eta = mu.eta(); float aeta = fabs(eta);
     if (pt<10 || aeta>2.4) continue;
     if (!mu.loose) continue;
-    bool isFake   = mu.tight  && mu.combIso()/mu.pt() < 0.4 && mu.chIso/mu.pt() < 0.4;
-    bool isMedium = mu.medium && mu.combIso()/mu.pt() < 0.15;
-    bool isTight  = mu.tight  && mu.combIso()/mu.pt() < 0.15;
+    bool isFake   = mu.tight  && (mu.combIso() < 0.4*mu.pt()) && (mu.chIso < 0.4*mu.pt());
+    bool isMedium = mu.medium && (mu.combIso() < 0.15*mu.pt());
+    bool isTight  = mu.tight  && (mu.combIso() < 0.15*mu.pt());
     bool isDxyz   = MuonIP(mu.dxy,mu.dz);
     if (isTight) gt->nTightMuon++;
     int muSelBit            = kLoose;
@@ -71,26 +71,40 @@ void PandaAnalyzer::SimpleLeptons() {
 
   // now consider all leptons
   gt->nLooseLep = looseLeps.size();
+  gt->nTightLep = gt->nTightElectron + gt->nTightMuon;
+
   if (gt->nLooseLep>0) {
-    auto ptsort([](panda::Lepton const* l1, panda::Lepton const* l2)->bool {
+    auto ptsort([](Lepton const* l1, Lepton const* l2)->bool {
       return l1->pt() > l2->pt();
     });
     int nToSort = TMath::Min(12,gt->nLooseLep);
     std::partial_sort(looseLeps.begin(),looseLeps.begin()+nToSort,looseLeps.end(),ptsort);
   }
-  gt->nTightLep = gt->nTightElectron + gt->nTightMuon;
+
+  Muon *mu1=0, *mu2=0; Electron *ele1=0, *ele2=0;
   if (gt->nLooseLep>0) {
-    panda::Lepton* lep1 = looseLeps[0];
+    Lepton* lep1 = looseLeps[0];
     gt->mT = MT(lep1->pt(),lep1->phi(),gt->pfmet,gt->pfmetphi);
+
+    mu1 = dynamic_cast<Muon*>(looseLeps[0]); 
+    ele1 = dynamic_cast<Electron*>(looseLeps[0]); 
+  }  
+  if (gt->nLooseLep>1) { 
+    mu2 = dynamic_cast<Muon*>(looseLeps[1]); 
+    ele2 = dynamic_cast<Electron*>(looseLeps[1]); 
   }
-  panda::Muon *mu1=0, *mu2=0; panda::Electron *ele1=0, *ele2=0;
-  if (gt->nLooseLep>0) { mu1 = dynamic_cast<panda::Muon*>(looseLeps[0]); ele1 = dynamic_cast<panda::Electron*>(looseLeps[0]); };
-  if (gt->nLooseLep>1) { mu2 = dynamic_cast<panda::Muon*>(looseLeps[1]); ele2 = dynamic_cast<panda::Electron*>(looseLeps[1]); };
-  if (mu1) looseLep1PdgId = mu1->charge*-13; else if (ele1) looseLep1PdgId = ele1->charge*-11;
-  if (mu2) looseLep2PdgId = mu2->charge*-13; else if (ele2) looseLep2PdgId = ele2->charge*-11;
+  if (mu1) 
+    looseLep1PdgId = mu1->charge*-13; 
+  else if (ele1) 
+    looseLep1PdgId = ele1->charge*-11;
+  if (mu2) 
+    looseLep2PdgId = mu2->charge*-13; 
+  else if (ele2) 
+    looseLep2PdgId = ele2->charge*-11;
+
   if (gt->nLooseLep>1 && looseLep1PdgId+looseLep2PdgId==0) {
     TLorentzVector v1,v2;
-    panda::Lepton *lep1=looseLeps[0], *lep2=looseLeps[1];
+    Lepton *lep1=looseLeps[0], *lep2=looseLeps[1];
     v1.SetPtEtaPhiM(lep1->pt(),lep1->eta(),lep1->phi(),lep1->m());
     v2.SetPtEtaPhiM(lep2->pt(),lep2->eta(),lep2->phi(),lep2->m());
     gt->diLepMass = (v1+v2).M();
@@ -167,7 +181,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
       ptCorrection=rochesterCorrection->kScaleDT((int)mu.charge, pt, eta, mu.phi(), 0, 0);
     } else if (pt>0) { // perform the rochester correction to the simulated particle
       // attempt gen-matching to a final state muon
-      bool muonIsTruthMatched=false; TLorentzVector genP4; panda::GenParticle genParticle;
+      bool muonIsTruthMatched=false; TLorentzVector genP4; GenParticle genParticle;
       for (unsigned iG = 0; iG != event.genParticles.size() && !muonIsTruthMatched; ++iG) {
         genParticle = event.genParticles[iG];
         if (genParticle.finalState != 1) continue;
@@ -236,7 +250,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
   // now consider all leptons
   gt->nLooseLep = looseLeps.size();
   if (gt->nLooseLep>0) {
-    auto ptsort([](panda::Lepton const* l1, panda::Lepton const* l2)->bool {
+    auto ptsort([](Lepton const* l1, Lepton const* l2)->bool {
       return l1->pt() > l2->pt();
     });
     int nToSort = TMath::Min(12,gt->nLooseLep);
@@ -244,21 +258,21 @@ void PandaAnalyzer::ComplicatedLeptons() {
   }
   gt->nTightLep = gt->nTightElectron + gt->nTightMuon;
   if (gt->nLooseLep>0) {
-    panda::Lepton* lep1 = looseLeps[0];
+    Lepton* lep1 = looseLeps[0];
     gt->mT = MT(lep1->pt(),lep1->phi(),gt->pfmet,gt->pfmetphi);
   }
-  panda::Muon *mu1=0, *mu2=0, *mu3=0, *mu4=0; panda::Electron *ele1=0, *ele2=0, *ele3=0, *ele4=0;
-  if (gt->nLooseLep>0) { mu1 = dynamic_cast<panda::Muon*>(looseLeps[0]); ele1 = dynamic_cast<panda::Electron*>(looseLeps[0]); };
-  if (gt->nLooseLep>1) { mu2 = dynamic_cast<panda::Muon*>(looseLeps[1]); ele2 = dynamic_cast<panda::Electron*>(looseLeps[1]); };
-  if (gt->nLooseLep>2) { mu3 = dynamic_cast<panda::Muon*>(looseLeps[2]); ele3 = dynamic_cast<panda::Electron*>(looseLeps[2]); };
-  if (gt->nLooseLep>3) { mu4 = dynamic_cast<panda::Muon*>(looseLeps[3]); ele4 = dynamic_cast<panda::Electron*>(looseLeps[3]); };
+  Muon *mu1=0, *mu2=0, *mu3=0, *mu4=0; Electron *ele1=0, *ele2=0, *ele3=0, *ele4=0;
+  if (gt->nLooseLep>0) { mu1 = dynamic_cast<Muon*>(looseLeps[0]); ele1 = dynamic_cast<Electron*>(looseLeps[0]); };
+  if (gt->nLooseLep>1) { mu2 = dynamic_cast<Muon*>(looseLeps[1]); ele2 = dynamic_cast<Electron*>(looseLeps[1]); };
+  if (gt->nLooseLep>2) { mu3 = dynamic_cast<Muon*>(looseLeps[2]); ele3 = dynamic_cast<Electron*>(looseLeps[2]); };
+  if (gt->nLooseLep>3) { mu4 = dynamic_cast<Muon*>(looseLeps[3]); ele4 = dynamic_cast<Electron*>(looseLeps[3]); };
   if (mu1) looseLep1PdgId = mu1->charge*-13; else if (ele1) looseLep1PdgId = ele1->charge*-11;
   if (mu2) looseLep2PdgId = mu2->charge*-13; else if (ele2) looseLep2PdgId = ele2->charge*-11;
   if (mu3) looseLep3PdgId = mu3->charge*-13; else if (ele3) looseLep3PdgId = ele3->charge*-11;
   if (mu4) looseLep4PdgId = mu4->charge*-13; else if (ele4) looseLep4PdgId = ele4->charge*-11;
   if (gt->nLooseLep>1 && looseLep1PdgId+looseLep2PdgId==0) {
     TLorentzVector v1,v2;
-    panda::Lepton *lep1=looseLeps[0], *lep2=looseLeps[1];
+    Lepton *lep1=looseLeps[0], *lep2=looseLeps[1];
     v1.SetPtEtaPhiM(lep1->pt(),lep1->eta(),lep1->phi(),lep1->m());
     v2.SetPtEtaPhiM(lep2->pt(),lep2->eta(),lep2->phi(),lep2->m());
     gt->diLepMass = (v1+v2).M();
@@ -343,7 +357,7 @@ void PandaAnalyzer::SaveGenLeptons()
     gt->genTauPt = -1;
     gt->genElectronPt = -1;
     gt->genMuonPt = -1;
-    panda::GenParticle *tau = NULL;
+    GenParticle *tau = NULL;
     bool foundTauLeptonic = false; 
     for (auto& gen : event.genParticles) {
       unsigned apdgid = abs(gen.pdgid);
@@ -363,7 +377,7 @@ void PandaAnalyzer::SaveGenLeptons()
       }
 
       if (isEmu && !foundTauLeptonic && tau) {
-        const panda::GenParticle *parent = &gen;
+        const GenParticle *parent = &gen;
         while (parent->parent.isValid()) {
           parent = parent->parent.get();
           if (parent == tau) {
@@ -376,10 +390,10 @@ void PandaAnalyzer::SaveGenLeptons()
       }
 
       if (!foundTauLeptonic && apdgid == 15 && pt > gt->genTauPt
-          && ((gen.statusFlags & (1 << panda::GenParticle::kIsHardProcess)) != 0 
-              || (gen.statusFlags & (1 << panda::GenParticle::kFromHardProcessBeforeFSR)) != 0 
-              || ((gen.statusFlags & (1 << panda::GenParticle::kIsDecayedLeptonHadron)) != 0 
-                  && (gen.statusFlags & (1 << panda::GenParticle::kFromHardProcess)) != 0
+          && ((gen.statusFlags & (1 << GenParticle::kIsHardProcess)) != 0 
+              || (gen.statusFlags & (1 << GenParticle::kFromHardProcessBeforeFSR)) != 0 
+              || ((gen.statusFlags & (1 << GenParticle::kIsDecayedLeptonHadron)) != 0 
+                  && (gen.statusFlags & (1 << GenParticle::kFromHardProcess)) != 0
                   )
               )
           ) 
@@ -401,7 +415,7 @@ void PandaAnalyzer::LeptonSFs()
   for (unsigned int iL=0; iL!=TMath::Min(gt->nLooseLep,2); ++iL) {
     auto* lep = looseLeps.at(iL);
     float pt = lep->pt(), eta = lep->eta(), aeta = TMath::Abs(eta);
-    panda::Muon* mu = dynamic_cast<panda::Muon*>(lep);
+    Muon* mu = dynamic_cast<Muon*>(lep);
     if (mu!=NULL) {
       bool isTight = mu->tight;
       if (isTight) {
@@ -413,7 +427,7 @@ void PandaAnalyzer::LeptonSFs()
       }
       gt->sf_lepTrack *= GetCorr(cMuReco,gt->npv);
     } else {
-      panda::Electron* ele = dynamic_cast<panda::Electron*>(lep);
+      Electron* ele = dynamic_cast<Electron*>(lep);
       bool isTight = ele->tight;
       if (isTight) {
         gt->sf_lepID *= GetCorr(cEleTight,eta,pt);

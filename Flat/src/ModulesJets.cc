@@ -75,6 +75,48 @@ void PandaAnalyzer::JetBasics()
 
     if (jet.pt()>jetPtThreshold) { // nominal jets
       cleanedJets.push_back(&jet);
+
+      // get jet flavor
+      int flavor=0;
+      float genpt=0;
+      if (analysis->jetFlavorPartons) {
+        // her we try to match to hard partons
+        for (auto& gen : event.genParticles) {
+          int apdgid = abs(gen.pdgid);
+          if (apdgid==0 || (apdgid>5 && apdgid!=21)) // light quark or gluon
+            continue;
+          double dr2 = DeltaR2(jet.eta(),jet.phi(),gen.eta(),gen.phi());
+          if (dr2<0.09) {
+            genpt = gen.pt();
+            if (apdgid==4 || apdgid==5) {
+              flavor=apdgid;
+              break;
+            } else {
+              flavor=0;
+            }
+          }
+        } 
+      } else if (analysis->jetFlavorJets) {
+        // or we can match to gen jets (probably better)
+        for (auto &gen : event.ak4GenJets) {
+          if (DeltaR2(gen.eta(), gen.phi(), jet.eta(), jet.phi()) < 0.09) {
+            int apdgid = abs(gen.pdgid);
+            genpt = gen.pt();
+            if (apdgid == 4 || apdgid == 5) {
+              flavor = apdgid;
+              break;
+            } else {
+              flavor = 0;
+            }
+          }
+        }
+      }
+      
+      // Set jetGenPt, jetGenFlavor for these jets
+      // This will be overwritten later if reclusterGen is turned on
+      gt->jetGenFlavor[cleanedJets.size()-1] = flavor;
+      gt->jetGenPt    [cleanedJets.size()-1] = genpt ;
+
       if (cleanedJets.size()<3) {
         bool isBad = GetCorr(cBadECALJets,jet.eta(),jet.phi()) > 0;
         if (isBad)
@@ -87,7 +129,9 @@ void PandaAnalyzer::JetBasics()
       float csv = (fabs(jet.eta())<2.5) ? jet.csv : -1;
       float cmva = (fabs(jet.eta())<2.5) ? jet.cmva : -1;
       if (fabs(jet.eta())<2.4) {
-        centralJets.push_back(&jet);
+        centralJets.push_back(&jet  );
+        centralJetGenFlavors[&jet] = flavor;
+        centralJetGenPts[&jet] = genpt;
         if (centralJets.size()==1) {
           jet1 = &jet;
           gt->jet1Pt = jet.pt();
@@ -96,6 +140,8 @@ void PandaAnalyzer::JetBasics()
           gt->jet1CSV = csv;
           gt->jet1CMVA = cmva;
           gt->jet1IsTight = jet.monojet ? 1 : 0;
+          gt->jet1Flav = flavor;
+          gt->jet1GenPt = genpt;
         } else if (centralJets.size()==2) {
           jet2 = &jet;
           gt->jet2Pt = jet.pt();
@@ -103,6 +149,8 @@ void PandaAnalyzer::JetBasics()
           gt->jet2Phi = jet.phi();
           gt->jet2CSV = csv;
           gt->jet2CMVA = cmva;
+          gt->jet2Flav = flavor;
+          gt->jet2GenPt = genpt;
         }
       }
 
@@ -662,7 +710,7 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       ellipse_k = TVector2::Phi_mpi_pi(phi2 + phi1MinusPhi2MPP/2.);
       ellipse_cosA = cos(ellipse_alpha);
       ellipse_sinA = sin(ellipse_alpha);
-      if (DEBUG) {
+      if (DEBUG > 10) {
         PDebug("PandaAnalyzer::JetHbbReco",Form("Calculating ellipse with (eta1,phi1)=(%.2f,%.2f), (eta2,phi2)=(%.2f,%.2f)",eta1,phi1,eta2,phi2));
         PDebug("PandaAnalyzer::JetHbbReco",Form("Found ellipse parameters (a,b,h,k,alpha)=(%.2f,%.2f,%.2f,%.2f,%.2f)",ellipse_a,ellipse_b,ellipse_h,ellipse_k,ellipse_alpha));
       }
@@ -701,13 +749,13 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       for (int iV=0; iV!=event.vertices.size(); iV++) {
         auto& theVertex = event.vertices[iV];
         float vertexAbsDz = fabs(softTrack->dz(theVertex.position()));
-        if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
+        if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
         if (vertexAbsDz >= minAbsDz) continue;
         idxVertexWithMinAbsDz = iV;
         minAbsDz = vertexAbsDz;
       }
       if (idxVertexWithMinAbsDz!=0 || minAbsDz>0.2) continue;
-      if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
+      if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
       // Need to add High Quality track flags :-)
       bool trackIsInHbbEllipse=false; {
         double ellipse_x = softTrack->eta();
@@ -725,16 +773,16 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       } if (trackIsInHbbEllipse) continue;
       softTracksPJ.emplace_back(softTrack->px(),softTrack->py(),softTrack->pz(),softTrack->e());
     }
-    if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Found %ld soft tracks that passed track quality cuts and the ellipse, jet constituency, and lepton matching vetoes",softTracksPJ.size()));
+    if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Found %ld soft tracks that passed track quality cuts and the ellipse, jet constituency, and lepton matching vetoes",softTracksPJ.size()));
     softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
     fastjet::ClusterSequenceArea softTrackSequence(softTracksPJ, *softTrackJetDefinition, *areaDef);
     
     std::vector<fastjet::PseudoJet> softTrackJets(softTrackSequence.inclusive_jets(1.));
-    if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
+    if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
     for (std::vector<fastjet::PseudoJet>::size_type iSTJ=0; iSTJ<softTrackJets.size(); iSTJ++) {
       if (fabs(softTrackJets[iSTJ].eta()) > 4.7) continue;
       gt->sumEtSoft1 += softTrackJets[iSTJ].Et(); 
-      if (DEBUG) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
+      if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
       if (softTrackJets[iSTJ].pt() >  2.)  gt->nSoft2++; else continue;
       if (softTrackJets[iSTJ].pt() >  5.)  gt->nSoft5++; else continue;
       if (softTrackJets[iSTJ].pt() > 10.) gt->nSoft10++; else continue;

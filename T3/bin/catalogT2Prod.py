@@ -12,7 +12,8 @@ parser = argparse.ArgumentParser(description='make config file')
 parser.add_argument('--catalog',type=str,default='/home/cmsprod/catalog/t2mit/pandaf/008')
 parser.add_argument('--mc_catalog',type=str,default=None)
 parser.add_argument('--data_catalog',type=str,default=None)
-parser.add_argument('--outfile',type=str)
+parser.add_argument('--cfg',type=str,default='common')
+parser.add_argument('--outfile',type=str,default=None)
 parser.add_argument('--include',nargs='+',type=str,default=None)
 parser.add_argument('--exclude',nargs='+',type=str,default=None)
 parser.add_argument('--smartcache',action='store_true')
@@ -30,6 +31,10 @@ if not args.mc_catalog:
 if not args.data_catalog:
     args.data_catalog = args.catalog
 
+if args.cfg == 'leptonic':
+    from PandaCore.Tools.process_leptonic import *
+else:
+    from PandaCore.Tools.process import *
 
 class CatalogSample:
     def __init__(self,name,dtype,xsec):
@@ -48,8 +53,7 @@ class CatalogSample:
             book_ = '/'.join(args.catalog.split('/')[-2:])
             lines.append('{0:<25} {2:<10} {3:<15} {1}\n'.format(nickname,f,self.dtype,self.xsec)) 
             if smartcache_args is not None:
-                if not path.isfile(f.replace('root://xrootd.cmsaf.mit.edu','/mnt/hadoop/cms')):
-                    smartcache_args.append('/cms/store/user/paus/%s/%s'%(book_,ds_))
+                smartcache_args.append('/cms/store/user/paus/%s/%s'%(book_,ds_))
         return lines
 
 def smartcache(arguments):

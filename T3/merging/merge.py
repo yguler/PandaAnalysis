@@ -5,7 +5,7 @@ from array import array
 from glob import glob
 from re import sub
 from sys import argv,exit
-import sys
+import sys,os
 from os import environ,system,path
 from argparse import ArgumentParser
 
@@ -30,7 +30,7 @@ else:
     from PandaCore.Tools.process import *
     xsecscale = 1
 
-sys.path.append('PandaAnalysis/T3/merging/configs/')
+sys.path.append(os.getenv('CMSSW_BASE') + '/src/PandaAnalysis/T3/merging/configs')
 cfg = __import__(args.cfg)
 
 Load('Normalizer')

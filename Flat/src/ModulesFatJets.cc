@@ -50,14 +50,14 @@ void PandaAnalyzer::FillGenTree()
 
   // cluster the  jet 
   fastjet::ClusterSequenceArea seq(finalStates, *jetDef, *areaDef);
-  std::vector<fastjet::PseudoJet> allJets(seq.inclusive_jets(0.01));
+  std::vector<fastjet::PseudoJet> allJets(seq.inclusive_jets(0.));
 
   if (allJets.size() == 0) {
     tr->TriggerEvent("fill gen tree");
     return;
   }
 
-  fastjet::PseudoJet &fullJet = allJets.at(0);
+  fastjet::PseudoJet fullJet = fastjet::sorted_by_pt(allJets).at(0);
   gt->genFatJetPt = fullJet.perp();
   if (gt->genFatJetPt < 450) {
     tr->TriggerEvent("fill gen tree");
@@ -186,6 +186,10 @@ void PandaAnalyzer::FillGenTree()
   nC = std::min(nC, (unsigned)NMAXPF);
   for (unsigned iC = 0; iC != nC; ++iC) {
     fastjet::PseudoJet &c = allConstituents.at(iC);
+
+    if (c.perp() < 0.0001 || c.user_index() < 0) // not a real particle
+      continue;
+
     genJetInfo.particles[iC][0] = c.perp() / fullJet.perp();
     genJetInfo.particles[iC][1] = c.eta() - fullJet.eta();
     genJetInfo.particles[iC][2] = SignedDeltaPhi(c.phi(), fullJet.phi());

@@ -14,13 +14,16 @@ void PandaAnalyzer::SimpleLeptons() {
   //electrons
   for (auto& ele : event.electrons) {
     float pt = ele.pt(); float eta = ele.eta(); float aeta = fabs(eta);
-    if (pt<10 || aeta>2.5) continue;
-    if (!ele.veto) continue;
-    if (!ElectronIP(ele.eta(),ele.dxy,ele.dz)) continue;
-    unsigned iL=gt->nLooseElectron;
+    if (!ele.veto) 
+      continue; 
+    if (pt<10 || aeta>2.5) 
+      continue;
+    if (!ElectronIP(ele.eta(),ele.dxy,ele.dz)) 
+      continue;
+    unsigned iL = gt->nLooseElectron;
     bool isFake   = ele.hltsafe;
     bool isMedium = ele.medium;
-    bool isTight  = ele.tight;
+    bool isTight  = ele.tight && pt>40 && aeta<2.5;
     bool isDxyz   = true; // already selected on this 
     if (isTight) gt->nTightElectron++;
     int eleSelBit            = kLoose;
@@ -37,16 +40,21 @@ void PandaAnalyzer::SimpleLeptons() {
     matchLeps.push_back(&ele);
     matchEles.push_back(&ele);
     gt->nLooseElectron++;
-    if (gt->nLooseElectron>=2) break;
+    if (gt->nLooseElectron>=2) 
+      break;
   }
   // muons
   for (auto& mu : event.muons) {
     float pt = mu.pt(); float eta = mu.eta(); float aeta = fabs(eta);
-    if (pt<10 || aeta>2.4) continue;
-    if (!mu.loose) continue;
-    bool isFake   = mu.tight  && (mu.combIso() < 0.4*mu.pt()) && (mu.chIso < 0.4*mu.pt());
-    bool isMedium = mu.medium && (mu.combIso() < 0.15*mu.pt());
-    bool isTight  = mu.tight  && (mu.combIso() < 0.15*mu.pt());
+    if (!mu.loose) 
+      continue; // loose ID 
+    if (pt<10 || aeta>2.4) 
+      continue;
+    if (mu.combIso() > 0.25*pt)
+      continue; // loose iso
+    bool isFake   = mu.tight  && (mu.combIso() < 0.4*pt) && (mu.chIso < 0.4*pt); // what the hell is this ID?
+    bool isMedium = mu.medium && (mu.combIso() < 0.15*pt);
+    bool isTight  = mu.tight  && (mu.combIso() < 0.15*pt) && pt>20 && aeta<2.4;
     bool isDxyz   = MuonIP(mu.dxy,mu.dz);
     if (isTight) gt->nTightMuon++;
     int muSelBit            = kLoose;
@@ -65,7 +73,8 @@ void PandaAnalyzer::SimpleLeptons() {
     TVector2 vMu; vMu.SetMagPhi(pt,mu.phi());
     vMETNoMu += vMu;
     gt->nLooseMuon++;
-    if (gt->nLooseMuon>=2) break;
+    if (gt->nLooseMuon>=2) 
+      break;
   }
   gt->pfmetnomu = vMETNoMu.Mod();
 

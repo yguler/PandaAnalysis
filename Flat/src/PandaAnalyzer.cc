@@ -239,6 +239,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   // Custom jet pt threshold
   if (analysis->hbb) jetPtThreshold=20;
+  if (analysis->vbf || analysis->hbb || 
+      analysis->complicatedLeptons) bJetPtThreshold=20;
 
   if (DEBUG) PDebug("PandaAnalyzer::Init","Finished configuration");
 

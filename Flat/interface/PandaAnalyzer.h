@@ -366,9 +366,9 @@ private:
     TLorentzVector vpfUW, vpfUZ, vpfUA, vpfU;
     TLorentzVector vpuppiUW, vpuppiUZ, vpuppiUA, vpuppiU;
     panda::FatJet *fj1 = 0;
-    std::vector<panda::Jet*> cleanedJets, isoJets, btaggedJets, centralJets;
-    std::map<panda::Jet*,int> centralJetGenFlavors;
-    std::map<panda::Jet*,float> centralJetGenPts;
+    std::vector<panda::Jet*> cleanedJets, isoJets, btaggedJets, centralJets, centralBCandJets;
+    std::map<panda::Jet*,int> centralBCandJetGenFlavors;
+    std::map<panda::Jet*,float> centralBCandJetGenPts;
     std::vector<int> btagindices;
     TLorentzVector vJet, vBarrelJets;
     panda::FatJetCollection *fatjets = 0;
@@ -384,6 +384,7 @@ private:
     std::vector<TString> wIDs;
     float *bjetreg_vars = 0;
     float jetPtThreshold=30;
+    float bJetPtThreshold=30;
 
     std::vector<std::vector<float>> pfInfo;
     std::vector<std::vector<float>> svInfo; 

@@ -107,14 +107,14 @@ void PandaAnalyzer::JetBtagSFs()
       vector<btagcand> btagcands;
       vector<double> sf_cent, sf_bUp, sf_bDown, sf_mUp, sf_mDown;
 
-      unsigned int nJ = centralJets.size();
+      unsigned int nJ = centralBCandJets.size();
       for (unsigned int iJ=0; iJ!=nJ; ++iJ) {
-        panda::Jet *jet = centralJets.at(iJ);
+        panda::Jet *jet = centralBCandJets.at(iJ);
         bool isIsoJet=false;
         if (std::find(isoJets.begin(), isoJets.end(), jet) != isoJets.end())
           isIsoJet = true;
-        int flavor = centralJetGenFlavors[jet];
-        // float genpt = centralJetGenPts[jet]; // not needed right now but it's here if it becomes needed
+        int flavor = centralBCandJetGenFlavors[jet];
+        // float genpt = centralBCandJetGenPts[jet]; // not needed right now but it's here if it becomes needed
         float pt = jet->pt();
         float btagUncFactor = 1;
         float eta = jet->eta();
@@ -164,25 +164,25 @@ void PandaAnalyzer::JetCMVAWeights()
     GeneralTree::csvShift shift = gt->csvShifts[iShift];
     gt->sf_csvWeights[shift] = 1;
   }
-  if (centralJets.size() < 1) return;
+  if (centralBCandJets.size() < 1) return;
 
   //get vectors of jet properties
   std::vector<double> jetPts, jetEtas, jetCSVs, jetCMVAs;
   std::vector<int> jetFlavors;
-  jetPts.reserve(centralJets.size());
-  jetEtas.reserve(centralJets.size());
-  jetCSVs.reserve(centralJets.size());
-  jetCMVAs.reserve(centralJets.size());
-  jetFlavors.reserve(centralJets.size());
-  unsigned int nJ = centralJets.size();
+  jetPts.reserve(centralBCandJets.size());
+  jetEtas.reserve(centralBCandJets.size());
+  jetCSVs.reserve(centralBCandJets.size());
+  jetCMVAs.reserve(centralBCandJets.size());
+  jetFlavors.reserve(centralBCandJets.size());
+  unsigned int nJ = centralBCandJets.size();
   for (unsigned int iJ=0; iJ!=nJ; ++iJ) {
-    panda::Jet *jet = centralJets.at(iJ);
+    panda::Jet *jet = centralBCandJets.at(iJ);
     jetPts.push_back(jet->pt());
     jetEtas.push_back(jet->eta());
     jetCSVs.push_back(jet->csv);
     jetCMVAs.push_back(jet->cmva);
-    int flavor = centralJetGenFlavors[jet];
-    //float genpt = centralJetGenPts[jet];
+    int flavor = centralBCandJetGenFlavors[jet];
+    //float genpt = centralBCandJetGenPts[jet];
     jetFlavors.push_back(flavor);
   }
   // throwaway addresses

@@ -111,7 +111,8 @@ void PandaAnalyzer::JetBtagSFs()
       for (unsigned int iJ=0; iJ!=nJ; ++iJ) {
         panda::Jet *jet = centralJets.at(iJ);
         bool isIsoJet=false;
-        if (std::find(isoJets.begin(), isoJets.end(), jet) != isoJets.end())
+        if (!analysis->fatjet || // if we do not consider fatjets, everything is an isojet 
+            std::find(isoJets.begin(), isoJets.end(), jet) != isoJets.end()) // otherwise, explicitly check isojet
           isIsoJet = true;
         int flavor = centralJetGenFlavors[jet];
         // float genpt = centralJetGenPts[jet]; // not needed right now but it's here if it becomes needed

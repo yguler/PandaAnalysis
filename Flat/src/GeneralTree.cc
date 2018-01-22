@@ -311,6 +311,8 @@ void GeneralTree::Reset() {
     pfUAmagDown = -1;
     pfUmagDown = -1;
     nJot = 0;
+    nJot_jesUp = 0;
+    nJot_jesDown = 0;
     jot1Phi = -1;
     jot1Pt = -1;
     jot1GenPt = -1;
@@ -558,6 +560,14 @@ void GeneralTree::WriteTree(TTree *t) {
 
   Book("nJet",&nJet,"nJet/I");
   Book("nJot",&nJot,"nJot/I");
+  if (leptonic) {
+    Book("nJot_jesUp",&nJot_jesUp,"nJot_jesUp/I");
+    Book("nJot_jesDown",&nJot_jesDown,"nJot_jesDown/I");
+    if (!monohiggs) { // to avoid double booking
+      Book("nJet_jesUp",&nJet_jesUp,"nJet_jesUp/I");
+      Book("nJet_jesDown",&nJet_jesDown,"nJet_jesDown/I");
+    }
+  }
   Book("nLooseLep",&nLooseLep,"nLooseLep/I");
   Book("nLooseElectron",&nLooseElectron,"nLooseElectron/I");
   Book("nLooseMuon",&nLooseMuon,"nLooseMuon/I");

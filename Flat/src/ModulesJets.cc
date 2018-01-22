@@ -202,6 +202,11 @@ void PandaAnalyzer::JetBasics()
     if (analysis->varyJES)
       JetVaryJES(jet);
 
+    if (analysis->complicatedLeptons) {
+      if (jet.ptCorrUp>jetPtThreshold) gt->nJot_jesUp++;
+      if (jet.ptCorrDown>jetPtThreshold) gt->nJot_jesDown++;
+    }
+
   } // jet loop
   gt->barrelHTMiss = vBarrelJets.Pt();
 

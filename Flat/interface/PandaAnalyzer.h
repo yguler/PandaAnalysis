@@ -358,6 +358,10 @@ private:
 
     // any extra signal weights we want
     // stuff that gets passed between modules
+    //
+    // NB: ensure that any global vectors/maps that are per-event
+    // are reset properly in ResetBranches(), or you can really
+    // mess up behavior
     std::vector<TriggerHandler> triggerHandlers = std::vector<TriggerHandler>(kNTrig);
     std::vector<panda::Lepton*> looseLeps, tightLeps;
     std::vector<panda::Photon*> loosePhos;
@@ -366,10 +370,9 @@ private:
     TLorentzVector vpfUW, vpfUZ, vpfUA, vpfU;
     TLorentzVector vpuppiUW, vpuppiUZ, vpuppiUA, vpuppiU;
     panda::FatJet *fj1 = 0;
-    std::vector<panda::Jet*> cleanedJets, isoJets, btaggedJets, centralJets, centralBCandJets;
-    std::map<panda::Jet*,int> centralBCandJetGenFlavors;
-    std::map<panda::Jet*,float> centralBCandJetGenPts;
-    std::vector<int> btagindices;
+    std::vector<panda::Jet*> cleanedJets, isoJets, centralJets, bCandJets;
+    std::map<panda::Jet*,int> bCandJetGenFlavor;
+    std::map<panda::Jet*,float> bCandJetGenPt;
     TLorentzVector vJet, vBarrelJets;
     panda::FatJetCollection *fatjets = 0;
     panda::JetCollection *jets = 0;

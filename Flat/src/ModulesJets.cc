@@ -69,19 +69,6 @@ void PandaAnalyzer::JetBasics()
     if (analysis->vbf && !jet.loose)
       continue;
 
-    // btags
-    if (analysis->vbf && jet.pt()>bJetPtThreshold && fabs(jet.eta())<2.4 && jet.csv>0.8484) {
-      ++(gt->jetNMBtags);
-    }
-    if (jet.pt()>bJetPtThreshold && fabs(jet.eta())<2.5 && jet.csv>0.5426) {
-      ++(gt->jetNBtags);
-      if (analysis->monoh || analysis->hbb) {
-        btaggedJets.push_back(&jet);
-        btagindices.push_back(cleanedJets.size()-1);
-      }
-      if (!analysis->vbf && jet.csv>0.8484) 
-        ++(gt->jetNMBtags);
-    }
 
     if (jet.pt()>jetPtThreshold || jet.pt()>bJetPtThreshold) { // nominal or b jets
 
@@ -122,30 +109,46 @@ void PandaAnalyzer::JetBasics()
       }
 
       if (jet.pt()>bJetPtThreshold && fabs(jet.eta())<2.5) { // b jets
-        centralBCandJets.push_back(&jet  );
-        centralBCandJetGenFlavors[&jet] = flavor;
-        centralBCandJetGenPts[&jet] = genpt;
+
+        if (jet.csv > 0.5426) {
+          // loose WP
+          ++(gt->jetNBtags);
+          if (jet.csv > 0.8484) {
+            // medum WP
+            if (!analysis->vbf || 
+                (analysis->vbf && fabs(jet.eta())<2.4))
+            {
+              ++(gt->jetNMBtags);
+            }
+          }
+        }
+
+        bCandJets.push_back(&jet);
+        bCandJetGenFlavor[&jet] = flavor;
+        bCandJetGenPt[&jet] = genpt;
       }
 
       if (jet.pt()>jetPtThreshold) { // nominal jets
         cleanedJets.push_back(&jet);
-	// Set jetGenPt, jetGenFlavor for these jets
-	// This will be overwritten later if reclusterGen is turned on
-	gt->jetGenFlavor[cleanedJets.size()-1] = flavor;
-	gt->jetGenPt    [cleanedJets.size()-1] = genpt ;
+        // Set jetGenPt, jetGenFlavor for these jets
+        // This will be overwritten later if reclusterGen is turned on
+        if (analysis->hbb || analysis->monoh) {
+          gt->jetGenFlavor[cleanedJets.size()-1] = flavor;
+          gt->jetGenPt    [cleanedJets.size()-1] = genpt ;
+        }
 
-	if (cleanedJets.size()<3) {
+        if (cleanedJets.size()<3) {
           bool isBad = GetCorr(cBadECALJets,jet.eta(),jet.phi()) > 0;
           if (isBad)
             gt->badECALFilter = 0;
-	}
+        }
 
-	if (analysis->fatjet)
+        if (analysis->fatjet)
           IsoJet(jet);
 
-	float csv = (fabs(jet.eta())<2.5) ? jet.csv : -1;
-	float cmva = (fabs(jet.eta())<2.5) ? jet.cmva : -1;
-	if (fabs(jet.eta())<2.4) {
+        float csv = (fabs(jet.eta())<2.5) ? jet.csv : -1;
+        float cmva = (fabs(jet.eta())<2.5) ? jet.cmva : -1;
+        if (fabs(jet.eta())<2.4) {
           centralJets.push_back(&jet  );
           if (centralJets.size()==1) {
             jet1 = &jet;
@@ -167,21 +170,21 @@ void PandaAnalyzer::JetBasics()
             gt->jet2Flav = flavor;
             gt->jet2GenPt = genpt;
           }
-	}
+        }
 
-	vJet.SetPtEtaPhiM(jet.pt(),jet.eta(),jet.phi(),jet.m());
+        vJet.SetPtEtaPhiM(jet.pt(),jet.eta(),jet.phi(),jet.m());
 
-	if (analysis->vbf || analysis->complicatedLeptons)
+        if (analysis->vbf || analysis->complicatedLeptons)
           JetVBFBasics(jet);
 
-	if (analysis->monoh || analysis->hbb) {
+        if (analysis->monoh || analysis->hbb) {
           JetHbbBasics(jet);
           if (analysis->bjetRegression)
             JetBRegressionInfo(jet);
-	}
+        }
 
-	// compute dphi wrt mets
-	if (cleanedJets.size() <= nJetDPhi) {
+        // compute dphi wrt mets
+        if (cleanedJets.size() <= nJetDPhi) {
           gt->dphipuppimet = std::min(fabs(vJet.DeltaPhi(vPuppiMET)),(double)gt->dphipuppimet);
           gt->dphipfmet = std::min(fabs(vJet.DeltaPhi(vPFMET)),(double)gt->dphipfmet);
           if (analysis->recoil) {
@@ -192,19 +195,23 @@ void PandaAnalyzer::JetBasics()
             gt->dphipfUW = std::min(fabs(vJet.DeltaPhi(vpfUW)),(double)gt->dphipfUW);
             gt->dphipfUZ = std::min(fabs(vJet.DeltaPhi(vpfUZ)),(double)gt->dphipfUZ);
           }
-	}
+        }
       } // end jetPt>jetPtThreshold
     }
-    if (analysis->varyJES && fabs(jet.eta())<2.4) {
-      if (jet.ptCorrUp>jetPtThreshold) gt->nJet_jesUp++;
-      if (jet.ptCorrDown>jetPtThreshold) gt->nJet_jesDown++;
-    }
-    if (analysis->varyJES)
+
+    if (analysis->varyJES) {
+      if (fabs(jet.eta())<2.4) {
+        if (jet.ptCorrUp>jetPtThreshold) 
+          gt->nJet_jesUp++;
+        if (jet.ptCorrDown>jetPtThreshold) 
+          gt->nJet_jesDown++;
+      }
       JetVaryJES(jet);
 
-    if (analysis->complicatedLeptons) {
-      if (jet.ptCorrUp>jetPtThreshold) gt->nJot_jesUp++;
-      if (jet.ptCorrDown>jetPtThreshold) gt->nJot_jesDown++;
+      if (jet.ptCorrUp>jetPtThreshold) 
+        gt->nJot_jesUp++;
+      if (jet.ptCorrDown>jetPtThreshold) 
+        gt->nJot_jesDown++;
     }
 
   } // jet loop
@@ -227,7 +234,7 @@ void PandaAnalyzer::JetBasics()
       gt->dphipuppiU = gt->dphipuppiUZ;
       gt->dphipfU = gt->dphipfUZ;
       break;
-    default: // impossible
+    default: // c'est impossible !
       break;
   }
 

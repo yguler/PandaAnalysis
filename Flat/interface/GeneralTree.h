@@ -412,6 +412,8 @@ class GeneralTree : public genericTree {
     float pfUAmagDown = -1;
     float pfUmagDown = -1;
     int nJot = -1;
+    int nJot_jesUp = -1;
+    int nJot_jesDown = -1;
     float jot1Phi = -1;
     float jot1Pt = -1;
     float jot1GenPt = -1;

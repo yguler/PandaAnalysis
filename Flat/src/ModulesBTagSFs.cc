@@ -129,10 +129,12 @@ void PandaAnalyzer::JetBtagSFs()
         else
           eff = lfeff[bineta][binpt];
         if (isIsoJet) {
-          if (jet==isoJets.at(0))
-            gt->isojet1Flav = flavor;
-          else if (jet==isoJets.at(1))
-            gt->isojet2Flav = flavor;
+          if (analysis->fatjet) {
+            if (jet==isoJets.at(0))
+              gt->isojet1Flav = flavor;
+            else if (jet==isoJets.at(1))
+              gt->isojet2Flav = flavor;
+          }
 
           CalcBJetSFs(bJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
           btagcands.emplace_back(iJ,flavor,eff,sf,sfUp,sfDown);

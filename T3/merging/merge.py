@@ -152,7 +152,7 @@ def merge(shortnames,mergedname):
             normalizeFast('/tmp/%s/split/%s.root'%(user,shortname),xsec)
     to_hadd = ['/tmp/%s/split/%s.root'%(user,x) for x in shortnames]
     hadd(to_hadd, '/tmp/%s/merged/%s.root'%(user,mergedname))
-    for f in in to_hadd:
+    for f in to_hadd:
         system('rm -f %s'%f)
 
 

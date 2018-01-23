@@ -177,7 +177,6 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=5):
                     failed = True
             else:
                 #lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
-                sleep(10)
                 lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
                 PInfo(sname+'.stageout',lsargs)
                 ret = system(lsargs)
@@ -185,6 +184,7 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=5):
                     PError(sname+'.stageout','Output file is missing!')
                     failed = True
         if not failed:
+            sleep(5) # give the filesystem a chance to respond
             PInfo(sname+'.stageout', 'Copy succeeded after %i attempts'%(i_attempt+1))
             return ret
         else:

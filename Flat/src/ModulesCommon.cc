@@ -276,19 +276,171 @@ void PandaAnalyzer::HeavyFlavorCounting()
 
 void PandaAnalyzer::GetMETSignificance()
 {
-  float pfEt = 0;
-  float puppiEt = 0;
+  std::vector<panda::Lepton*> msLeps;
+  // Get the lepton collections for the MET significance calculation
+  // Ported approximately from RecoMET/METProducers/python/METSignificanceObjects_cfi.py
+  for (auto& ele : event.electrons) {
+    if(!ele.superCluster.isValid()) continue;
+    if(!ele.matchedPF.isValid()) continue;
+    float abseta = fabs(ele.eta());
+    // WARNING: Missing Track-Cluster Matching
+    // barrel abs(deltaEtaSuperClusterTrackAtVtx) < 0.007, abs(deltaPhiSuperClusterTrackAtVtx) < 0.8
+    // endcap abs(deltaEtaSuperClusterTrackAtVtx) < 0.009, abs(deltaPhiSuperClusterTrackAtVtx) < 0.10
+    panda::SuperCluster *theSC = (panda::SuperCluster*)ele.superCluster.get();
+    // panda::PFCand *theTrack = ele.matchedPF.get();
+    // float dEtaSCTrack = ?
+    // float dPhiSCTrack = ?
+    float ooEmooP = fabs(1./theSC->rawPt - 1./ele.trackP);
+    if (
+      // Common cuts
+      ele.pt() > 19.5 && abseta < 2.5 && 
+      ele.nMissingHits <= 1 && 
+      ele.combIso()/ele.pt() < 0.3 &&  // Warning: Not the Delta-R 0.3 Isolation
+      (
+        ( 
+          // Barrel cuts
+          abseta < 1.4442 &&
+          ele.sieie < 0.01 &&
+          ele.hOverE < 0.15 &&
+          ooEmooP < 0.05
+        ) || ( 
+          // Endcap cuts
+          abseta > 1.566 &&
+          ele.sieie < 0.03 &&
+          ele.hOverE < 0.10 &&
+          ooEmooP < 0.05
+        )
+      )
+    ) msLeps.push_back(&ele);
+  }
+  for (auto& mu : event.muons) {
+    float abseta = fabs(mu.eta());
+    if (
+      mu.tracker==true &&
+      mu.pt() > 5 &&
+      mu.pf==true &&
+      mu.global==true && // Same as globalTrack.isNonnull ?
+      mu.pixLayersWithMmt > 0 &&
+      mu.normChi2 < 10 &&
+      mu.nMatched > 0 &&
+      mu.trkLayersWithMmt > 5 &&
+      mu.nValidMuon > 0 &&
+      mu.r03Iso/mu.pt() < 0.3 &&
+      fabs(mu.dxy) < 2.0
+    ) msLeps.push_back(&mu);
+  }
+  // metsig covariance
+  double cov_xx=0, cov_yy=0, cov_xy=0;
+  
+  std::vector<panda::PFCand*> footprint; // jet+leptons footprint
+  footprint.reserve(event.pfCandidates.size());
+  for (unsigned iL=0; iL<(unsigned)msLeps.size(); iL++) {
+    if (msLeps[iL]->pt()<10) continue;
+    if (msLeps[iL]->matchedPF.isValid())
+      footprint.push_back((panda::PFCand*)msLeps[iL]->matchedPF.get());
+  }
+  std::vector<bool> jetIsLep; jetIsLep.reserve(event.chsAK4Jets.size());
+  for (unsigned iJ=0; iJ<(unsigned)event.chsAK4Jets.size(); iJ++) { 
+    panda::Jet jet = event.chsAK4Jets[iJ];
+    jetIsLep.push_back(false);
+    // jet-lepton cleaning
+    for (unsigned iL=0; iL<(unsigned)msLeps.size(); iL++) {
+      if (msLeps[iL]->p4().DeltaR( jet.p4()) < 0.4) { 
+        jetIsLep[iJ]=true;
+        break; 
+      }
+    }
+    if (jetIsLep[iJ]) continue;
+    RefVector<PFCand> jetCands = jet.constituents;
+    for (UShort_t iJC=0; iJC<jetCands.size(); iJC++) { 
+      if (!jetCands.at(iJC).isValid()) continue;
+      footprint.push_back( (panda::PFCand*) jetCands.at(iJC).get());
+    }
+  }
 
+  // Calculate sumPt not including the footprint
+  double sumPt=0;
+  float puppiEt = 0;
+  //float pfEt = 0;
   TLorentzVector pfcand(0,0,0,0);
   for (auto& pfCand : event.pfCandidates) {
     pfcand.SetPtEtaPhiM(pfCand.pt(),pfCand.eta(),pfCand.phi(),pfCand.m());
     puppiEt += pfcand.Et()*pfCand.puppiW();
-    pfEt += pfcand.Et();
+    //pfEt += pfcand.Et(); continue;
+    bool candIsInFootprint=false;
+    for (unsigned iFP=0; iFP<(unsigned)footprint.size(); iFP++) {
+      if (footprint[iFP] == &pfCand ) candIsInFootprint=true;
+    }
+    if(candIsInFootprint) continue;
+    sumPt += pfCand.pt();
+  }
+  gt->puppimetsig = event.puppiMet.pt/sqrt(puppiEt);
+  //gt->pfmetsig = event.pfMet.pt/sqrt(pfEt);
+  
+  // Add jets to covariance matrix
+  JME::JetParameters parameters;
+  
+  for (unsigned iJ=0; iJ<(unsigned)event.chsAK4Jets.size(); iJ++) { 
+    panda::Jet jet = event.chsAK4Jets[iJ];
+    if(jetIsLep[iJ]) continue;
+    parameters.setJetPt(jet.pt());
+    parameters.setJetEta(jet.eta());
+    parameters.setRho(event.rho);
+    // jet energy resolutions
+    double sigmapt = 0.01; //resPtObj.getResolution(parameters);
+    double sigmaphi = 0.001; //resPhiObj.getResolution(parameters);
+    // split into high-pt and low-pt sector
+    if( jet.pt() > 15. ){
+      // high-pt jets enter into the covariance matrix via JER
+      double scale = 0;
+      float abseta=fabs(jet.eta());
+      if (isData) {
+        if      (abseta<msJetEtas[0]) scale = msJetParametersData[0];
+        else if (abseta<msJetEtas[1]) scale = msJetParametersData[1];
+        else if (abseta<msJetEtas[2]) scale = msJetParametersData[2];
+        else if (abseta<msJetEtas[3]) scale = msJetParametersData[3];
+        else                          scale = msJetParametersData[4];
+      } else {
+        if      (abseta<msJetEtas[0]) scale = msJetParametersMC[0];
+        else if (abseta<msJetEtas[1]) scale = msJetParametersMC[1];
+        else if (abseta<msJetEtas[2]) scale = msJetParametersMC[2];
+        else if (abseta<msJetEtas[3]) scale = msJetParametersMC[3];
+        else                          scale = msJetParametersMC[4];
+      }
+      double dpt = scale*jet.pt()*sigmapt;
+      double dph = jet.pt()*sigmaphi;
+      double c   = jet.p4().Px()/jet.pt();
+      double s   = jet.p4().Px()/jet.pt();
+      cov_xx += dpt*dpt*c*c + dph*dph*s*s;
+      cov_xy += (dpt*dpt-dph*dph)*c*s;
+      cov_yy += dph*dph*c*c + dpt*dpt*s*s;
+    } else {
+       // add the (corrected) jet to the sumPt
+       sumPt += jet.pt();
+    }
+  }
+  //protection against unphysical events
+  if(sumPt<0) sumPt=0;
+
+  // add pseudo-jet to metsig covariance matrix
+  if(isData) {
+    cov_xx += pow(msPseudoJetParametersData[0],2) + pow(msPseudoJetParametersData[1],2)*sumPt;
+    cov_yy += pow(msPseudoJetParametersData[0],2) + pow(msPseudoJetParametersData[1],2)*sumPt;
+  } else {
+    cov_xx += pow(msPseudoJetParametersMC[0],2) + pow(msPseudoJetParametersMC[1],2)*sumPt;
+    cov_yy += pow(msPseudoJetParametersMC[0],2) + pow(msPseudoJetParametersMC[1],2)*sumPt;
   }
 
-  gt->pfmetsig = event.pfMet.pt/sqrt(pfEt);
-  gt->puppimetsig = event.puppiMet.pt/sqrt(puppiEt);
-
+  // covariance matrix determinant
+  double det = cov_xx*cov_yy - cov_xy*cov_xy;
+  // invert matrix
+  double ncov_xx = cov_yy / det; 
+  double ncov_xy = -cov_xy / det;
+  double ncov_yy = cov_xx / det; 
+  // product of met and inverse of covariance
+  double metpx = vPFMET.Px(), metpy = vPFMET.Py();
+  double sig = metpx*metpx*ncov_xx + 2*metpx*metpy*ncov_xy + metpy*metpy*ncov_yy;                  
+  gt->pfmetsig = sig; 
   tr->TriggerEvent("MET significance");
 }
 

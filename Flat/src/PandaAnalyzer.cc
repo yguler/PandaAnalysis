@@ -48,8 +48,8 @@ void PandaAnalyzer::ResetBranches()
   btagindices.clear();
   genJetsNu.clear();
   fj1 = 0;
-  for (TLorentzVector v_ : {vPFMET, vPuppiMET, vpfUW, vpfUZ, vpfUA, vpfU,
-                            vpuppiUW, vpuppiUZ, vpuppiUA, vpuppiU,
+  for (TLorentzVector v_ : {vPFMET, vPuppiMET, vpfUW, vpfUZ, vpfUA, vpfU, vpfUWW,
+	                    vpuppiUW, vpuppiUWW ,vpuppiUZ, vpuppiUA, vpuppiU,
                             vJet, vBarrelJets})
   {
     v_.SetPtEtaPhiM(0,0,0,0);
@@ -103,7 +103,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
                                      "pfMet", "caloMet", "puppiMet", "rawMet", 
-                                     "recoil","metFilters","trkMet"});
+	"recoil","metFilters","trkMet"});
   readlist.setVerbosity(0);
 
   if (analysis->ak8)
@@ -126,7 +126,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     readlist.push_back("genMet");
   }
 
-
+  /////
   event.setAddress(*t, readlist); // pass the readlist so only the relevant branches are turned on
   if (DEBUG) PDebug("PandaAnalyzer::Init","Set addresses");
 
@@ -905,7 +905,7 @@ void PandaAnalyzer::Run()
     pr.Report();
     ResetBranches();
     event.getEntry(*tIn,iE);
-
+    /////
     tr->TriggerEvent(TString::Format("GetEntry %u",iE));
     if (DEBUG>2) {
       PDebug("PandaAnalyzer::Run::Dump","");

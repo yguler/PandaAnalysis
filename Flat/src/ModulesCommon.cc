@@ -276,6 +276,7 @@ void PandaAnalyzer::HeavyFlavorCounting()
 
 void PandaAnalyzer::GetMETSignificance()
 {
+  /*
   std::vector<panda::Lepton*> msLeps;
   // Get the lepton collections for the MET significance calculation
   // Ported approximately from RecoMET/METProducers/python/METSignificanceObjects_cfi.py
@@ -357,16 +358,16 @@ void PandaAnalyzer::GetMETSignificance()
       footprint.push_back( (panda::PFCand*) jetCands.at(iJC).get());
     }
   }
-
+  */
   // Calculate sumPt not including the footprint
   double sumPt=0;
   float puppiEt = 0;
-  //float pfEt = 0;
+  float pfEt = 0;
   TLorentzVector pfcand(0,0,0,0);
   for (auto& pfCand : event.pfCandidates) {
     pfcand.SetPtEtaPhiM(pfCand.pt(),pfCand.eta(),pfCand.phi(),pfCand.m());
     puppiEt += pfcand.Et()*pfCand.puppiW();
-    //pfEt += pfcand.Et(); continue;
+    pfEt += pfcand.Et(); continue;
     bool candIsInFootprint=false;
     for (unsigned iFP=0; iFP<(unsigned)footprint.size(); iFP++) {
       if (footprint[iFP] == &pfCand ) candIsInFootprint=true;
@@ -375,8 +376,11 @@ void PandaAnalyzer::GetMETSignificance()
     sumPt += pfCand.pt();
   }
   gt->puppimetsig = event.puppiMet.pt/sqrt(puppiEt);
-  //gt->pfmetsig = event.pfMet.pt/sqrt(pfEt);
+  gt->pfmetsig = event.pfMet.pt/sqrt(pfEt);
+  tr->TriggerEvent("MET significance");
+  return;
   
+  /*
   // Add jets to covariance matrix
   JME::JetParameters parameters;
   
@@ -442,5 +446,6 @@ void PandaAnalyzer::GetMETSignificance()
   double sig = metpx*metpx*ncov_xx + 2*metpx*metpy*ncov_xy + metpy*metpy*ncov_yy;                  
   gt->pfmetsig = sig; 
   tr->TriggerEvent("MET significance");
+  */
 }
 

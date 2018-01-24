@@ -108,7 +108,7 @@ void PandaAnalyzer::JetBasics()
         }
       }
 
-      if (jet.pt()>bJetPtThreshold && fabs(jet.eta())<2.4) { // b jets
+      if (jet.pt()>bJetPtThreshold && fabs(jet.eta())<2.5) { // b jets
 
         if (jet.csv > 0.5426) {
           // loose WP

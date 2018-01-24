@@ -29,7 +29,6 @@
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
-#include "JetMETCorrections/Modules/interface/JetResolution.h"
 #include "PandaAnalysis/Utilities/interface/RoccoR.h"
 #include "PandaAnalysis/Utilities/interface/CSVHelper.h"
 
@@ -399,13 +398,6 @@ private:
     int NGENPROPS = 8; 
     
     float minSoftTrackPt=0.3; // 300 MeV
-
-    // MET significance stuff
-    float msJetEtas[4]={0.8, 1.3, 1.9, 2.5};
-    float msPseudoJetParametersData[2]={ -3.3,0.5961};
-    float msPseudoJetParametersMC  [2]={-0.04,0.6504};
-    float msJetParametersData[5]={1.26,1.14,1.13,1.13,1.06};
-    float msJetParametersMC  [5]={1.29,1.19,1.07,1.13,1.12};
 };
 
 

@@ -6,7 +6,7 @@ from glob import glob
 from re import sub
 from sys import argv,exit
 import sys
-from os import environ,system,path
+from os import environ,system,path,remove
 from argparse import ArgumentParser
 
 sname = argv[0]
@@ -61,22 +61,25 @@ else:
 def hadd(inpath,outpath):
     if type(inpath)==type('str'):
         infiles = glob(inpath)
-        PInfo(sname,'hadding %s into %s'%(inpath,outpath))
-        cmd = '%s %s %s %s'%(hadd_cmd, outpath,inpath,suffix)
-        system(cmd)
-        return
+        if len(infiles) > 1: # if 1 file, use mv
+            PInfo(sname,'hadding %s into %s'%(inpath,outpath))
+            cmd = '%s %s %s %s'%(hadd_cmd, outpath,inpath,suffix)
+            system(cmd)
+            return
     else:
         infiles = inpath
     if len(infiles)==0:
         PWarning(sname,'nothing hadded into',outpath)
         return
     elif len(infiles)==1:
-        cmd = 'mv %s %s'%(infiles[0],outpath)
+        PInfo(sname,'moving %s to %s'%(inpath[0],outpath))
+        cmd = 'mv -v %s %s'%(infiles[0],outpath)
     else:
         cmd = '%s %s '%(hadd_cmd, outpath)
         for f in infiles:
             if path.isfile(f):
                 cmd += '%s '%f
+        PInfo(sname,'hadding into %s'%(outpath))
     if VERBOSE: PInfo(sname,cmd)
     system(cmd+suffix)
 
@@ -147,7 +150,10 @@ def merge(shortnames,mergedname):
         hadd(inpath,'/tmp/%s/split/%s.root'%(user,shortname))
         if xsec>0:
             normalizeFast('/tmp/%s/split/%s.root'%(user,shortname),xsec)
-    hadd(['/tmp/%s/split/%s.root'%(user,x) for x in shortnames],'/tmp/%s/merged/%s.root'%(user,mergedname))
+    to_hadd = ['/tmp/%s/split/%s.root'%(user,x) for x in shortnames]
+    hadd(to_hadd, '/tmp/%s/merged/%s.root'%(user,mergedname))
+    for f in to_hadd:
+        system('rm -f %s'%f)
 
 
 args = {}
@@ -160,6 +166,8 @@ for pd in arguments:
 
 for pd in args:
     merge(args[pd],pd)
-    system('cp -r /tmp/%s/merged/%s.root %s'%(user,pd,outbase))
+    merged_file = '/tmp/%s/merged/%s.root'%(user,pd)
+    hadd(merged_file ,outbase) # really an mv
+    system('rm -f %s'%merged_file)
     PInfo(sname,'finished with '+pd)
 

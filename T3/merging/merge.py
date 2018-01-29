@@ -69,7 +69,7 @@ def hadd(inpath,outpath):
     else:
         infiles = inpath
     if len(infiles)==0:
-        PWarning(sname,'nothing hadded into',outpath)
+        PWarning(sname,'nothing hadded into '+outpath)
         return
     elif len(infiles)==1:
         PInfo(sname,'moving %s to %s'%(inpath[0],outpath))

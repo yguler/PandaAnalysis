@@ -190,11 +190,16 @@ void PandaAnalyzer::FillGenTree()
     if (c.perp() < 0.0001 || c.user_index() < 0) // not a real particle
       continue;
 
-    genJetInfo.particles[iC][0] = c.perp() / fullJet.perp();
-    genJetInfo.particles[iC][1] = c.eta() - fullJet.eta();
-    genJetInfo.particles[iC][2] = SignedDeltaPhi(c.phi(), fullJet.phi());
-    genJetInfo.particles[iC][3] = c.m();
-    genJetInfo.particles[iC][4] = c.e();
+    // genJetInfo.particles[iC][0] = c.perp() / fullJet.perp();
+    // genJetInfo.particles[iC][1] = c.eta() - fullJet.eta();
+    // genJetInfo.particles[iC][2] = SignedDeltaPhi(c.phi(), fullJet.phi());
+    // genJetInfo.particles[iC][3] = c.m();
+    // genJetInfo.particles[iC][4] = c.e();
+    genJetInfo.particles[iC][0] = c.px();
+    genJetInfo.particles[iC][1] = c.py();
+    genJetInfo.particles[iC][2] = c.pz();
+    genJetInfo.particles[iC][3] = c.e();
+    genJetInfo.particles[iC][4] = c.m();
     genJetInfo.particles[iC][5] = survived[iC] ? 1 : 0;
 
     unsigned ptype = 0;

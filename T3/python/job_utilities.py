@@ -5,7 +5,7 @@ import socket
 from re import sub
 from sys import exit
 from time import clock,time,sleep
-from os import system,getenv,path
+from os import system,getenv,path,environ
 
 import ROOT as root
 from PandaCore.Tools.Misc import *
@@ -18,6 +18,27 @@ host = socket.gethostname()                                    # where we're run
 IS_T3 = (host[:2] == 't3')                                     # are we on the T3?
 REMOTE_READ = True                                             # should we read from hadoop or copy locally?
 local_copy = bool(smart_getenv('SUBMIT_LOCALACCESS', True))    # should we always xrdcp from T2?
+
+stageout_protocol = None                                       # what stageout should we use?
+if IS_T3:
+    stageout_protocol = 'mv' 
+elif system('which gfal-copy'):
+    stageout_protocol = 'gfal'
+elif system('which lcg-cp'):
+    stageout_protocol = 'lcg'
+else:
+    try:
+        ret = system('wget http://t3serv001.mit.edu/~snarayan/misc/lcg-cp.tar.gz')
+        ret = max(ret, system('tar -xvf lcg-cp.tar.gz'))
+        if ret:
+            raise RuntimeError
+        environ['PATH'] = '$PWD/lcg-cp:'+environ['PATH']
+        environ['LD_LIBRARY_PATH'] = '$PWD/lcg-cp:'+environ['LD_LIBRARY_PATH']
+        stageout_protocol = 'lcg'
+    except Exception as e:
+        PError(sname,
+               'Could not install lcg-cp in absence of other protocols!')
+
 
 
 # global to keep track of how long things take
@@ -147,6 +168,7 @@ def drop_branches(to_drop=None, to_keep=None):
         return 2
 
 
+
 # stageout a file (e.g. output or lock)
 #  - if IS_T3, execute a simple mv
 #  - else, use lcg-cp
@@ -154,15 +176,23 @@ def drop_branches(to_drop=None, to_keep=None):
 #  - if IS_T3, use os.path.isfile
 #  - else, use lcg-ls
 def stageout(outdir,outfilename,infilename='output.root',n_attempts=5):
+    if stageout_protocol is None:
+        PError(sname+'.stageout',
+               'Stageout protocol has not been satisfactorily determined! Cannot proceed.')
+        return -2
     timeout = 300
     ret = -1
     for i_attempt in xrange(n_attempts):
         failed = False
-        if IS_T3:
+        if stageout_protocol == 'mv':
             mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
-        else:
-            #mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
+        elif stageout_protocol == 'gfal':
             mvargs = 'gfal-copy -f --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
+        elif stageout_protocol == 'lcg':
+            mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
+        else:
+            PError(sname+'.stageout','stageout_protocol not set!')
+            raise RuntimeError
         PInfo(sname+'.stageout',mvargs)
         ret = system(mvargs)
         if not ret:
@@ -171,19 +201,19 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=5):
         else:
             PError(sname+'.stageout','Move exited with code %i'%ret)
             failed = True
-        if not failed:
-            if IS_T3:
-                if not path.isfile('%s/%s'%(outdir,outfilename)):
-                    PError(sname+'.stageout','Output file is missing!')
-                    failed = True
-            elif False: # assume gfal-copy is safe?
-                #lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
-                lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
-                PInfo(sname+'.stageout',lsargs)
-                ret = system(lsargs)
-                if ret:
-                    PError(sname+'.stageout','Output file is missing!')
-                    failed = True
+#        if not failed:
+#            if IS_T3:
+#                if not path.isfile('%s/%s'%(outdir,outfilename)):
+#                    PError(sname+'.stageout','Output file is missing!')
+#                    failed = True
+#            elif False: # assume gfal-copy is safe?
+#                #lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+#                lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+#                PInfo(sname+'.stageout',lsargs)
+#                ret = system(lsargs)
+#                if ret:
+#                    PError(sname+'.stageout','Output file is missing!')
+#                    failed = True
         if not failed:
             PInfo(sname+'.stageout', 'Copy succeeded after %i attempts'%(i_attempt+1))
             return ret

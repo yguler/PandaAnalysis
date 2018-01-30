@@ -167,15 +167,16 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=5):
         ret = system(mvargs)
         if not ret:
             PInfo(sname+'.stageout','Move exited with code %i'%ret)
+            sleep(5) # give the filesystem a chance to respond
         else:
             PError(sname+'.stageout','Move exited with code %i'%ret)
             failed = True
-        if not failed and False:
+        if not failed:
             if IS_T3:
                 if not path.isfile('%s/%s'%(outdir,outfilename)):
                     PError(sname+'.stageout','Output file is missing!')
                     failed = True
-            else:
+            elif False: # assume gfal-copy is safe?
                 #lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
                 lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
                 PInfo(sname+'.stageout',lsargs)
@@ -184,7 +185,6 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=5):
                     PError(sname+'.stageout','Output file is missing!')
                     failed = True
         if not failed:
-            sleep(5) # give the filesystem a chance to respond
             PInfo(sname+'.stageout', 'Copy succeeded after %i attempts'%(i_attempt+1))
             return ret
         else:

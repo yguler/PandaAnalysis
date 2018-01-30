@@ -51,9 +51,11 @@ class CatalogSample:
         return lines
 
 def smartcache(arguments):
-    arguments = ' '.join(arguments)
-    cmd = ('dynamoCache request --datasets %s'%(arguments))
-    system(cmd)
+    #arguments = ' '.join(arguments)
+    for a in arguments:
+        cmd = ('dynamoCache request --datasets %s'%(a))
+        #print cmd
+        system(cmd)
 
 def checkDS(nickname,include,exclude):
   included=False

@@ -182,6 +182,8 @@ void PandaAnalyzer::FillGenTree()
   for (auto &parton : partons) 
     partonToIdx[parton] = partonToIdx.size(); // just some arbitrary ordering 
 
+  RotationToZ rtz(fullJet.px(), fullJet.py(), fullJet.pz());
+
   // now we fill the particles
   nC = std::min(nC, (unsigned)NMAXPF);
   for (unsigned iC = 0; iC != nC; ++iC) {
@@ -195,9 +197,11 @@ void PandaAnalyzer::FillGenTree()
     // genJetInfo.particles[iC][2] = SignedDeltaPhi(c.phi(), fullJet.phi());
     // genJetInfo.particles[iC][3] = c.m();
     // genJetInfo.particles[iC][4] = c.e();
-    genJetInfo.particles[iC][0] = c.px();
-    genJetInfo.particles[iC][1] = c.py();
-    genJetInfo.particles[iC][2] = c.pz();
+    float x=c.px(), y=c.py(), z=c.pz();
+    rtz.Rotate(x, y, z);
+    genJetInfo.particles[iC][0] = x;
+    genJetInfo.particles[iC][1] = y;
+    genJetInfo.particles[iC][2] = z;
     genJetInfo.particles[iC][3] = c.e();
     genJetInfo.particles[iC][4] = c.m();
     genJetInfo.particles[iC][5] = survived[iC] ? 1 : 0;

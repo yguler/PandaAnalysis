@@ -75,6 +75,8 @@ colors = {
 last_lock = 1
 last_check = 1
 
+jm.setup_schedd(getenv('SUBMIT_CONFIG'))
+
 def init_colors():
     curses.start_color()
     curses.init_pair(colors['green'], curses.COLOR_WHITE, curses.COLOR_GREEN)
@@ -95,7 +97,6 @@ def submit(silent=False):
     frozen_outcfg = outcfg.replace('local','local_%i'%now)
     system('cp %s %s'%(outcfg,frozen_outcfg)) 
 
-    jm.setup_schedd(getenv('SUBMIT_CONFIG'))
     s = jm.Submission(frozen_outcfg,workdir+'/submission.pkl')
     s.execute()
     s.save()

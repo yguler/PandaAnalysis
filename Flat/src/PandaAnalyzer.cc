@@ -111,37 +111,40 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   event.setStatus(*t, {"!*"}); // turn everything off first
 
   TString jetname = (analysis->puppi_jets) ? "puppi" : "chs";
-  panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber", "rho", 
-                                     "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
-                                     "electrons", "muons", "taus", "photons", 
-                                     "pfMet", "caloMet", "puppiMet", "rawMet", "trkMet", 
-                                     "recoil","metFilters","trkMet"});
+  panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber","weight"});
   readlist.setVerbosity(0);
 
-  if (analysis->ak8)
-    readlist += {jetname+"AK8Jets", "subjets", jetname+"AK8Subjets","Subjets"};
-  else if (analysis->fatjet) 
-    readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
-  
-  if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->hbb) {
-    readlist.push_back("pfCandidates");
-  }
-  if (analysis->deepTracks || analysis->bjetRegression || analysis->hbb) {
-    readlist += {"tracks","vertices"};
-  }
+  if (analysis->genOnly) {
+    readlist += {"genParticles","genReweight","ak4GenJets","genMet"};
+  } else { 
+    readlist += {"runNumber", "lumiNumber", "eventNumber", "rho", 
+                 "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
+                 "electrons", "muons", "taus", "photons", 
+                 "pfMet", "caloMet", "puppiMet", "rawMet", "trkMet", 
+                 "recoil","metFilters","trkMet"};
 
-  if (analysis->bjetRegression || analysis->deepSVs)
-    readlist.push_back("secondaryVertices");
+    if (analysis->ak8)
+      readlist += {jetname+"AK8Jets", "subjets", jetname+"AK8Subjets","Subjets"};
+    else if (analysis->fatjet) 
+      readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
+    
+    if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->hbb) {
+      readlist.push_back("pfCandidates");
+    }
+    if (analysis->deepTracks || analysis->bjetRegression || analysis->hbb) {
+      readlist += {"tracks","vertices"};
+    }
 
-  if (isData || analysis->applyMCTriggers) {
-    readlist.push_back("triggers");
-  }
+    if (analysis->bjetRegression || analysis->deepSVs)
+      readlist.push_back("secondaryVertices");
 
-  if (!isData) {
-    readlist.push_back("genParticles");
-    readlist.push_back("genReweight");
-    readlist.push_back("ak4GenJets");
-    readlist.push_back("genMet");
+    if (isData || analysis->applyMCTriggers) {
+      readlist.push_back("triggers");
+    }
+
+    if (!isData) {
+      readlist += {"genParticles","genReweight","ak4GenJets","genMet"};
+    }
   }
 
 
@@ -181,8 +184,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   }
   if (analysis->genOnly) {
     std::vector<TString> keepable = {"mcWeight","scale","scaleUp",
-                                     "scaleDown","pdf.*","gen.*","fj1.*",
-                                     "nFatjet","sf_tt.*","sf_qcdTT.*",
+                                     "scaleDown","pdf.*","gen.*",
+                                     "sf_tt.*","sf_qcdTT.*",
                                      "trueGenBosonPt","sf_qcd.*","sf_ewk.*"};
     gt->RemoveBranches({".*"},keepable);
   }
@@ -1107,7 +1110,8 @@ void PandaAnalyzer::Run()
     // do this up here before the preselection
     if (analysis->deepGen) {
       FillGenTree();
-      tAux->Fill();
+      if (gt->genFatJetPt > 400) 
+        tAux->Fill();
       if (tAux->GetEntriesFast() == 2500)
         IncrementGenAuxFile();
     }
@@ -1182,8 +1186,6 @@ void PandaAnalyzer::Run()
         SaveGenLeptons();
 
       SignalInfo();
-
-      PhotonSFs();
 
       if (analysis->reclusterGen && analysis->hbb) {
         GenJetsNu();

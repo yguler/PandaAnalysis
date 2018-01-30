@@ -22,9 +22,9 @@ local_copy = bool(smart_getenv('SUBMIT_LOCALACCESS', True))    # should we alway
 stageout_protocol = None                                       # what stageout should we use?
 if IS_T3:
     stageout_protocol = 'mv' 
-elif system('which gfal-copy'):
+elif system('which gfal-copy') == 0:
     stageout_protocol = 'gfal'
-elif system('which lcg-cp'):
+elif system('which lcg-cp') == 0:
     stageout_protocol = 'lcg'
 else:
     try:
@@ -38,6 +38,7 @@ else:
     except Exception as e:
         PError(sname,
                'Could not install lcg-cp in absence of other protocols!')
+        raise e
 
 
 
@@ -73,7 +74,10 @@ def copy_local(long_name):
     copied = False
 
     # if the file is cached locally, why not use it?
-    local_path = full_path.replace('root://xrootd.cmsaf.mit.edu/','/mnt/hadoop/cms')
+    if 'scratch' in full_path:
+        local_path = full_path.replace('root://t3serv006.mit.edu/','/mnt/hadoop')
+    else:
+        local_path = full_path.replace('root://xrootd.cmsaf.mit.edu/','/mnt/hadoop/cms')
     PInfo(sname+'.copy_local','Local access is configured to be %s'%('on' if local_copy else 'off'))
     if local_copy and path.isfile(local_path): 
         # apparently SmartCached files can be corrupted...

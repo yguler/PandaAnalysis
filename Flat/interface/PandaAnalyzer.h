@@ -72,6 +72,15 @@ public :
      kDxyz    =(1<<4)
     };
 
+    enum PhoSelectionBit {
+     pMedium    =(1<<0),
+     pTight     =(1<<1),
+     pHighPt    =(1<<2),
+     pCsafeVeto =(1<<3),
+     pPixelVeto =(1<<4),
+     pTrkVeto   =(1<<5)
+    };
+
     enum TriggerBits {
         kMETTrig       = 0,
         kSingleEleTrig,
@@ -208,6 +217,8 @@ private:
     void CalcBJetSFs(BTagType bt, int flavor, double eta, double pt, 
                      double eff, double uncFactor, double &sf, double &sfUp, double &sfDown);
     void ComplicatedLeptons();
+    void ComplicatedPhotons();
+    bool PFChargedPhotonMatch(panda::Photon photon);
     void EvalBTagSF(std::vector<btagcand> &cands, std::vector<double> &sfs,
                     GeneralTree::BTagShift shift,GeneralTree::BTagJet jettype, bool do2=false);
     void IncrementAuxFile(bool close=false);
@@ -236,7 +247,7 @@ private:
     void JetVaryJES(panda::Jet&);
     void LeptonSFs();
     void PhotonSFs();
-    void Photons();
+    void SimplePhotons();
     void QCDUncs();
     void Recoil();
     bool RecoilPresel();

@@ -385,8 +385,9 @@ void PandaAnalyzer::GenStudyEWK() {
   gt->looseGenLep2PdgId = 0;
   gt->looseGenLep3PdgId = 0;
   gt->looseGenLep4PdgId = 0;
+  gt->looseGenPho1PdgId = 0;
   if (isData) return;
-  TLorentzVector v1,v2,v3,v4;
+  TLorentzVector v1,v2,v3,v4,p1;
   if (gt->nLooseLep>=1) {
     panda::Lepton *lep1=looseLeps[0];
     v1.SetPtEtaPhiM(lep1->pt(),lep1->eta(),lep1->phi(),lep1->m());
@@ -402,6 +403,10 @@ void PandaAnalyzer::GenStudyEWK() {
   if (gt->nLooseLep>=4) {
     panda::Lepton *lep4=looseLeps[3];
     v4.SetPtEtaPhiM(lep4->pt(),lep4->eta(),lep4->phi(),lep4->m());
+  }
+  if (gt->nLoosePhoton>=1) {
+    panda::Photon *pho = loosePhos[0];
+    p1.SetPtEtaPhiM(pho->pt(),pho->eta(),pho->phi(),0.);
   }
   // gen lepton matching
   std::vector<int> targetsLepton;
@@ -446,6 +451,16 @@ void PandaAnalyzer::GenStudyEWK() {
   } //looking for targets
 
   tr->TriggerSubEvent("check gen infos");
+
+  for (int jG : targetsPhoton) {
+    auto& partph(event.genParticles.at(jG));
+    
+    if(partph.pt() <= 10) continue; // ignore low pt photons
+
+    if (p1.Pt() > 0 && DeltaR2(partph.eta(),partph.phi(),p1.Eta(),p1.Phi()) < 0.01) {
+        gt->looseGenPho1PdgId = 3;
+    }    
+  }
 
   TLorentzVector rhoP4(0,0,0,0);
   double bosonPtMin = 1000000000;
@@ -560,6 +575,20 @@ void PandaAnalyzer::GenStudyEWK() {
       }
       if (part.pdgid != looseLep4PdgId) 
         gt->looseGenLep4PdgId = -1 * gt->looseGenLep4PdgId;
+    }
+    if (p1.Pt() > 0 && DeltaR2(part.eta(),part.phi(),p1.Eta(),p1.Phi()) < 0.01) {
+      if (part.testFlag(GenParticle::kIsTauDecayProduct) 
+          || part.testFlag(GenParticle::kIsPromptTauDecayProduct) 
+          || part.testFlag(GenParticle::kIsDirectTauDecayProduct) 
+          || part.testFlag(GenParticle::kIsDirectPromptTauDecayProduct) 
+          || (part.parent.isValid() && abs(part.parent->pdgid) == 15)) 
+      {
+        gt->looseGenPho1PdgId = 2;
+      } else if (part.testFlag(GenParticle::kIsPrompt) 
+                 || part.statusFlags == GenParticle::kIsPrompt) 
+      {
+        gt->looseGenPho1PdgId = 1;
+      }
     }
   }
   

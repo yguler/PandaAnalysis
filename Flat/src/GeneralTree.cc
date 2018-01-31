@@ -204,6 +204,8 @@ void GeneralTree::Reset() {
     electronTripleCharge[iL] = -99;
     electronCombIso[iL] = -99;
   }
+  loosePho1SelBit = -99;
+  looseGenPho1PdgId = -99;
   for (auto iter=signal_weights.begin(); iter!=signal_weights.end(); ++iter) {
     signal_weights[iter->first] = 1; 
   }
@@ -808,6 +810,10 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("sf_lepID",&sf_lepID,"sf_lepID/F");
     Book("sf_lepIso",&sf_lepIso,"sf_lepIso/F");
     Book("sf_lepTrack",&sf_lepTrack,"sf_lepTrack/F");
+  }
+  if (photonic) {
+    Book("loosePho1SelBit",&loosePho1SelBit,"loosePho1SelBit/I");
+    Book("looseGenPho1PdgId",&looseGenPho1PdgId,"looseGenPho1PdgId/I");
   }
   if (fatjet) {
     Book("fj1Tau32",&fj1Tau32,"fj1Tau32/F");

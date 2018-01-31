@@ -74,6 +74,7 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
   gt->vbf            = analysis->vbf;
   gt->fatjet         = analysis->fatjet;
   gt->leptonic       = analysis->complicatedLeptons;
+  gt->photonic       = analysis->complicatedPhotons;
   gt->hfCounting     = analysis->hfCounting;
   gt->btagWeights    = analysis->btagWeights;
   gt->useCMVA        = analysis->useCMVA;
@@ -123,7 +124,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   else if (analysis->fatjet) 
     readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
   
-  if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->hbb) {
+  if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->hbb || analysis->complicatedPhotons) {
     readlist.push_back("pfCandidates");
   }
   if (analysis->deepTracks || analysis->bjetRegression || analysis->hbb) {
@@ -1122,7 +1123,11 @@ void PandaAnalyzer::Run()
       }
       
       // photons
-      Photons();
+      if (analysis->complicatedPhotons) {
+        ComplicatedPhotons();
+      } else {
+        SimplePhotons();
+      }
 
       // recoil!
       if (analysis->recoil)
@@ -1167,7 +1172,8 @@ void PandaAnalyzer::Run()
         
         TriggerEffs();
 
-        if (analysis->complicatedLeptons) 
+        if (analysis->complicatedLeptons ||
+	    analysis->complicatedPhotons)
           GenStudyEWK();
         else
           LeptonSFs();

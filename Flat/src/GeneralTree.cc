@@ -204,13 +204,13 @@ void GeneralTree::Reset() {
     electronTripleCharge[iL] = -99;
     electronCombIso[iL] = -99;
   }
-  loosePho1SelBit = -99;
-  looseGenPho1PdgId = -99;
   for (auto iter=signal_weights.begin(); iter!=signal_weights.end(); ++iter) {
     signal_weights[iter->first] = 1; 
   }
 
 //ENDCUSTOMRESET
+    loosePho1SelBit = 0;
+    looseGenPho1PdgId = 0;
     genFatJetPt = -1;
     fj1NBPartons = 0;
     fj1NCPartons = 0;
@@ -811,10 +811,6 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("sf_lepIso",&sf_lepIso,"sf_lepIso/F");
     Book("sf_lepTrack",&sf_lepTrack,"sf_lepTrack/F");
   }
-  if (photonic) {
-    Book("loosePho1SelBit",&loosePho1SelBit,"loosePho1SelBit/I");
-    Book("looseGenPho1PdgId",&looseGenPho1PdgId,"looseGenPho1PdgId/I");
-  }
   if (fatjet) {
     Book("fj1Tau32",&fj1Tau32,"fj1Tau32/F");
     Book("fj1Tau21",&fj1Tau21,"fj1Tau21/F");
@@ -891,6 +887,10 @@ void GeneralTree::WriteTree(TTree *t) {
     }
   }
 //ENDCUSTOMWRITE
+    if (photonic) {
+      Book("loosePho1SelBit",&loosePho1SelBit,"loosePho1SelBit/I");
+      Book("looseGenPho1PdgId",&looseGenPho1PdgId,"looseGenPho1PdgId/I");
+    }
     Book("genFatJetPt",&genFatJetPt,"genFatJetPt/F");
     Book("fj1NBPartons",&fj1NBPartons,"fj1NBPartons/I");
     Book("fj1NCPartons",&fj1NCPartons,"fj1NCPartons/I");

@@ -309,10 +309,9 @@ class GeneralTree : public genericTree {
       int electronTripleCharge[NLEP];
       float electronCombIso[NLEP];
 
-      int loosePho1SelBit;
-      int looseGenPho1PdgId;
-
 //ENDCUSTOMDEF
+    int loosePho1SelBit = -1;
+    int looseGenPho1PdgId = -1;
     float genFatJetPt = -1;
     int fj1NBPartons = -1;
     int fj1NCPartons = -1;

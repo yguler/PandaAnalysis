@@ -48,6 +48,7 @@ void PandaAnalyzer::JetBasics()
   gt->dphipuppiUW=999; gt->dphipfUW=999;
   gt->dphipuppiUZ=999; gt->dphipfUZ=999;
   gt->dphipuppiUA=999; gt->dphipfUA=999;
+  gt->dphipuppiUWW=999; gt->dphipfUWW=999;
   float maxJetEta = (analysis->vbf) ? 4.7 : 4.5;
   unsigned nJetDPhi = (analysis->vbf) ? 4 : 5;
 
@@ -108,6 +109,7 @@ void PandaAnalyzer::JetBasics()
 
       if (analysis->monoh || analysis->hbb) {
         JetHbbBasics(jet);
+	IsoJet(jet);
         if (analysis->bjetRegression)
           JetBRegressionInfo(jet);
       }
@@ -120,9 +122,11 @@ void PandaAnalyzer::JetBasics()
           gt->dphipuppiUA = std::min(fabs(vJet.DeltaPhi(vpuppiUA)),(double)gt->dphipuppiUA);
           gt->dphipuppiUW = std::min(fabs(vJet.DeltaPhi(vpuppiUW)),(double)gt->dphipuppiUW);
           gt->dphipuppiUZ = std::min(fabs(vJet.DeltaPhi(vpuppiUZ)),(double)gt->dphipuppiUZ);
+	  gt->dphipuppiUWW = std::min(fabs(vJet.DeltaPhi(vpuppiUWW)),(double)gt->dphipuppiUWW);
           gt->dphipfUA = std::min(fabs(vJet.DeltaPhi(vpfUA)),(double)gt->dphipfUA);
           gt->dphipfUW = std::min(fabs(vJet.DeltaPhi(vpfUW)),(double)gt->dphipfUW);
           gt->dphipfUZ = std::min(fabs(vJet.DeltaPhi(vpfUZ)),(double)gt->dphipfUZ);
+	  gt->dphipfUWW = std::min(fabs(vJet.DeltaPhi(vpfUWW)),(double)gt->dphipfUWW);
         }
       }
       // btags
@@ -161,7 +165,7 @@ void PandaAnalyzer::JetBasics()
       gt->dphipfU = gt->dphipfUZ;
       break;
     case 3:
-      gt->dphipuppiU = gt->dphipuppiUWW;                                                                                                                                                              
+      gt->dphipuppiU = gt->dphipuppiUWW;                                                                                                            
       gt->dphipfU = gt->dphipfUWW;
     break;
     default: // impossible

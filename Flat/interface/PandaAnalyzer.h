@@ -3,6 +3,7 @@
 
 // STL
 #include "vector"
+#include <unordered_set>
 #include "map"
 #include <string>
 #include <cmath>
@@ -216,7 +217,7 @@ private:
     void FatjetMatching();
     void FatjetPartons();
     void FatjetRecluster();
-    void FillGenTree();
+    template <typename T> void FillGenTree(panda::Collection<T>& genParticles);
     void FillPFTree();
     void GenFatJet();
     void GenJetsNu();
@@ -235,6 +236,7 @@ private:
     void JetVBFSystem();
     void JetVaryJES(panda::Jet&);
     void LeptonSFs();
+    template <typename T> void MatchGenJets(T& genJets);
     void PhotonSFs();
     void Photons();
     void QCDUncs();
@@ -251,21 +253,6 @@ private:
     void VJetsReweight();
     double WeightEWKCorr(float pt, int type);
     double WeightZHEWKCorr(float baseCorr);
-    // templated function needs to be defined here, ugh
-    template <typename T> void MatchGenJets(T& genJets) {
-      unsigned N = cleanedJets.size();
-      for (unsigned i = 0; i != N; ++i) {
-        panda::Jet *reco = cleanedJets.at(i);
-        for (auto &gen : genJets) {
-          if (DeltaR2(gen.eta(), gen.phi(), reco->eta(), reco->phi()) < 0.09) {
-            gt->jetGenPt[i] = gen.pt();
-            gt->jetGenFlavor[i] = gen.pdgid;
-            break;
-          }
-        }
-      }
-      tr->TriggerEvent("match gen jets");
-    }
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -300,26 +287,28 @@ private:
     // CMSSW-provided utilities
     BTagCalibration *btagCalib=0;
     BTagCalibration *sj_btagCalib=0;
-    std::vector<BTagCalibrationReader*> btagReaders = std::vector<BTagCalibrationReader*>(bN,0); 
-        //!< maps BTagType to a reader 
+    std::vector<BTagCalibrationReader*> btagReaders = std::vector<BTagCalibrationReader*>(bN,0); //!< maps BTagType to a reader 
+
+    Binner btagpt = Binner({});
+    Binner btageta = Binner({});
+    std::vector<std::vector<double>> lfeff, ceff, beff;
+    TMVA::Reader *bjetreg_reader=0; 
+
     std::map<TString,JetCorrectionUncertainty*> ak8UncReader; //!< calculate JES unc on the fly
     JERReader *ak8JERReader{0}; //!< fatjet jet energy resolution reader
     std::map<TString,JetCorrectionUncertainty*> ak4UncReader; //!< calculate JES unc on the fly
     std::map<TString,FactorizedJetCorrector*> ak4ScaleReader; //!< calculate JES on the fly
     JERReader *ak4JERReader{0}; //!< fatjet jet energy resolution reader
-    EraHandler eras = EraHandler(2016); //!< determining data-taking era, to be used for era-dependent JEC
     JetCorrectionUncertainty *uncReader=0;           
     JetCorrectionUncertainty *uncReaderAK4=0;        
     FactorizedJetCorrector *scaleReaderAK4=0;        
-    Binner btagpt = Binner({});
-    Binner btageta = Binner({});
-    std::vector<std::vector<double>> lfeff, ceff, beff;
-    TMVA::Reader *bjetreg_reader = new TMVA::Reader("!Color:!Silent");
+
+    EraHandler eras = EraHandler(2016); //!< determining data-taking era, to be used for era-dependent JEC
 
     //////////////////////////////////////////////////////////////////////////////////////
 
     // files and histograms containing weights
-    std::vector<TFile*> fCorrs = std::vector<TFile*>(cN,0); //!< files containing corrections
+    std::vector<TFile*>   fCorrs  = std::vector<TFile*>  (cN,0); //!< files containing corrections
     std::vector<THCorr1*> h1Corrs = std::vector<THCorr1*>(cN,0); //!< histograms for binned corrections
     std::vector<THCorr2*> h2Corrs = std::vector<THCorr2*>(cN,0); //!< histograms for binned corrections
     std::vector<TF1Corr*> f1Corrs = std::vector<TF1Corr*>(cN,0); //!< TF1s for continuous corrections
@@ -345,7 +334,7 @@ private:
     TH1F *hDTotalMCWeight=0;
     TTree *tIn=0;    // input tree to read
     unsigned int preselBits=0;
-    panda::Event event;
+    panda::EventAnalysis event;
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -399,6 +388,257 @@ private:
     
     float minSoftTrackPt=0.3; // 300 MeV
 };
+
+
+/** templated functions **/
+
+template <typename T> 
+void PandaAnalyzer::MatchGenJets(T& genJets) 
+{
+  unsigned N = cleanedJets.size();
+  for (unsigned i = 0; i != N; ++i) {
+    panda::Jet *reco = cleanedJets.at(i);
+    for (auto &gen : genJets) {
+      if (DeltaR2(gen.eta(), gen.phi(), reco->eta(), reco->phi()) < 0.09) {
+        gt->jetGenPt[i] = gen.pt();
+        gt->jetGenFlavor[i] = gen.pdgid;
+        break;
+      }
+    }
+  }
+  tr->TriggerEvent("match gen jets");
+}
+
+template <typename T>
+void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
+{
+
+  genJetInfo.pt = -1; genJetInfo.eta = -1; genJetInfo.phi = -1; genJetInfo.m = -1;
+  genJetInfo.msd = -1;
+  genJetInfo.tau3 = -1; genJetInfo.tau2 = -1; genJetInfo.tau1 = -1;
+  genJetInfo.tau3sd = -1; genJetInfo.tau2sd = -1; genJetInfo.tau1sd = -1;
+  genJetInfo.nprongs = -1;
+  genJetInfo.partonpt = -1; genJetInfo.partonm = -1;
+  gt->genFatJetPt = 0;
+  for (unsigned i = 0; i != NMAXPF; ++i) {
+    for (unsigned j = 0; j != NGENPROPS; ++j) {
+      genJetInfo.particles[i][j] = 0;
+    }
+  }
+
+  std::vector<fastjet::PseudoJet> finalStates;
+  unsigned idx = -1;
+  for (auto &p : genParticles) {
+    idx++;
+    unsigned apdgid = abs(p.pdgid);
+    if (!p.finalState)
+      continue;
+    if (apdgid == 12 ||
+        apdgid == 14 ||
+        apdgid == 16)
+      continue; 
+    if (p.pt() > 0.001) {
+      finalStates.emplace_back(p.px(), p.py(), p.pz(), p.e());
+      finalStates.back().set_user_index(idx);
+    }
+  }
+
+  // cluster the  jet 
+  fastjet::ClusterSequenceArea seq(finalStates, *jetDef, *areaDef);
+  std::vector<fastjet::PseudoJet> allJets(seq.inclusive_jets(0.));
+
+  if (allJets.size() == 0) {
+    tr->TriggerEvent("fill gen tree");
+    return;
+  }
+
+  fastjet::PseudoJet fullJet = fastjet::sorted_by_pt(allJets).at(0);
+  gt->genFatJetPt = fullJet.perp();
+
+  if (gt->genFatJetPt < 450) {
+    tr->TriggerEvent("fill gen tree");
+    return;
+  }
+
+  VPseudoJet allConstituents = fastjet::sorted_by_pt(fullJet.constituents());
+  genJetInfo.pt = gt->genFatJetPt;
+  genJetInfo.m = fullJet.m();
+  genJetInfo.eta = fullJet.eta();
+  genJetInfo.phi = fullJet.phi();
+
+  // softdrop the jet
+  fastjet::PseudoJet sdJet = (*softDrop)(fullJet);
+  VPseudoJet sdConstituents = fastjet::sorted_by_pt(sdJet.constituents());
+  genJetInfo.msd = sdJet.m();
+  std::vector<bool> survived(allConstituents.size());
+  unsigned nC = allConstituents.size();
+  for (unsigned iC = 0; iC != nC; ++iC) {
+    unsigned idx = allConstituents.at(iC).user_index();
+    survived[iC] = false;
+    for (auto &sdc : sdConstituents) {
+      if (idx == sdc.user_index()) {
+        survived[iC] = true; 
+        break;
+      }
+    }
+  }
+
+  // get tau  
+  genJetInfo.tau1 = tauN->getTau(1, allConstituents);
+  genJetInfo.tau2 = tauN->getTau(2, allConstituents);
+  genJetInfo.tau3 = tauN->getTau(3, allConstituents);
+  genJetInfo.tau1sd = tauN->getTau(1, sdConstituents);
+  genJetInfo.tau2sd = tauN->getTau(2, sdConstituents);
+  genJetInfo.tau3sd = tauN->getTau(3, sdConstituents);
+
+  // now we have to count the number of prongs 
+  float dR2 = FATJETMATCHDR2;
+  float base_eta = genJetInfo.eta, base_phi = genJetInfo.phi;
+  auto matchJet = [base_eta, base_phi, dR2](const T &p) -> bool {
+    return DeltaR2(base_eta, base_phi, p.eta(), p.phi()) < dR2;
+  };
+  float threshold = genJetInfo.pt * 0.2;
+  std::unordered_set<const T*> partons; 
+  for (auto &gen : genParticles) {
+    unsigned apdgid = abs(gen.pdgid);
+    if (apdgid > 5 && 
+        apdgid != 21 &&
+        apdgid != 15 &&
+        apdgid != 11 && 
+        apdgid != 13)
+      continue; 
+
+    if (gen.pt() < threshold)
+      continue; 
+
+    if (!matchJet(gen))
+      continue;
+
+    const T *parent = &gen;
+    const T *foundParent = NULL;
+    while (parent->parent.isValid()) {
+      parent = parent->parent.get();
+      if (partons.find(parent) != partons.end()) {
+        foundParent = parent;
+        break;
+      }
+    }
+
+
+    T *dau1 = NULL, *dau2 = NULL;
+    for (auto &child : genParticles) {
+      if (!(child.parent.isValid() && 
+            child.parent.get() == &gen))
+        continue; 
+      
+      unsigned child_apdgid = abs(child.pdgid);
+      if (child_apdgid > 5 && 
+          child_apdgid != 21 &&
+          child_apdgid != 15 &&
+          child_apdgid != 11 && 
+          child_apdgid != 13)
+        continue; 
+
+      if (dau1)
+        dau2 = &child;
+      else
+        dau1 = &child;
+
+      if (dau1 && dau2)
+        break;
+    }
+
+    if (dau1 && dau2 && 
+        dau1->pt() > threshold && dau2->pt() > threshold && 
+        matchJet(*dau1) && matchJet(*dau2)) {
+      if (foundParent) {
+        partons.erase(partons.find(foundParent));
+      }
+      partons.insert(dau1);
+      partons.insert(dau2);
+    } else if (foundParent) {
+      continue; 
+    } else {
+      partons.insert(&gen);
+    }
+  }
+
+  genJetInfo.nprongs = partons.size();
+
+  TLorentzVector vPartonSum;
+  TLorentzVector vTmp;
+  for (auto *p : partons) {
+    vTmp.SetPtEtaPhiM(p->pt(), p->eta(), p->phi(), p->m());
+    vPartonSum += vTmp;
+  }
+  genJetInfo.partonm = vPartonSum.M();
+  genJetInfo.partonpt = vPartonSum.Pt();
+
+  std::map<const T*, unsigned> partonToIdx;
+  for (auto &parton : partons) 
+    partonToIdx[parton] = partonToIdx.size(); // just some arbitrary ordering 
+
+  RotationToZ rtz(fullJet.px(), fullJet.py(), fullJet.pz());
+
+  // now we fill the particles
+  nC = std::min(nC, (unsigned)NMAXPF);
+  for (unsigned iC = 0; iC != nC; ++iC) {
+    fastjet::PseudoJet &c = allConstituents.at(iC);
+
+    if (c.perp() < 0.0001 || c.user_index() < 0) // not a real particle
+      continue;
+
+    // genJetInfo.particles[iC][0] = c.perp() / fullJet.perp();
+    // genJetInfo.particles[iC][1] = c.eta() - fullJet.eta();
+    // genJetInfo.particles[iC][2] = SignedDeltaPhi(c.phi(), fullJet.phi());
+    // genJetInfo.particles[iC][3] = c.m();
+    // genJetInfo.particles[iC][4] = c.e();
+    float x=c.px(), y=c.py(), z=c.pz();
+    rtz.Rotate(x, y, z);
+    genJetInfo.particles[iC][0] = x;
+    genJetInfo.particles[iC][1] = y;
+    genJetInfo.particles[iC][2] = z;
+    genJetInfo.particles[iC][3] = c.e();
+    genJetInfo.particles[iC][4] = c.m();
+    genJetInfo.particles[iC][5] = survived[iC] ? 1 : 0;
+
+    unsigned ptype = 0;
+    T &gen = genParticles.at(c.user_index());
+    int pdgid = gen.pdgid;
+    unsigned apdgid = abs(pdgid);
+    if (apdgid == 11) {
+      ptype = 1 * sign(pdgid * -11);
+    } else if (apdgid == 13) {
+      ptype = 2 * sign(pdgid * -13);
+    } else if (apdgid == 22) {
+      ptype = 3;
+    } else {
+      float q = pdgToQ[apdgid];
+      if (apdgid != pdgid)
+        q *= -1;
+      if (q == 0) 
+        ptype = 4;
+      else if (q > 0) 
+        ptype = 5;
+      else 
+        ptype = 6;
+    }
+    genJetInfo.particles[iC][6] = ptype;
+
+    const T *parent = &gen;
+    int parent_idx = -1;
+    while (parent->parent.isValid()) {
+      parent = parent->parent.get();
+      if (partons.find(parent) != partons.end()) {
+        parent_idx = partonToIdx[parent];
+        break;
+      }
+    }
+    genJetInfo.particles[iC][7] = parent_idx;
+  }
+
+  tr->TriggerEvent("fill gen tree");
+}
 
 
 #endif

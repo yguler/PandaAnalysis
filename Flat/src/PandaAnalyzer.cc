@@ -115,7 +115,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   readlist.setVerbosity(0);
 
   if (analysis->genOnly) {
-    readlist += {"genParticles","genReweight","ak4GenJets","genMet"};
+    readlist += {"genParticles","genReweight","ak4GenJets","genMet","genParticlesU","electrons"};
   } else { 
     readlist += {"runNumber", "lumiNumber", "eventNumber", "rho", 
                  "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
@@ -324,6 +324,9 @@ void PandaAnalyzer::Terminate()
   delete softDrop;
 
   delete hDTotalMCWeight;
+  
+  delete bjetreg_reader;
+  delete rochesterCorrection;
 
   if (DEBUG) PDebug("PandaAnalyzer::Terminate","Finished with output");
 }
@@ -401,6 +404,11 @@ void PandaAnalyzer::SetDataDir(const char *s)
     // EWK corrections 
     OpenCorrection(cWZEwkCorr,dirPath+"leptonic/data.root","hEWKWZCorr",1);
     OpenCorrection(cqqZZQcdCorr,dirPath+"leptonic/data.root","hqqZZKfactor",2);
+
+    if (DEBUG>5) PDebug("PandaAnalyzer::Run","Loading the Rochester corrections with random seed 3393");
+    // TO DO: Hard coded to 2016 rochester corrections for now, need to do this in a better way later
+    rochesterCorrection = new RoccoR(Form("%s/rcdata.2016.v3",dirPath.Data()));
+    rng=TRandom3(3393); //Dylan's b-day
   } else {
     OpenCorrection(cEleVeto,dirPath+"moriond17/scaleFactor_electron_summer16.root","scaleFactor_electron_vetoid_RooCMSShape_pu_0_100",2);
     OpenCorrection(cEleTight,dirPath+"moriond17/scaleFactor_electron_summer16.root","scaleFactor_electron_tightid_RooCMSShape_pu_0_100",2);
@@ -512,14 +520,17 @@ void PandaAnalyzer::SetDataDir(const char *s)
   } 
   if (analysis->btagWeights) {
     if (analysis->useCMVA) 
-      cmvaReweighter = new CSVHelper("PandaAnalysis/data/csvweights/cmva_rwt_fit_hf_v0_final_2017_3_29.root"   , "PandaAnalysis/data/csvweights/cmva_rwt_fit_lf_v0_final_2017_3_29.root"   , 5);
+      cmvaReweighter = new CSVHelper("PandaAnalysis/data/csvweights/cmva_rwt_fit_hf_v0_final_2017_3_29.root"   , 
+                                     "PandaAnalysis/data/csvweights/cmva_rwt_fit_lf_v0_final_2017_3_29.root"   , 5);
     else
-      csvReweighter  = new CSVHelper("PandaAnalysis/data/csvweights/csv_rwt_fit_hf_v2_final_2017_3_29test.root", "PandaAnalysis/data/csvweights/csv_rwt_fit_lf_v2_final_2017_3_29test.root", 5);
+      csvReweighter  = new CSVHelper("PandaAnalysis/data/csvweights/csv_rwt_fit_hf_v2_final_2017_3_29test.root", 
+                                     "PandaAnalysis/data/csvweights/csv_rwt_fit_lf_v2_final_2017_3_29test.root", 5);
   }
 
   // bjet regression
   if (analysis->bjetRegression) {
     bjetreg_vars = new float[10];
+    bjetreg_reader = new TMVA::Reader("!Color:!Silent");
 
     bjetreg_reader->AddVariable("jetPt[hbbjtidx[0]]",&bjetreg_vars[0]);
     bjetreg_reader->AddVariable("nJot",&bjetreg_vars[1]);
@@ -532,7 +543,9 @@ void PandaAnalyzer::SetDataDir(const char *s)
     bjetreg_reader->AddVariable("jetEMFrac[hbbjtidx[0]]",&bjetreg_vars[8]);
     bjetreg_reader->AddVariable("jetHadFrac[hbbjtidx[0]]",&bjetreg_vars[9]);
 
-    bjetreg_reader->BookMVA( "BDT method", dirPath+"trainings/bjet_regression_v0.weights.xml" );    
+    gSystem->Exec(
+        Form("wget -O %s/trainings/bjet_regression_v0.weights.xml http://t3serv001.mit.edu/~snarayan/pandadata/trainings/bjet_regression_v0.weights.xml",dirPath.Data())
+      );
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded bjet regression weights");
   }
@@ -853,13 +866,6 @@ void PandaAnalyzer::Run()
           {0.739,0.767,0.780,0.789,0.776,0.771,0.779,0.787,0.806}};
   btagpt = Binner(vbtagpt);
   btageta = Binner(vbtageta);
-  if (analysis->complicatedLeptons) {
-    if (DEBUG) PDebug("PandaAnalyzer::Run","Loading the Rochester corrections with random seed 3393");
-    // TO DO: Hard coded to 2016 rochester corrections for now, need to do this in a better way later
-    TString dirPath1 = TString(gSystem->Getenv("CMSSW_BASE")) + "/src/";
-    rochesterCorrection = new RoccoR(Form("%sPandaAnalysis/data/rcdata.2016.v3",dirPath1.Data()));
-    rng=TRandom3(3393); //Dylan's b-day
-  }
 
   std::vector<unsigned int> metTriggers;
   std::vector<unsigned int> eleTriggers;
@@ -1109,7 +1115,10 @@ void PandaAnalyzer::Run()
 
     // do this up here before the preselection
     if (analysis->deepGen) {
-      FillGenTree();
+      if (event.genParticles.size() > 0) 
+        FillGenTree(event.genParticles);
+      else
+        FillGenTree(event.genParticlesU);
       if (gt->genFatJetPt > 400) 
         tAux->Fill();
       if (tAux->GetEntriesFast() == 2500)

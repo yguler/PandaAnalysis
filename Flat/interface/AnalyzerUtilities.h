@@ -2,7 +2,7 @@
 #define ANALYZERUTILS_H
 
 // PandaProd Objects
-#include "PandaTree/Objects/interface/Event.h"
+#include "PandaTree/Objects/interface/EventAnalysis.h"
 
 // PANDACore
 #include "PandaCore/Tools/interface/Common.h"

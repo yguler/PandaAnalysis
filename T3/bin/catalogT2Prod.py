@@ -115,8 +115,7 @@ def cat(catalog, condition=lambda x : True):
 cat(args.mc_catalog, lambda x : bool(match('.*SIM$', x)))
 cat(args.data_catalog, lambda x : bool(match('.*AOD$', x)))
 if args.user_catalog:
-    cat(args.mc_catalog.replace('cmsprod',user).replace('t2','t3'))
-    cat(args.data_catalog.replace('cmsprod',user).replace('t2','t3'))
+    cat(args.catalog.replace('cmsprod',user).replace('t2','t3'))
 
 if len(could_not_find)>0:
     PWarning(argv[0],"Could not properly catalog following datasets (force=%s)"%('True' if args.force else 'False'))

@@ -110,6 +110,7 @@ vv = lambda v=False : _analysis(
         complicatedLeptons = True,
         complicatedPhotons = True,
         applyMCTriggers = True,
+        varyJES = True,
         jetFlavorPartons = False,
         jetFlavorJets = True,
     )

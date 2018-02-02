@@ -218,7 +218,7 @@ private:
                      double eff, double uncFactor, double &sf, double &sfUp, double &sfDown);
     void ComplicatedLeptons();
     void ComplicatedPhotons();
-    bool PFChargedPhotonMatch(panda::Photon photon);
+    bool PFChargedPhotonMatch(const panda::Photon& photon);
     void EvalBTagSF(std::vector<btagcand> &cands, std::vector<double> &sfs,
                     GeneralTree::BTagShift shift,GeneralTree::BTagJet jettype, bool do2=false);
     void IncrementAuxFile(bool close=false);

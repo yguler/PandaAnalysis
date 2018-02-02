@@ -387,7 +387,7 @@ void PandaAnalyzer::ComplicatedPhotons()
     tr->TriggerEvent("photons");
 }
 
-bool PandaAnalyzer::PFChargedPhotonMatch(panda::Photon photon)
+bool PandaAnalyzer::PFChargedPhotonMatch(const panda::Photon& photon)
 {
   double matchedRelPt = -1.;
 

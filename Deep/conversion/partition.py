@@ -16,6 +16,10 @@ if args.proc == 'Top':
     fs = []
     for p in ['ZpTT', 'Scalar_MonoTop', 'Vector_MonoTop']:
         fs +=  glob(getenv('SUBMIT_OUTDIR') + '/' + p + '*.npz')
+elif args.proc == 'Top_lo':
+    fs = []
+    for p in ['ZpTT_lo']:
+        fs +=  glob(getenv('SUBMIT_OUTDIR') + '/' + p + '*.npz')
 elif args.proc == 'Higgs':
     fs = []
     for p in ['ZpA0h']:

@@ -47,7 +47,8 @@ void PandaAnalyzer::IncrementGenAuxFile(bool close)
 
   fOut->cd();
 
-  tr->TriggerEvent("increment aux file");
+  if (tr)
+    tr->TriggerEvent("increment aux file");
 }
 
 void PandaAnalyzer::IncrementAuxFile(bool close)
@@ -104,7 +105,8 @@ void PandaAnalyzer::IncrementAuxFile(bool close)
 
   fOut->cd();
 
-  tr->TriggerEvent("increment aux file");
+  if (tr)
+    tr->TriggerEvent("increment aux file");
 }
 
 void PandaAnalyzer::RegisterTriggers() 

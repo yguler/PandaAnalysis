@@ -26,6 +26,7 @@ skimmer = root.PandaAnalyzer(debug_level)
 a = deepgen()
 a.processType=root.kTop
 skimmer.SetAnalysis(a)
+skimmer.SetPreselectionBit(root.PandaAnalyzer.kGenFatJet)
 
 skimmer.firstEvent=0
 skimmer.lastEvent=10

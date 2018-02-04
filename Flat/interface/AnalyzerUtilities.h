@@ -249,22 +249,6 @@ typedef THCorr<TH2D> THCorr2;
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-namespace panda {
-  enum IDWorkingPoint {
-    kVeto,
-    kLoose,
-    kMedium,
-    kTight,
-    nIDWorkingPoints
-  };
-}
-
-inline bool MuonIsolation(double pt, double eta, double iso, panda::IDWorkingPoint isoType) {
-    float maxIso=0;
-    maxIso = (isoType == panda::kTight) ? 0.15 : 0.25;
-    return (iso < pt*maxIso);
-}
-
 inline bool ElectronIP(double eta, double dxy, double dz) {
   double aeta = fabs(eta);
   if (aeta<1.4442) {

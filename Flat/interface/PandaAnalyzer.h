@@ -358,6 +358,10 @@ private:
 
     // any extra signal weights we want
     // stuff that gets passed between modules
+    //
+    // NB: ensure that any global vectors/maps that are per-event
+    // are reset properly in ResetBranches(), or you can really
+    // mess up behavior
     std::vector<TriggerHandler> triggerHandlers = std::vector<TriggerHandler>(kNTrig);
     std::vector<panda::Lepton*> looseLeps, tightLeps;
     std::vector<panda::Photon*> loosePhos;
@@ -366,10 +370,9 @@ private:
     TLorentzVector vpfUW, vpfUZ, vpfUWW, vpfUA, vpfU;
     TLorentzVector vpuppiUW, vpuppiUZ, vpuppiUWW, vpuppiUA, vpuppiU;
     panda::FatJet *fj1 = 0;
-    std::vector<panda::Jet*> cleanedJets, isoJets, btaggedJets, centralJets;
-    std::map<panda::Jet*,int> centralJetGenFlavors;
-    std::map<panda::Jet*,float> centralJetGenPts;
-    std::vector<int> btagindices;
+    std::vector<panda::Jet*> cleanedJets, isoJets, centralJets, bCandJets;
+    std::map<panda::Jet*,int> bCandJetGenFlavor;
+    std::map<panda::Jet*,float> bCandJetGenPt;
     TLorentzVector vJet, vBarrelJets;
     panda::FatJetCollection *fatjets = 0;
     panda::JetCollection *jets = 0;
@@ -384,6 +387,7 @@ private:
     std::vector<TString> wIDs;
     float *bjetreg_vars = 0;
     float jetPtThreshold=30;
+    float bJetPtThreshold=30;
 
     std::vector<std::vector<float>> pfInfo;
     std::vector<std::vector<float>> svInfo; 

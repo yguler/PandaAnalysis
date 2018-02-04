@@ -43,9 +43,10 @@ void PandaAnalyzer::ResetBranches()
   loosePhos.clear();
   cleanedJets.clear();
   isoJets.clear();
-  btaggedJets.clear();
   centralJets.clear();
-  btagindices.clear();
+  bCandJets.clear();
+  bCandJetGenFlavor.clear();
+  bCandJetGenPt.clear();
   genJetsNu.clear();
   fj1 = 0;
   for (TLorentzVector v_ : {vPFMET, vPuppiMET, vpfUW, vpfUZ, vpfUA, vpfU,
@@ -239,6 +240,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
 
   // Custom jet pt threshold
   if (analysis->hbb) jetPtThreshold=20;
+  if (analysis->vbf || analysis->hbb || analysis->complicatedLeptons) 
+    bJetPtThreshold=20;
 
   if (DEBUG) PDebug("PandaAnalyzer::Init","Finished configuration");
 
@@ -1139,11 +1142,11 @@ void PandaAnalyzer::Run()
       Taus();
 
       if (!PassPreselection()) // only check reco presel here
-	continue;
+        continue;
 
       if (analysis->hbb) {
-	JetHbbSoftActivity();
-	GetMETSignificance();
+        JetHbbSoftActivity();
+        GetMETSignificance();
       }
     }
 

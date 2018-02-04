@@ -73,6 +73,8 @@ class GeneralTree : public genericTree {
       };
       enum csvShift {
         csvCent=0,
+        csvJESup=7,
+        csvJESdown=8,
         csvLFup=9,
         csvLFdown=10,
         csvHFup=11,
@@ -91,9 +93,11 @@ class GeneralTree : public genericTree {
         csvCErr2down=24
       };
       // Array of the CSV/CMVA weight enums that can be looped over
-      static const unsigned char nCsvShifts=17;
+      static const unsigned char nCsvShifts=19;
       csvShift csvShifts[nCsvShifts] = {
         csvCent,
+        csvJESup,
+        csvJESdown,
         csvLFup,
         csvLFdown,
         csvHFup,
@@ -111,7 +115,10 @@ class GeneralTree : public genericTree {
         csvCErr2up,
         csvCErr2down
       };
-        
+
+    
+      virtual void SetAuxTree(TTree *t);  
+
     private:
         std::vector<double> betas = {0.5, 1.0, 2.0, 4.0};
         std::vector<int> ibetas = {0,1,2,3};
@@ -161,6 +168,8 @@ class GeneralTree : public genericTree {
           TString s = isCMVA? "sf_cmvaWeight_" : "sf_csvWeight_";
           switch (shift) {
             case csvCent         :  s += "Cent"         ; break;
+            case csvJESup        :  s += "JESup"        ; break;
+            case csvJESdown      :  s += "JESdown"      ; break;
             case csvLFup         :  s += "LFup"         ; break;
             case csvLFdown       :  s += "LFdown"       ; break;
             case csvHFup         :  s += "HFup"         ; break;
@@ -216,6 +225,8 @@ class GeneralTree : public genericTree {
       float fj1sjQGL[NSUBJET];
 
       float jetPt[NJET];
+      float jetPtUp[NJET];
+      float jetPtDown[NJET];
       float jetEta[NJET];
       float jetPhi[NJET];
       float jetE[NJET];
@@ -256,18 +267,19 @@ class GeneralTree : public genericTree {
       int muonSelBit[NLEP];
       int muonPdgId[NLEP];
       int muonIsSoftMuon[NLEP];
-      int muonIsGlobalMuon[NLEP];
-      int muonIsTrackerMuon[NLEP];
-      int muonNValidMuon[NLEP];
-      int muonNValidPixel[NLEP];
-      int muonTrkLayersWithMmt[NLEP];
-      int muonPixLayersWithMmt[NLEP];
-      int muonNMatched[NLEP];
-      int muonChi2LocalPosition[NLEP];
-      int muonTrkKink[NLEP];
-      float muonValidFraction[NLEP];
-      float muonNormChi2[NLEP];
-      float muonSegmentCompatibility[NLEP];
+      float muonCombIso[NLEP];
+      //int muonIsGlobalMuon[NLEP];
+      //int muonIsTrackerMuon[NLEP];
+      //int muonNValidMuon[NLEP];
+      //int muonNValidPixel[NLEP];
+      //int muonTrkLayersWithMmt[NLEP];
+      //int muonPixLayersWithMmt[NLEP];
+      //int muonNMatched[NLEP];
+      //int muonChi2LocalPosition[NLEP];
+      //int muonTrkKink[NLEP];
+      //float muonValidFraction[NLEP];
+      //float muonNormChi2[NLEP];
+      //float muonSegmentCompatibility[NLEP];
 
       float electronPt[NLEP];
       float electronEta[NLEP];
@@ -281,25 +293,37 @@ class GeneralTree : public genericTree {
       float electronSfReco[NLEP];
       int electronSelBit[NLEP];
       int electronPdgId[NLEP];
-      float electronChIsoPh[NLEP];
-      float electronNhIsoPh[NLEP];
-      float electronPhIsoPh[NLEP];
-      float electronEcalIso[NLEP];
-      float electronHcalIso[NLEP];
-      float electronTrackIso[NLEP];
-      float electronIsoPUOffset[NLEP];
-      float electronSieie[NLEP];
-      float electronSipip[NLEP];
-      float electronDEtaInSeed[NLEP];
-      float electronDPhiIn[NLEP];
-      float electronEseed[NLEP];
-      float electronHOverE[NLEP];
-      float electronEcalE[NLEP];
-      float electronTrackP[NLEP];
-      int electronNMissingHits[NLEP];
+      //float electronChIsoPh[NLEP];
+      //float electronNhIsoPh[NLEP];
+      //float electronPhIsoPh[NLEP];
+      //float electronEcalIso[NLEP];
+      //float electronHcalIso[NLEP];
+      //float electronTrackIso[NLEP];
+      //float electronIsoPUOffset[NLEP];
+      //float electronSieie[NLEP];
+      //float electronSipip[NLEP];
+      //float electronDEtaInSeed[NLEP];
+      //float electronDPhiIn[NLEP];
+      //float electronEseed[NLEP];
+      //float electronHOverE[NLEP];
+      //float electronEcalE[NLEP];
+      //float electronTrackP[NLEP];
+      //int electronNMissingHits[NLEP];
       int electronTripleCharge[NLEP];
+      float electronCombIso[NLEP];
 
 //ENDCUSTOMDEF
+    float genFatJetPt = -1;
+    int fj1NBPartons = -1;
+    int fj1NCPartons = -1;
+    float fj1Rho2 = -1;
+    float fj1RawRho2 = -1;
+    float fj1Rho = -1;
+    float fj1RawRho = -1;
+    int fj1NPartons = -1;
+    float fj1PartonM = -1;
+    float fj1PartonPt = -1;
+    float fj1PartonEta = -1;
     float trkmetphi = -1;
     float sf_zzUnc = -1;
     float sf_zz = -1;
@@ -513,6 +537,8 @@ class GeneralTree : public genericTree {
     float genTTPt = -1;
     float genTTEta = -1;
     int nJet = -1;
+    int nJet_jesUp = -1;
+    int nJet_jesDown = -1;
     int nIsoJet = -1;
     int jet1Flav = -1;
     float jet1Phi = -1;
@@ -681,6 +707,31 @@ class GeneralTree : public genericTree {
     float hbbm = -1;
     float hbbm_reg = -1;
     float hbbpt_reg = -1;
+    float hbbpt_jesUp = -1;
+    float hbbeta_jesUp = -1;
+    float hbbphi_jesUp = -1;
+    float hbbm_jesUp = -1;
+    float hbbm_reg_jesUp = -1;
+    float hbbpt_reg_jesUp = -1;
+    float hbbpt_jesDown = -1;
+    float hbbeta_jesDown = -1;
+    float hbbphi_jesDown = -1;
+    float hbbm_jesDown = -1;
+    float hbbm_reg_jesDown = -1;
+    float hbbpt_reg_jesDown = -1;
+    float hbbCosThetaJJ = -1;
+    float hbbCosThetaCSJ1 = -1;
+    float topMassLep1Met = -1;
+    float topMassLep1Met_jesUp = -1;
+    float topMassLep1Met_jesDown = -1;
+    float topWBosonCosThetaCS = -1;
+    float topWBosonPt = -1;
+    float topWBosonEta = -1;
+    float topWBosonPhi = -1;
+    float sumEtSoft1 = -1;
+    int nSoft2 = -1;
+    int nSoft5 = -1;
+    int nSoft10 = -1;
     float scaleUp = -1;
     float scaleDown = -1;
     float pdfUp = -1;

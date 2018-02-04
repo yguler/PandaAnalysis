@@ -16,6 +16,7 @@
 #include "fastjet/AreaDefinition.hh"
 #include "fastjet/ClusterSequenceArea.hh"
 #include "fastjet/contrib/SoftDrop.hh"
+#include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/MeasureDefinition.hh"
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -24,12 +25,15 @@ typedef std::vector<fastjet::PseudoJet> VPseudoJet;
 inline VPseudoJet ConvertPFCands(std::vector<const panda::PFCand*> &incoll, bool puppi, double minPt=0.001) {
   VPseudoJet vpj;
   vpj.reserve(incoll.size());
+  int idx = -1;
   for (auto *incand : incoll) {
     double factor = puppi ? incand->puppiW() : 1;
+    idx++;
     if (factor*incand->pt()<minPt)
       continue;
     vpj.emplace_back(factor*incand->px(),factor*incand->py(),
                      factor*incand->pz(),factor*incand->e());
+    vpj.back().set_user_index(idx);
   }
   return vpj;
 }
@@ -86,15 +90,24 @@ public:
   TString name;
   ProcessType processType=kNoProcess;
   bool ak8 = false;
+  bool applyMCTriggers = false;
   bool bjetRegression = false;
   bool btagSFs = true;
   bool btagWeights = false;
   bool complicatedLeptons = false;
+  bool deep = false;
+  bool deepAntiKtSort = false;
+  bool deepGen = false;
+  bool deepKtSort = false;
+  bool deepSVs = false;
+  bool deepTracks = false;
   bool fatjet = true;
   bool firstGen = true;
   bool genOnly = false;
   bool hbb = false;
   bool hfCounting = false;
+  bool jetFlavorPartons = true;
+  bool jetFlavorJets = false;
   bool monoh = false;
   bool puppi_jets = true;
   bool recluster = false;
@@ -259,6 +272,10 @@ inline bool ElectronIP(double eta, double dxy, double dz) {
   } else {
     return (dxy < 0.10 && dz < 0.20);
   }
+}
+
+inline bool MuonIP(double dxy, double dz) {
+  return (dxy < 0.02 && dz < 0.10);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

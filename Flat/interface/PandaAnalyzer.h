@@ -38,6 +38,9 @@
 /////////////////////////////////////////////////////////////////////////////
 // some misc definitions
 
+#define NMAXPF 100
+#define NMAXSV 10
+
 
 /////////////////////////////////////////////////////////////////////////////
 // PandaAnalyzer definition
@@ -52,16 +55,21 @@ public :
      kVBF        =(1<<5),
      kRecoil     =(1<<6),
      kFatjet     =(1<<7),
-     kRecoil50   =(1<<8),
-     kGenBosonPt =(1<<9),
-     kVHBB       =(1<<10)
+     kFatjet450  =(1<<8),
+     kRecoil50   =(1<<9),
+     kGenBosonPt =(1<<10),
+     kGenFatJet  =(1<<11),
+     kVHBB       =(1<<12),
+     kLepton     =(1<<13),
+     kLeptonFake =(1<<14)
     };
     
     enum LepSelectionBit {
      kLoose   =(1<<0),
      kFake    =(1<<1),
      kMedium  =(1<<2),
-     kTight   =(1<<3)
+     kTight   =(1<<3),
+     kDxyz    =(1<<4)
     };
 
     enum TriggerBits {
@@ -73,7 +81,9 @@ public :
         kDoubleEleTrig,
         kEMuTrig,
         kJetHTTrig,
-        kNTrig,
+        kMuFakeTrig,
+        kEleFakeTrig,
+        kNTrig
     };
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -127,7 +137,7 @@ private:
         cTrigMET,     //!< MET trigger eff        
         cTrigMETZmm,  //!< Zmumu MET trigger eff
         cTrigEle,     //!< Ele trigger eff        
-        cTrigMu,     //!< Ele trigger eff        
+        cTrigMu,      //!< Mu trigger eff        
         cTrigPho,     //!< Pho trigger eff        
         cZNLO,        //!< NLO weights for QCD Z,W,A,A+2j
         cWNLO,
@@ -172,6 +182,15 @@ private:
             double eff, sf, sfup, sfdown;
     };
 
+    struct GenJetInfo {
+      float pt=0, eta=0, phi=0, m=0;
+      float msd=0;
+      float tau3=0, tau2=0, tau1=0;
+      float tau3sd=0, tau2sd=0, tau1sd=0;
+      int nprongs=0;
+      float partonpt=0, partonm=0;
+      std::vector<std::vector<float>> particles;
+    };
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -191,12 +210,18 @@ private:
     void ComplicatedLeptons();
     void EvalBTagSF(std::vector<btagcand> &cands, std::vector<double> &sfs,
                     GeneralTree::BTagShift shift,GeneralTree::BTagJet jettype, bool do2=false);
+    void IncrementAuxFile(bool close=false);
+    void IncrementGenAuxFile(bool close=false);
     void FatjetBasics();
     void FatjetMatching();
+    void FatjetPartons();
     void FatjetRecluster();
+    void FillGenTree();
+    void FillPFTree();
+    void GenFatJet();
     void GenJetsNu();
     void GenStudyEWK();
-    float GetMSDCorr(Float_t puppipt, Float_t puppieta); // @bmaier: please refactor this
+    float GetMSDCorr(float, float); 
     void HeavyFlavorCounting();
     void IsoJet(panda::Jet&);
     void JetBRegressionInfo(panda::Jet&);
@@ -205,6 +230,7 @@ private:
     void JetCMVAWeights();
     void JetHbbBasics(panda::Jet&);
     void JetHbbReco();
+    void JetHbbSoftActivity();
     void JetVBFBasics(panda::Jet&);
     void JetVBFSystem();
     void JetVaryJES(panda::Jet&);
@@ -257,13 +283,17 @@ private:
         //!< private function to match a jet; returns NULL if not found
     std::map<int,std::vector<LumiRange>> goodLumis;
     std::vector<panda::Particle*> matchPhos, matchEles, matchLeps;
+    std::map<int, int> pdgToQ; 
     
     // fastjet reclustering
     fastjet::JetDefinition *jetDef=0;
+    fastjet::JetDefinition *jetDefKt=0;
     fastjet::contrib::SoftDrop *softDrop=0;
+    fastjet::contrib::Njettiness *tauN=0;
     fastjet::AreaDefinition *areaDef=0;
     fastjet::GhostedAreaSpec *activeArea=0;
     fastjet::JetDefinition *jetDefGen=0;
+    fastjet::JetDefinition *softTrackJetDefinition=0;
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -304,9 +334,14 @@ private:
     //////////////////////////////////////////////////////////////////////////////////////
 
     // IO for the analyzer
+    TString fOutPath;
     TFile *fOut=0;     // output file is owned by PandaAnalyzer
     TTree *tOut=0;
     GeneralTree *gt=0; // essentially a wrapper around tOut
+    TString auxFilePath="";
+    unsigned auxCounter=0;
+    TFile *fAux=0; // auxillary file
+    TTree *tAux=0;
     TH1F *hDTotalMCWeight=0;
     TTree *tIn=0;    // input tree to read
     unsigned int preselBits=0;
@@ -332,6 +367,8 @@ private:
     TLorentzVector vpuppiUW, vpuppiUZ, vpuppiUWW, vpuppiUA, vpuppiU;
     panda::FatJet *fj1 = 0;
     std::vector<panda::Jet*> cleanedJets, isoJets, btaggedJets, centralJets;
+    std::map<panda::Jet*,int> centralJetGenFlavors;
+    std::map<panda::Jet*,float> centralJetGenPts;
     std::vector<int> btagindices;
     TLorentzVector vJet, vBarrelJets;
     panda::FatJetCollection *fatjets = 0;
@@ -343,12 +380,20 @@ private:
     panda::Jet *jetDown1 = 0, *jetDown2 = 0;
     std::vector<panda::GenJet> genJetsNu;
     float genBosonPtMin, genBosonPtMax;
-    int looseLep1PdgId, looseLep2PdgId;
+    int looseLep1PdgId, looseLep2PdgId, looseLep3PdgId, looseLep4PdgId;
     std::vector<TString> wIDs;
     float *bjetreg_vars = 0;
-
     float jetPtThreshold=30;
+
+    std::vector<std::vector<float>> pfInfo;
+    std::vector<std::vector<float>> svInfo; 
+    float fjmsd, fjpt, fjrawpt, fjeta, fjphi;
+    int NPFPROPS = 9, NSVPROPS = 13;
+
+    GenJetInfo genJetInfo;
+    int NGENPROPS = 8; 
     
+    float minSoftTrackPt=0.3; // 300 MeV
 };
 
 

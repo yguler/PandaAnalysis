@@ -11,7 +11,9 @@ def _dump(a):
     for k in dir(a):
         if k[0] == '_':
             continue
-        PInfo('PandaAnalysis.Flat.analysis','    %20s = %s'%(k, 'True' if bool(getattr(a, k)) else 'False'))
+        if type(getattr(a, k)) != int:
+            continue
+        PInfo('PandaAnalysis.Flat.analysis','    %20s = %s'%(k, 'True' if getattr(a, k) else 'False'))
 
 
 
@@ -59,19 +61,51 @@ gghbb = lambda v=False : _analysis(
         recoil = False,
         ak8 = True,
     )
+
+deep = lambda v=False : _analysis(
+        name = 'deep',
+        verbose = v,
+        ak8 = True,
+        deep = True,
+        deepTracks = True,
+        deepSVs = True,
+        deepAntiKtSort = True,
+        btagSFs = False,
+        jetFlavorPartons = False,
+    )
+
+deepgen = lambda v=False : _analysis(
+        name = 'deepgen',
+        verbose = v,
+        ak8 = True,
+        deepGen = True,
+        btagSFs = False,
+    )
+
 wlnhbb = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,
-        monoh = True,
         hbb = True,
         recoil = True,
-        ak8 = True,
         fatjet = True,
-        btagSFs = True,
+        btagSFs = False,
         btagWeights = True,
         useCMVA = True,
         complicatedLeptons = True,
         hfCounting = True,
         reclusterGen = False,
-        bjetRegression = True
+        bjetRegression = True,
+        varyJES = True,
+        rerunJES = True,
+        jetFlavorPartons = False,
+        jetFlavorJets = True,
+    )
+
+vv = lambda v=False : _analysis(
+        name = 'vv',
+        verbose = v,
+        recoil = False,
+        fatjet = False,
+        btagSFs = True,
+        complicatedLeptons = True,
     )

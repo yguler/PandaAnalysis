@@ -568,6 +568,14 @@ void GeneralTree::WriteTree(TTree *t) {
     if (!monohiggs) { // to avoid double booking
       Book("nJet_jesUp",&nJet_jesUp,"nJet_jesUp/I");
       Book("nJet_jesDown",&nJet_jesDown,"nJet_jesDown/I");
+      Book("jet1EtaUp",&jet1EtaUp,"jet1EtaUp/F");
+      Book("jet1EtaDown",&jet1EtaDown,"jet1EtaDown/F");
+      Book("jet1PtUp",&jet1PtUp,"jet1PtUp/F");
+      Book("jet1PtDown",&jet1PtDown,"jet1PtDown/F");
+      Book("jet2EtaUp",&jet2EtaUp,"jet2EtaUp/F");
+      Book("jet2EtaDown",&jet2EtaDown,"jet2EtaDown/F");
+      Book("jet2PtUp",&jet2PtUp,"jet2PtUp/F");
+      Book("jet2PtDown",&jet2PtDown,"jet2PtDown/F");
     }
   }
   Book("nLooseLep",&nLooseLep,"nLooseLep/I");

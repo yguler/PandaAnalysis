@@ -578,6 +578,12 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("jot2PhiUp",&jot2PhiUp,"jot2PhiUp/F");
     Book("jot2PhiDown",&jot2PhiDown,"jot2PhiDown/F");
     if (!vbf) { // to avoid double booking
+      Book("jot1Phi",&jot1Phi,"jot1Phi/F");
+      Book("jot1Eta",&jot1Eta,"jot1Eta/F");
+      Book("jot1Pt",&jot1Pt,"jot1Pt/F");
+      Book("jot2Phi",&jot2Phi,"jot2Phi/F");
+      Book("jot2Eta",&jot2Eta,"jot2Eta/F");
+      Book("jot2Pt",&jot2Pt,"jot2Pt/F");
       Book("jot1EtaUp",&jot1EtaUp,"jot1EtaUp/F");
       Book("jot1EtaDown",&jot1EtaDown,"jot1EtaDown/F");
       Book("jot1PtUp",&jot1PtUp,"jot1PtUp/F");
@@ -905,10 +911,6 @@ void GeneralTree::WriteTree(TTree *t) {
     }
   }
 //ENDCUSTOMWRITE
-    Book("jot1PhiUp",&jot1PhiUp,"jot1PhiUp/F");
-    Book("jot1PhiDown",&jot1PhiDown,"jot1PhiDown/F");
-    Book("jot2PhiUp",&jot2PhiUp,"jot2PhiUp/F");
-    Book("jot2PhiDown",&jot2PhiDown,"jot2PhiDown/F");
     if (photonic) {
       Book("loosePho1SelBit",&loosePho1SelBit,"loosePho1SelBit/I");
       Book("looseGenPho1PdgId",&looseGenPho1PdgId,"looseGenPho1PdgId/I");
@@ -926,11 +928,13 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("fj1PartonEta",&fj1PartonEta,"fj1PartonEta/F");
     Book("trkmetphi",&trkmetphi,"trkmetphi/F");
     Book("whichRecoil",&whichRecoil,"whichRecoil/I");
-    Book("genJet1Pt",&genJet1Pt,"genJet1Pt/F");
-    Book("genJet2Pt",&genJet2Pt,"genJet2Pt/F");
-    Book("genJet1Eta",&genJet1Eta,"genJet1Eta/F");
-    Book("genJet2Eta",&genJet2Eta,"genJet2Eta/F");
-    Book("genMjj",&genMjj,"genMjj/F");
+    if (!leptonic) { // information about central jets is not needed for leptonic analyses
+      Book("genJet1Pt",&genJet1Pt,"genJet1Pt/F");
+      Book("genJet2Pt",&genJet2Pt,"genJet2Pt/F");
+      Book("genJet1Eta",&genJet1Eta,"genJet1Eta/F");
+      Book("genJet2Eta",&genJet2Eta,"genJet2Eta/F");
+      Book("genMjj",&genMjj,"genMjj/F");
+    }
     Book("badECALFilter",&badECALFilter,"badECALFilter/I");
     Book("jetNMBtags",&jetNMBtags,"jetNMBtags/I");
     Book("pfmetRaw",&pfmetRaw,"pfmetRaw/F");
@@ -1029,21 +1033,23 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("genAntiTopEta",&genAntiTopEta,"genAntiTopEta/F");
     Book("genTTPt",&genTTPt,"genTTPt/F");
     Book("genTTEta",&genTTEta,"genTTEta/F");
-    Book("jet1Flav",&jet1Flav,"jet1Flav/I");
-    Book("jet1Phi",&jet1Phi,"jet1Phi/F");
-    Book("jet1Pt",&jet1Pt,"jet1Pt/F");
-    Book("jet1GenPt",&jet1GenPt,"jet1GenPt/F");
-    Book("jet1Eta",&jet1Eta,"jet1Eta/F");
-    Book("jet1CSV",&jet1CSV,"jet1CSV/F");
-    Book("jet1CMVA",&jet1CMVA,"jet1CMVA/F");
-    Book("jet1IsTight",&jet1IsTight,"jet1IsTight/I");
-    Book("jet2Flav",&jet2Flav,"jet2Flav/I");
-    Book("jet2Phi",&jet2Phi,"jet2Phi/F");
-    Book("jet2Pt",&jet2Pt,"jet2Pt/F");
-    Book("jet2GenPt",&jet2GenPt,"jet2GenPt/F");
-    Book("jet2Eta",&jet2Eta,"jet2Eta/F");
-    Book("jet2CSV",&jet2CSV,"jet2CSV/F");
-    Book("jet2CMVA",&jet2CMVA,"jet2CMVA/F");
+    if (!leptonic) { // information about central jets is not needed for leptonic analyses
+      Book("jet1Flav",&jet1Flav,"jet1Flav/I");
+      Book("jet1Phi",&jet1Phi,"jet1Phi/F");
+      Book("jet1Pt",&jet1Pt,"jet1Pt/F");
+      Book("jet1GenPt",&jet1GenPt,"jet1GenPt/F");
+      Book("jet1Eta",&jet1Eta,"jet1Eta/F");
+      Book("jet1CSV",&jet1CSV,"jet1CSV/F");
+      Book("jet1CMVA",&jet1CMVA,"jet1CMVA/F");
+      Book("jet1IsTight",&jet1IsTight,"jet1IsTight/I");
+      Book("jet2Flav",&jet2Flav,"jet2Flav/I");
+      Book("jet2Phi",&jet2Phi,"jet2Phi/F");
+      Book("jet2Pt",&jet2Pt,"jet2Pt/F");
+      Book("jet2GenPt",&jet2GenPt,"jet2GenPt/F");
+      Book("jet2Eta",&jet2Eta,"jet2Eta/F");
+      Book("jet2CSV",&jet2CSV,"jet2CSV/F");
+      Book("jet2CMVA",&jet2CMVA,"jet2CMVA/F");
+    }
     Book("jetNBtags",&jetNBtags,"jetNBtags/I");
     Book("nLoosePhoton",&nLoosePhoton,"nLoosePhoton/I");
     Book("nTightPhoton",&nTightPhoton,"nTightPhoton/I");

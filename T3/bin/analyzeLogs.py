@@ -28,11 +28,11 @@ def sub(x, y, z):
 def clean(x):
     x = x.replace('+', '\+')
     x = sub(x, '\n', '')
-    x = sub(x, 'input_[0-9A-Z\-]*.root', 'X.root')
+    x = sub(x, 'input_[.0-9A-Z\-]*\.root', 'X.root')
     x = sub(x, '[0-9][0-9][0-9][0-9]+', 'X')
     x = sub(x, '/mnt/hadoop.*root', 'X.root')
     x = sub(x, '/store/user.*root', 'X.root')
-    x = sub(x, '/data/t3serv014.*lock', 'X.lock')
+    x = sub(x, '/data/t3.*lock', 'X.lock')
     x = sub(x, 'branch:.*', '')
     x = sub(x, '/mnt/hadoop.*npz', 'X.npz')
     return x 

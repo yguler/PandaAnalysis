@@ -78,8 +78,9 @@ deepgen = lambda v=False : _analysis(
         name = 'deepgen',
         verbose = v,
         ak8 = True,
-        deepGen = True,
         btagSFs = False,
+        deepGen = True,
+        genOnly = True,
     )
 
 wlnhbb = lambda v=False : _analysis(

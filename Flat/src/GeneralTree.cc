@@ -209,6 +209,10 @@ void GeneralTree::Reset() {
   }
 
 //ENDCUSTOMRESET
+    jot1PhiUp = -1;
+    jot1PhiDown = -1;
+    jot2PhiUp = -1;
+    jot2PhiDown = -1;
     loosePho1SelBit = 0;
     looseGenPho1PdgId = 0;
     genFatJetPt = -1;
@@ -568,14 +572,20 @@ void GeneralTree::WriteTree(TTree *t) {
     if (!monohiggs) { // to avoid double booking
       Book("nJet_jesUp",&nJet_jesUp,"nJet_jesUp/I");
       Book("nJet_jesDown",&nJet_jesDown,"nJet_jesDown/I");
-      Book("jet1EtaUp",&jet1EtaUp,"jet1EtaUp/F");
-      Book("jet1EtaDown",&jet1EtaDown,"jet1EtaDown/F");
-      Book("jet1PtUp",&jet1PtUp,"jet1PtUp/F");
-      Book("jet1PtDown",&jet1PtDown,"jet1PtDown/F");
-      Book("jet2EtaUp",&jet2EtaUp,"jet2EtaUp/F");
-      Book("jet2EtaDown",&jet2EtaDown,"jet2EtaDown/F");
-      Book("jet2PtUp",&jet2PtUp,"jet2PtUp/F");
-      Book("jet2PtDown",&jet2PtDown,"jet2PtDown/F");
+    }
+    Book("jot1PhiUp",&jot1PhiUp,"jot1PhiUp/F");
+    Book("jot1PhiDown",&jot1PhiDown,"jot1PhiDown/F");
+    Book("jot2PhiUp",&jot2PhiUp,"jot2PhiUp/F");
+    Book("jot2PhiDown",&jot2PhiDown,"jot2PhiDown/F");
+    if (!vbf) { // to avoid double booking
+      Book("jot1EtaUp",&jot1EtaUp,"jot1EtaUp/F");
+      Book("jot1EtaDown",&jot1EtaDown,"jot1EtaDown/F");
+      Book("jot1PtUp",&jot1PtUp,"jot1PtUp/F");
+      Book("jot1PtDown",&jot1PtDown,"jot1PtDown/F");
+      Book("jot2EtaUp",&jot2EtaUp,"jot2EtaUp/F");
+      Book("jot2EtaDown",&jot2EtaDown,"jot2EtaDown/F");
+      Book("jot2PtUp",&jot2PtUp,"jot2PtUp/F");
+      Book("jot2PtDown",&jot2PtDown,"jot2PtDown/F");
     }
   }
   Book("nLooseLep",&nLooseLep,"nLooseLep/I");
@@ -895,6 +905,10 @@ void GeneralTree::WriteTree(TTree *t) {
     }
   }
 //ENDCUSTOMWRITE
+    Book("jot1PhiUp",&jot1PhiUp,"jot1PhiUp/F");
+    Book("jot1PhiDown",&jot1PhiDown,"jot1PhiDown/F");
+    Book("jot2PhiUp",&jot2PhiUp,"jot2PhiUp/F");
+    Book("jot2PhiDown",&jot2PhiDown,"jot2PhiDown/F");
     if (photonic) {
       Book("loosePho1SelBit",&loosePho1SelBit,"loosePho1SelBit/I");
       Book("looseGenPho1PdgId",&looseGenPho1PdgId,"looseGenPho1PdgId/I");

@@ -209,7 +209,7 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=10):
             PError(sname+'.stageout','Move exited with code %i'%ret)
             failed = True
         if not failed:
-            if stageout_protocol == 'cp':
+            if stageout_protocol == 'cp' and False:
                 if not path.isfile('%s/%s'%(outdir,outfilename)):
                     PError(sname+'.stageout','Output file is missing!')
                     failed = True

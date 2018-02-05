@@ -25,12 +25,14 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-class RotationToZ {
+class JetRotation {
   public:
-    RotationToZ(float x, float y, float z);
+    JetRotation(float x1, float y1, float z1,
+                float x2, float y2, float z2);
     void Rotate(float& x, float& y, float& z);
   private:
-    TRotation r;
+    TRotation r_toz;
+    TRotation r_inxy;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////

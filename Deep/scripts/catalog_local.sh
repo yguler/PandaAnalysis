@@ -27,3 +27,5 @@ do
     ls $PWD/$f/*root 2>/dev/null | sort -u |  sed "s?/mnt/hadoop?root://t3serv006.mit.edu/?" >> ${CATALOG}/${pd}/RawFiles.00  
     echo "-> $(cat ${CATALOG}/${pd}/RawFiles.00 | wc -l) files"
 done
+
+echo "total of $(cat ${CATALOG}/ZprimeToTT*/RawFiles.00 | wc -l) files"

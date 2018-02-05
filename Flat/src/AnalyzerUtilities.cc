@@ -1,19 +1,30 @@
 #include "PandaAnalysis/Flat/interface/AnalyzerUtilities.h"
+#include <cassert>
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-RotationToZ::RotationToZ(float x, float y, float z)
+JetRotation::JetRotation(float x1, float y1, float z1, float x2, float y2, float z2)
 {
-  TVector3 v_(x, y, z);
-  TVector3 z_(0, 0, 1);
-  r.Rotate(v_.Angle(z_), v_.Cross(z_)); 
+  TVector3 axis1(x1, y1, z1); // this axis gets rotated onto the z-axis
+  TVector3 axis2(x2, y2, z2); // this axis will get rotated into the x-z plane 
+  TVector3 axisz(0, 0, 1);
+  TVector3 axisx(1, 0, 0);
+
+  r_toz.Rotate(axis1.Angle(axisz), axis1.Cross(axisz)); 
+  assert((r_toz*axis1).Angle(axisz) < 0.0001); // allow some rounding
+
+  axis2 = r_toz * axis2;      // first rotate it as before 
+  axis2.SetZ(0);              // zero-out the z-component 
+  r_inxy.Rotate(axis2.Angle(axisx), axis2.Cross(axisx));
+  assert((r_inxy*axis2).Angle(axisx) < 0.0001);
 }
 
-void RotationToZ::Rotate(float& x, float& y, float& z) 
+void JetRotation::Rotate(float& x, float& y, float& z) 
 {
-  TVector3 v_(x, y, z);
-  v_ = r * v_;
-  x = v_.x(); y = v_.y(); z = v_.z();
+  TVector3 v(x, y, z);
+  v = r_toz * v;
+  v = r_inxy * v;
+  x = v.x(); y = v.y(); z = v.z();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////

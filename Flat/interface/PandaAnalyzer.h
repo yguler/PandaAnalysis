@@ -578,7 +578,18 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
   for (auto &parton : partons) 
     partonToIdx[parton] = partonToIdx.size(); // just some arbitrary ordering 
 
-  RotationToZ rtz(fullJet.px(), fullJet.py(), fullJet.pz());
+  // get the hardest particle with angle wrt jet axis > 0.1
+  fastjet::PseudoJet *axis2 = NULL;
+  for (auto &c : allConstituents) {
+    if (DeltaR2(c.eta(), c.phi(), genJetInfo.eta, genJetInfo.phi) > 0.01) {
+      if (!axis2 || (c.perp() > axis2->perp())) {
+        axis2 = &c;
+      }
+    }
+  }
+
+  JetRotation rot(fullJet.px(), fullJet.py(), fullJet.pz(),
+                  axis2->px(), axis2->py(), axis2->pz());
 
   // now we fill the particles
   nC = std::min(nC, (unsigned)NMAXPF);
@@ -593,13 +604,14 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
     // genJetInfo.particles[iC][2] = SignedDeltaPhi(c.phi(), fullJet.phi());
     // genJetInfo.particles[iC][3] = c.m();
     // genJetInfo.particles[iC][4] = c.e();
+    float angle = DeltaR2(c.eta(), c.phi(), genJetInfo.eta, genJetInfo.phi);
     float x=c.px(), y=c.py(), z=c.pz();
-    rtz.Rotate(x, y, z);
+    rot.Rotate(x, y, z);  // perform two rotations on the jet 
     genJetInfo.particles[iC][0] = x;
     genJetInfo.particles[iC][1] = y;
     genJetInfo.particles[iC][2] = z;
     genJetInfo.particles[iC][3] = c.e();
-    genJetInfo.particles[iC][4] = c.m();
+    genJetInfo.particles[iC][4] = angle;
     genJetInfo.particles[iC][5] = survived[iC] ? 1 : 0;
 
     unsigned ptype = 0;

@@ -106,6 +106,7 @@ def cat(catalog, condition=lambda x : True):
           could_not_find.append(shortname)
         if properties[0] not in samples:
             samples[properties[0]] = CatalogSample(*properties)
+        PInfo(argv[0], 'Selecting %s'%properties[0])
         sample = samples[properties[0]]
         for rfpath in glob(d+'/RawFiles.*'):
             rawfile = open(rfpath)

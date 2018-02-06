@@ -50,6 +50,7 @@ void PandaAnalyzer::JetBasics()
   gt->dphipuppiUW=999; gt->dphipfUW=999;
   gt->dphipuppiUZ=999; gt->dphipfUZ=999;
   gt->dphipuppiUA=999; gt->dphipfUA=999;
+  gt->dphipuppiUWW=999; gt->dphipfUWW=999;
   float maxJetEta = (analysis->vbf) ? 4.7 : 4.5;
   unsigned nJetDPhi = (analysis->vbf) ? 4 : 5;
 
@@ -137,6 +138,7 @@ void PandaAnalyzer::JetBasics()
           gt->jetGenPt    [cleanedJets.size()-1] = genpt ;
         }
 
+<<<<<<< HEAD
         if (cleanedJets.size()<3) {
           bool isBad = GetCorr(cBadECALJets,jet.eta(),jet.phi()) > 0;
           if (isBad)
@@ -170,6 +172,28 @@ void PandaAnalyzer::JetBasics()
             gt->jet2Flav = flavor;
             gt->jet2GenPt = genpt;
           }
+=======
+      if (analysis->monoh || analysis->hbb) {
+        JetHbbBasics(jet);
+	IsoJet(jet);
+        if (analysis->bjetRegression)
+          JetBRegressionInfo(jet);
+      }
+
+      // compute dphi wrt mets
+      if (cleanedJets.size() <= nJetDPhi) {
+        gt->dphipuppimet = std::min(fabs(vJet.DeltaPhi(vPuppiMET)),(double)gt->dphipuppimet);
+        gt->dphipfmet = std::min(fabs(vJet.DeltaPhi(vPFMET)),(double)gt->dphipfmet);
+        if (analysis->recoil) {
+          gt->dphipuppiUA = std::min(fabs(vJet.DeltaPhi(vpuppiUA)),(double)gt->dphipuppiUA);
+          gt->dphipuppiUW = std::min(fabs(vJet.DeltaPhi(vpuppiUW)),(double)gt->dphipuppiUW);
+          gt->dphipuppiUZ = std::min(fabs(vJet.DeltaPhi(vpuppiUZ)),(double)gt->dphipuppiUZ);
+	  gt->dphipuppiUWW = std::min(fabs(vJet.DeltaPhi(vpuppiUWW)),(double)gt->dphipuppiUWW);
+          gt->dphipfUA = std::min(fabs(vJet.DeltaPhi(vpfUA)),(double)gt->dphipfUA);
+          gt->dphipfUW = std::min(fabs(vJet.DeltaPhi(vpfUW)),(double)gt->dphipfUW);
+          gt->dphipfUZ = std::min(fabs(vJet.DeltaPhi(vpfUZ)),(double)gt->dphipfUZ);
+	  gt->dphipfUWW = std::min(fabs(vJet.DeltaPhi(vpfUWW)),(double)gt->dphipfUWW);
+>>>>>>> 483bf42b8165089bc4fe0110d9e4072298f54ff0
         }
 
         vJet.SetPtEtaPhiM(jet.pt(),jet.eta(),jet.phi(),jet.m());
@@ -236,7 +260,7 @@ void PandaAnalyzer::JetBasics()
       break;
 <<<<<<< HEAD
     case 3:
-      gt->dphipuppiU = gt->dphipuppiUWW;                                                                                                                                                              
+      gt->dphipuppiU = gt->dphipuppiUWW;                                                                                                            
       gt->dphipfU = gt->dphipfUWW;
     break;
     default: // impossible

@@ -205,7 +205,7 @@ void PandaAnalyzer::Recoil()
       }
 
       if (gt->nLooseLep>1 && looseLep1PdgId+looseLep2PdgId==0) {
-        // two OS lep => Z
+	//std::cout<<"two OS lep => Z"<<std::endl;
         panda::Lepton *lep2 = looseLeps.at(1);
         vObj2.SetPtEtaPhiM(lep2->pt(),lep2->eta(),lep2->phi(),lep2->m());
 
@@ -219,12 +219,14 @@ void PandaAnalyzer::Recoil()
 
         vpuppiU = vpuppiUZ; vpfU = vpfUZ;
         gt->whichRecoil = 2;
-      } else if ( gt->nLooseLep>1 && ( (gt->looseLep1PdgId==11 && gt->looseLep2PdgId==-13)
-                                       || ( gt->looseLep1PdgId==-11 && gt->looseLep2PdgId==13 )
-                                       || ( gt->looseLep1PdgId==13 && gt->looseLep2PdgId==-11 )
-                                       || ( gt->looseLep1PdgId==-13 && gt->looseLep2PdgId==11 )
+
+      } else if ( gt->nLooseLep>1 && ( (looseLep1PdgId==11 && looseLep2PdgId==-13)
+                                       || ( looseLep1PdgId==-11 && looseLep2PdgId==13 )
+                                       || ( looseLep1PdgId==13 && looseLep2PdgId==-11 )
+                                       || ( looseLep1PdgId==-13 && looseLep2PdgId==11 )
                                        ) ){
-        // two W with opposite flavor                                                                                                                                                                       
+	
+	std::cout<<"two W with opposite flavor"<<std::endl;                                                                                                                                                                       
 	panda::Lepton *lep2 = looseLeps.at(1);
         vObj2.SetPtEtaPhiM(lep2->pt(),lep2->eta(),lep2->phi(),lep2->m());
 

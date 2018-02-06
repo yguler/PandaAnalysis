@@ -5,13 +5,14 @@ metTrigger='(trigger&1)!=0'
 eleTrigger='(trigger&2)!=0'
 phoTrigger='(trigger&4)!=0'
 
-metFilter='metFilter==1 && egmFilter==1'
+#metFilter='metFilter==1 && egmFilter==1'
+metFilter='metFilter==1'
 presel = 'nFatjet==1 && fj1Pt>200 && nTau==0 && Sum$(jetPt>30 && jetIso)<2'
 
 cuts = {
  'signal' : tAND(metFilter,tAND(presel,'nLooseLep==0 && nLooseElectron==0 && nLoosePhoton==0 && pfmet>200 && dphipfmet>0.4')), 
- 'mn'      : tAND(metFilter,tAND(presel,'nLoosePhoton==0 && nTau==0 && nLooseLep==1 && looseLep1IsTight==1 && abs(looseLep1PdgId)==13 && pfUWmag>200 && dphipfUW>0.4 && mT<160')),
- 'en'      : tAND(metFilter,tAND(presel,'nLoosePhoton==0 && nTau==0 && nLooseLep==1 && looseLep1IsTight==1 && looseLep1IsHLTSafe==1 && abs(looseLep1PdgId)==11 && pfmet>50 && pfUWmag>200 && dphipfUW>0.4 && mT<160')),
+ 'mn'      : tAND(metFilter,tAND(presel,'nLoosePhoton==0 && nTau==0 && nLooseLep==1 && nTightMuon==1 && abs(muonPdgId[0])==13 && pfUWmag>200 && dphipfUW>0.4 && mT<160')),
+ 'en'      : tAND(metFilter,tAND(presel,'nLoosePhoton==0 && nTau==0 && nLooseLep==1 && nTightElectron==1 && abs(electronPdgId[0])==11 && pfmet>50 && pfUWmag>200 && dphipfUW>0.4 && mT<160')),
  'zmm'    : tAND(metFilter,tAND(presel,'pfUZmag>200 && dphipfUZ>0.4 && nLooseElectron==0 && nLoosePhoton==0 && nTau==0 && nLooseMuon==2 && nTightLep>0 && 60<diLepMass && diLepMass<120')),
  'zee'    : tAND(metFilter,tAND(presel,'pfUZmag>200 && dphipfUZ>0.4 && nLooseMuon==0 && nLoosePhoton==0 && nTau==0 && nLooseElectron==2 && nTightLep>0 && 60<diLepMass && diLepMass<120')),
 }
@@ -25,7 +26,7 @@ for r in ['signal','zmm','zee']:
 
 for r in ['signal','wmn','tmn','wen','ten','zmm','zee']:
 	cuts[r] = tAND(cuts[r],'fj1DoubleCSV>0.75')
-	cuts[r+'_fail'] = tAND(cuts[r],'fj1DoubleCSV<=0.75')
+	#cuts[r+'_fail'] = tAND(cuts[r],'fj1DoubleCSV<=0.75')
 
 weights = {
   'signal'         : '%f*sf_pu*sf_tt*normalizedWeight*sf_lepID*sf_lepIso*sf_lepTrack*sf_ewkV*sf_qcdV*sf_metTrig*sf_btag0',

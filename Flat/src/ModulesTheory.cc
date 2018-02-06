@@ -407,6 +407,7 @@ void PandaAnalyzer::GenStudyEWK() {
   std::vector<int> targetsLepton;
   std::vector<int> targetsPhoton;
   std::vector<int> targetsV;
+  std::vector<int> targetsH;
   std::vector<int> targetsTop;
   std::vector<int> targetsN;
 
@@ -436,6 +437,9 @@ void PandaAnalyzer::GenStudyEWK() {
 
     if (abspdgid == 23 || abspdgid == 24)
       targetsV.push_back(iG);
+
+    if (abspdgid == 25)
+      targetsH.push_back(iG);
 
     if (abspdgid == 6)
       targetsTop.push_back(iG);
@@ -564,7 +568,8 @@ void PandaAnalyzer::GenStudyEWK() {
   }
   
   tr->TriggerSubEvent("gen leptons 2");
-
+  
+  unsigned char nNeutrinos=0;
   for (int iG : targetsN) {
     auto& part(event.genParticles.at(iG));
     TLorentzVector neutrino;
@@ -580,13 +585,36 @@ void PandaAnalyzer::GenStudyEWK() {
     if (!isLastCopy)
       continue;
     rhoP4 = rhoP4 + neutrino;
+    nNeutrinos++;
   }
 
   tr->TriggerSubEvent("gen neutrinos");
+  
+  TLorentzVector higgsBosons(0,0,0,0);
+  int nHBosons = 0;
+  for (int iG : targetsH) {
+    auto& part(event.genParticles.at(iG));
+    TLorentzVector boson;
+    boson.SetPtEtaPhiM(part.pt(),part.eta(),part.phi(),part.m());
+
+    // check there is no further copy:
+    bool isLastCopy=true;
+    for (int kG : targetsH) {
+      if (event.genParticles.at(kG).parent.isValid() 
+          && event.genParticles.at(kG).parent.get() == &part) {
+        isLastCopy=false;
+        break;
+      }
+    }
+    if (!isLastCopy) continue;
+  
+    if (abs(part.pdgid) == 25) {higgsBosons = higgsBosons + boson; nHBosons++;}
+  }
+  tr->TriggerSubEvent("gen higgs");
 
   TLorentzVector zBosons(0,0,0,0);
   TLorentzVector wBosons(0,0,0,0);
-  int nZBosons = 0; int nWBosons = 0;
+  int nZBosons = 0; int nWBosons = 0; vector<bool> wBosonQ; wBosonQ.reserve(8);
   for (int iG : targetsV) {
     auto& part(event.genParticles.at(iG));
     TLorentzVector boson;
@@ -605,7 +633,7 @@ void PandaAnalyzer::GenStudyEWK() {
   
     if (boson.Pt() < bosonPtMin) bosonPtMin = boson.Pt();
     if (abs(part.pdgid) == 23) {zBosons = zBosons + boson; nZBosons++;}
-    if (abs(part.pdgid) == 24) {wBosons = wBosons + boson; nWBosons++;}
+    if (abs(part.pdgid) == 24) {wBosons = wBosons + boson; nWBosons++; wBosonQ.push_back(part.pdgid>0); }
   }
   if (nZBosons+nWBosons == 0) bosonPtMin = 0;
 
@@ -629,16 +657,45 @@ void PandaAnalyzer::GenStudyEWK() {
   } else {
     gt->sf_wz = 1.0;
   }
-  
-  if (nZBosons == 1) {
-    gt->sf_zh     = WeightZHEWKCorr(GetCorr(cZHEwkCorr,bound(zBosons.Pt(),0,499.999)));
-    gt->sf_zhUp   = WeightZHEWKCorr(GetCorr(cZHEwkCorrUp,bound(zBosons.Pt(),0,499.999)));
-    gt->sf_zhDown = WeightZHEWKCorr(GetCorr(cZHEwkCorrDown,bound(zBosons.Pt(),0,499.999)));
-  }
-  else {
-    gt->sf_zh     = 1.0;
-    gt->sf_zhUp   = 1.0;
-    gt->sf_zhDown = 1.0;
+  if(analysis->processType==kH) { 
+    if (nZBosons == 1 && gt->genLep2PdgId!=0) {
+      gt->sf_vh     = WeightZHEWKCorr(GetCorr(cZllHEwkCorr,bound(zBosons.Pt(),0,499.999)));
+      gt->sf_vhUp   = WeightZHEWKCorr(GetCorr(cZllHEwkCorrUp,bound(zBosons.Pt(),0,499.999)));
+      gt->sf_vhDown = WeightZHEWKCorr(GetCorr(cZllHEwkCorrDown,bound(zBosons.Pt(),0,499.999)));
+      gt->genBosonMass = zBosons.M();
+      gt->genBosonEta  = zBosons.Eta();
+      gt->genBosonPt   = zBosons.Pt();
+      gt->trueGenBosonPt = higgsBosons.Pt();
+    } else if(nZBosons==1 && nNeutrinos>0) {
+      gt->sf_vh     = WeightZHEWKCorr(GetCorr(cZnnHEwkCorr,bound(zBosons.Pt(),0,499.999)));
+      gt->sf_vhUp   = WeightZHEWKCorr(GetCorr(cZnnHEwkCorrUp,bound(zBosons.Pt(),0,499.999)));
+      gt->sf_vhDown = WeightZHEWKCorr(GetCorr(cZnnHEwkCorrDown,bound(zBosons.Pt(),0,499.999)));
+      gt->genBosonMass = zBosons.M();
+      gt->genBosonEta  = zBosons.Eta();
+      gt->genBosonPt   = zBosons.Pt();
+      gt->trueGenBosonPt = higgsBosons.Pt();
+    } else if(nWBosons==1 && gt->genLep1PdgId!=0 && nNeutrinos>0) {
+      if(wBosonQ[0]>0) {
+        gt->sf_vh     = WeightZHEWKCorr(GetCorr(cWpHEwkCorr,bound(wBosons.Pt(),0,499.999)));
+        gt->sf_vhUp   = WeightZHEWKCorr(GetCorr(cWpHEwkCorrUp,bound(wBosons.Pt(),0,499.999)));
+        gt->sf_vhDown = WeightZHEWKCorr(GetCorr(cWpHEwkCorrDown,bound(wBosons.Pt(),0,499.999)));
+        gt->genWPlusPt = wBosons.Pt();
+        gt->genWPlusEta = wBosons.Eta();
+      } else {
+        gt->sf_vh     = WeightZHEWKCorr(GetCorr(cWmHEwkCorr,bound(wBosons.Pt(),0,499.999)));
+        gt->sf_vhUp   = WeightZHEWKCorr(GetCorr(cWmHEwkCorrUp,bound(wBosons.Pt(),0,499.999)));
+        gt->sf_vhDown = WeightZHEWKCorr(GetCorr(cWmHEwkCorrDown,bound(wBosons.Pt(),0,499.999)));
+        gt->genWMinusPt = wBosons.Pt();
+        gt->genWMinusEta = wBosons.Eta();
+      }
+      gt->genBosonMass = higgsBosons.M();
+      gt->genBosonEta  = higgsBosons.Eta();
+      gt->genBosonPt   = higgsBosons.Pt();
+    } else {
+      gt->sf_vh     = 1.0;
+      gt->sf_vhUp   = 1.0;
+      gt->sf_vhDown = 1.0;
+    }
   }
 
   tr->TriggerSubEvent("boson corrections");

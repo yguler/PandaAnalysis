@@ -7,7 +7,7 @@ from re import sub
 from random import shuffle
 
 parser = ArgumentParser()
-parser.add_argument('--nmax',type=int,default=15)
+parser.add_argument('--nmax',type=int,default=25)
 parser.add_argument('--nmin',type=int,default=10)
 parser.add_argument('--proc',type=str)
 args = parser.parse_args()
@@ -15,6 +15,10 @@ args = parser.parse_args()
 if args.proc == 'Top':
     fs = []
     for p in ['ZpTT', 'Scalar_MonoTop', 'Vector_MonoTop']:
+        fs +=  glob(getenv('SUBMIT_OUTDIR') + '/' + p + '*.npz')
+elif args.proc == 'Top_lo':
+    fs = []
+    for p in ['ZpTT_lo']:
         fs +=  glob(getenv('SUBMIT_OUTDIR') + '/' + p + '*.npz')
 elif args.proc == 'Higgs':
     fs = []
@@ -63,7 +67,7 @@ for k in xrange(npartition):
         nsub = len(to_run) / args.nmax + 1
         for kk in xrange(nsub):
             lo = args.nmax * kk 
-            hi = -1 if (k == nsub - 1) else args.nmax * (kk + 1)
+            hi = -1 if (kk == nsub - 1) else args.nmax * (kk + 1)
             klabel = str(k) + '_' + str(kk)
             with open('partitions/' + args.proc + '/' + klabel + '.txt', 'w') as fout:
                 for r in to_run[lo:hi]:

@@ -5,7 +5,7 @@ import socket
 from re import sub
 from sys import exit
 from time import clock,time,sleep
-from os import system,getenv,path
+from os import system,getenv,path,environ
 
 import ROOT as root
 from PandaCore.Tools.Misc import *
@@ -18,6 +18,28 @@ host = socket.gethostname()                                    # where we're run
 IS_T3 = (host[:2] == 't3')                                     # are we on the T3?
 REMOTE_READ = True                                             # should we read from hadoop or copy locally?
 local_copy = bool(smart_getenv('SUBMIT_LOCALACCESS', True))    # should we always xrdcp from T2?
+
+stageout_protocol = None                                       # what stageout should we use?
+if IS_T3:
+    stageout_protocol = 'cp' 
+elif system('which gfal-copy') == 0:
+    stageout_protocol = 'gfal'
+elif system('which lcg-cp') == 0:
+    stageout_protocol = 'lcg'
+else:
+    try:
+        ret = system('wget http://t3serv001.mit.edu/~snarayan/misc/lcg-cp.tar.gz')
+        ret = max(ret, system('tar -xvf lcg-cp.tar.gz'))
+        if ret:
+            raise RuntimeError
+        environ['PATH'] = '$PWD/lcg-cp:'+environ['PATH']
+        environ['LD_LIBRARY_PATH'] = '$PWD/lcg-cp:'+environ['LD_LIBRARY_PATH']
+        stageout_protocol = 'lcg'
+    except Exception as e:
+        PError(sname,
+               'Could not install lcg-cp in absence of other protocols!')
+        raise e
+
 
 
 # global to keep track of how long things take
@@ -52,7 +74,10 @@ def copy_local(long_name):
     copied = False
 
     # if the file is cached locally, why not use it?
-    local_path = full_path.replace('root://xrootd.cmsaf.mit.edu/','/mnt/hadoop/cms')
+    if 'scratch' in full_path:
+        local_path = full_path.replace('root://t3serv006.mit.edu/','/mnt/hadoop')
+    else:
+        local_path = full_path.replace('root://xrootd.cmsaf.mit.edu/','/mnt/hadoop/cms')
     PInfo(sname+'.copy_local','Local access is configured to be %s'%('on' if local_copy else 'off'))
     if local_copy and path.isfile(local_path): 
         # apparently SmartCached files can be corrupted...
@@ -147,48 +172,60 @@ def drop_branches(to_drop=None, to_keep=None):
         return 2
 
 
+
 # stageout a file (e.g. output or lock)
-#  - if IS_T3, execute a simple mv
+#  - if IS_T3, execute a simple cp
 #  - else, use lcg-cp
 # then, check if the file exists:
 #  - if IS_T3, use os.path.isfile
 #  - else, use lcg-ls
-def stageout(outdir,outfilename,infilename='output.root',n_attempts=5):
+def stageout(outdir,outfilename,infilename='output.root',n_attempts=10):
+    if stageout_protocol is None:
+        PError(sname+'.stageout',
+               'Stageout protocol has not been satisfactorily determined! Cannot proceed.')
+        return -2
     timeout = 300
     ret = -1
     for i_attempt in xrange(n_attempts):
         failed = False
-        if IS_T3:
-            mvargs = 'mv $PWD/%s %s/%s'%(infilename,outdir,outfilename)
+        if stageout_protocol == 'cp':
+            cpargs = 'cp -v $PWD/%s %s/%s'%(infilename,outdir,outfilename)
+            lsargs = 'ls %s/%s'%(outdir,outfilename)
+        elif stageout_protocol == 'gfal':
+            cpargs = 'gfal-copy -f --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
+            lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+        elif stageout_protocol == 'lcg':
+            cpargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
+            lsargs = 'lcg-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
         else:
-            #mvargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
-            mvargs = 'gfal-copy -f --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
-        PInfo(sname+'.stageout',mvargs)
-        ret = system(mvargs)
+            PError(sname+'.stageout','stageout_protocol not set!')
+            raise RuntimeError
+        PInfo(sname+'.stageout',cpargs)
+        ret = system(cpargs)
         if not ret:
             PInfo(sname+'.stageout','Move exited with code %i'%ret)
+            sleep(5) # give the filesystem a chance to respond
         else:
             PError(sname+'.stageout','Move exited with code %i'%ret)
             failed = True
-        if not failed and False:
-            if IS_T3:
+        if not failed:
+            if stageout_protocol == 'cp' and False:
                 if not path.isfile('%s/%s'%(outdir,outfilename)):
                     PError(sname+'.stageout','Output file is missing!')
                     failed = True
-            else:
-                #lsargs = 'lcg-ls -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
-                lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+                else:
+                    PInfo(sname+'.stageout','Found output file via os.path.isfile!')
+            else: 
                 PInfo(sname+'.stageout',lsargs)
                 ret = system(lsargs)
                 if ret:
                     PError(sname+'.stageout','Output file is missing!')
                     failed = True
         if not failed:
-            sleep(5) # give the filesystem a chance to respond
             PInfo(sname+'.stageout', 'Copy succeeded after %i attempts'%(i_attempt+1))
             return ret
         else:
-            timeout *= 2
+            timeout = int(timeout * 1.5)
     PError(sname+'.stagoeut', 'Copy failed after %i attempts'%(n_attempts))
     return ret
 

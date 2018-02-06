@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #for f in ZpWW ZpTT ZpA0h QCD; do
-for f in Top QCD Higgs W; do
-    echo $f
-    check --cache cache/$f $@
+for f in cache/*; do
+    PInfo -n check.sh $f
+    check --cache $f $@
 done

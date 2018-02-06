@@ -111,15 +111,11 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   event.setStatus(*t, {"!*"}); // turn everything off first
 
   TString jetname = (analysis->puppi_jets) ? "puppi" : "chs";
-<<<<<<< HEAD
-  panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber","weight"});
-=======
   panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber", "rho", 
                                      "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
                                      "electrons", "muons", "taus", "photons", 
                                      "pfMet", "caloMet", "puppiMet", "rawMet", 
 	"recoil","metFilters","trkMet"});
->>>>>>> 483bf42b8165089bc4fe0110d9e4072298f54ff0
   readlist.setVerbosity(0);
 
   if (analysis->genOnly) {

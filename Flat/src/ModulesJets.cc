@@ -138,41 +138,6 @@ void PandaAnalyzer::JetBasics()
           gt->jetGenPt    [cleanedJets.size()-1] = genpt ;
         }
 
-<<<<<<< HEAD
-        if (cleanedJets.size()<3) {
-          bool isBad = GetCorr(cBadECALJets,jet.eta(),jet.phi()) > 0;
-          if (isBad)
-            gt->badECALFilter = 0;
-        }
-
-        if (analysis->fatjet)
-          IsoJet(jet);
-
-        float csv = (fabs(jet.eta())<2.5) ? jet.csv : -1;
-        float cmva = (fabs(jet.eta())<2.5) ? jet.cmva : -1;
-        if (fabs(jet.eta())<2.4) {
-          centralJets.push_back(&jet  );
-          if (centralJets.size()==1) {
-            jet1 = &jet;
-            gt->jet1Pt = jet.pt();
-            gt->jet1Eta = jet.eta();
-            gt->jet1Phi = jet.phi();
-            gt->jet1CSV = csv;
-            gt->jet1CMVA = cmva;
-            gt->jet1IsTight = jet.monojet ? 1 : 0;
-            gt->jet1Flav = flavor;
-            gt->jet1GenPt = genpt;
-          } else if (centralJets.size()==2) {
-            jet2 = &jet;
-            gt->jet2Pt = jet.pt();
-            gt->jet2Eta = jet.eta();
-            gt->jet2Phi = jet.phi();
-            gt->jet2CSV = csv;
-            gt->jet2CMVA = cmva;
-            gt->jet2Flav = flavor;
-            gt->jet2GenPt = genpt;
-          }
-=======
       if (analysis->monoh || analysis->hbb) {
         JetHbbBasics(jet);
 	IsoJet(jet);
@@ -193,7 +158,6 @@ void PandaAnalyzer::JetBasics()
           gt->dphipfUW = std::min(fabs(vJet.DeltaPhi(vpfUW)),(double)gt->dphipfUW);
           gt->dphipfUZ = std::min(fabs(vJet.DeltaPhi(vpfUZ)),(double)gt->dphipfUZ);
 	  gt->dphipfUWW = std::min(fabs(vJet.DeltaPhi(vpfUWW)),(double)gt->dphipfUWW);
->>>>>>> 483bf42b8165089bc4fe0110d9e4072298f54ff0
         }
 
         vJet.SetPtEtaPhiM(jet.pt(),jet.eta(),jet.phi(),jet.m());
@@ -258,15 +222,7 @@ void PandaAnalyzer::JetBasics()
       gt->dphipuppiU = gt->dphipuppiUZ;
       gt->dphipfU = gt->dphipfUZ;
       break;
-<<<<<<< HEAD
-    case 3:
-      gt->dphipuppiU = gt->dphipuppiUWW;                                                                                                            
-      gt->dphipfU = gt->dphipfUWW;
-    break;
-    default: // impossible
-=======
     default: // c'est impossible !
->>>>>>> e1c89ba15a57478c86bb1936e5545b05973fbd1a
       break;
   }
 

@@ -75,6 +75,8 @@ colors = {
 last_lock = 1
 last_check = 1
 
+jm.setup_schedd(getenv('SUBMIT_CONFIG'))
+
 def init_colors():
     curses.start_color()
     curses.init_pair(colors['green'], curses.COLOR_WHITE, curses.COLOR_GREEN)
@@ -95,7 +97,6 @@ def submit(silent=False):
     frozen_outcfg = outcfg.replace('local','local_%i'%now)
     system('cp %s %s'%(outcfg,frozen_outcfg)) 
 
-    jm.setup_schedd(getenv('SUBMIT_CONFIG'))
     s = jm.Submission(frozen_outcfg,workdir+'/submission.pkl')
     s.execute()
     s.save()
@@ -227,9 +228,12 @@ def check(stdscr=None):
             il = 1
             for lock in locks:
                 il += 1
-                flock = open(lock)
-                for l in flock:
-                    processedfiles.append(l.strip())
+                try:
+                    flock = open(lock)
+                    for l in flock:
+                        processedfiles.append(l.strip())
+                except IOError:
+                    pass
 
             # determine what samples from previous resubmissions are still running
             t2_samples = []
@@ -413,7 +417,7 @@ if args.check:
         check()
 else:
     PInfo('task.py', 'TASK = '+submit_name)
-    if args.build_only and not path.isfile(workdir+'/submission.pkl'): 
+    if args.build_only and (not path.isfile(workdir+'/submission.pkl') or not args.submit): 
         if args.nfiles < 0:
             PInfo('task.py', 'Number of files not provided for new task => setting nfiles=25')
             args.nfiles = 25

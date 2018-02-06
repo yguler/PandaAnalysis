@@ -9,6 +9,105 @@
 using namespace panda;
 using namespace std;
 
+void PandaAnalyzer::IncrementGenAuxFile(bool close)
+{
+  if (fAux) {
+    fAux->WriteTObject(tAux, "inputs", "Overwrite");
+    fAux->Close();
+  }
+  if (close)
+    return;
+
+  TString path = TString::Format(auxFilePath.Data(),auxCounter++);
+  fAux = TFile::Open(path.Data(), "RECREATE");
+  if (DEBUG) PDebug("PandaAnalyzer::IncrementAuxFile", "Opening "+path);
+  tAux = new TTree("inputs","inputs");
+  
+  genJetInfo.particles.resize(NMAXPF);
+  for (unsigned i = 0; i != NMAXPF; ++i) {
+    genJetInfo.particles[i].resize(NGENPROPS);
+  }
+  tAux->Branch("kinematics",&(genJetInfo.particles));
+
+  tAux->Branch("eventNumber",&(gt->eventNumber),"eventNumber/l");
+  tAux->Branch("nprongs",&(genJetInfo.nprongs),"nprongs/I");
+  tAux->Branch("partonpt",&(genJetInfo.partonpt),"partonpt/F");
+  tAux->Branch("partonm",&(genJetInfo.partonm),"partonm/F");
+  tAux->Branch("pt",&(genJetInfo.pt),"pt/F");
+  tAux->Branch("msd",&(genJetInfo.msd),"msd/F");
+  tAux->Branch("eta",&(genJetInfo.eta),"eta/F");
+  tAux->Branch("phi",&(genJetInfo.phi),"phi/F");
+  tAux->Branch("m",&(genJetInfo.m),"m/F");
+  tAux->Branch("tau3",&(genJetInfo.tau3),"tau3/F");
+  tAux->Branch("tau2",&(genJetInfo.tau2),"tau2/F");
+  tAux->Branch("tau1",&(genJetInfo.tau1),"tau1/F");
+  tAux->Branch("tau3sd",&(genJetInfo.tau3sd),"tau3sd/F");
+  tAux->Branch("tau2sd",&(genJetInfo.tau2sd),"tau2sd/F");
+  tAux->Branch("tau1sd",&(genJetInfo.tau1sd),"tau1sd/F");
+
+  fOut->cd();
+
+  if (tr)
+    tr->TriggerEvent("increment aux file");
+}
+
+void PandaAnalyzer::IncrementAuxFile(bool close)
+{
+  if (fAux) {
+    fAux->WriteTObject(tAux, "inputs", "Overwrite");
+    fAux->Close();
+  }
+  if (close)
+    return;
+
+  TString path = TString::Format(auxFilePath.Data(),auxCounter++);
+  fAux = TFile::Open(path.Data(), "RECREATE");
+  if (DEBUG) PDebug("PandaAnalyzer::IncrementAuxFile", "Opening "+path);
+  tAux = new TTree("inputs","inputs");
+  
+  pfInfo.resize(NMAXPF);
+  for (unsigned i = 0; i != NMAXPF; ++i) {
+    pfInfo[i].resize(NPFPROPS);
+  }
+  tAux->Branch("kinematics",&pfInfo);
+  
+  svInfo.resize(NMAXSV);
+  for (unsigned i = 0; i != NMAXSV; ++i) {
+    svInfo[i].resize(NSVPROPS);
+  }
+  tAux->Branch("svs",&svInfo);
+
+  tAux->Branch("msd",&fjmsd,"msd/F");
+  tAux->Branch("pt",&fjpt,"pt/F");
+  tAux->Branch("rawpt",&fjrawpt,"rawpt/F");
+  tAux->Branch("eta",&fjeta,"eta/F");
+  tAux->Branch("phi",&fjphi,"phi/F");
+  tAux->Branch("rho",&(gt->fj1Rho),"rho/f");
+  tAux->Branch("rawrho",&(gt->fj1RawRho),"rawrho/f");
+  tAux->Branch("rho2",&(gt->fj1Rho2),"rho2/f");
+  tAux->Branch("rawrho2",&(gt->fj1RawRho2),"rawrho2/f");
+  tAux->Branch("nPartons",&(gt->fj1NPartons),"nPartons/I");
+  tAux->Branch("nBPartons",&(gt->fj1NBPartons),"nBPartons/I");
+  tAux->Branch("nCPartons",&(gt->fj1NCPartons),"nCPartons/I");
+  tAux->Branch("partonM",&(gt->fj1PartonM),"partonM/f");
+  tAux->Branch("partonPt",&(gt->fj1PartonPt),"partonPt/f");
+  tAux->Branch("partonEta",&(gt->fj1PartonEta),"partonEta/f");
+  tAux->Branch("tau32",&(gt->fj1Tau32),"tau32/f");
+  tAux->Branch("tau32SD",&(gt->fj1Tau32SD),"tau32SD/f");
+  tAux->Branch("tau21",&(gt->fj1Tau21),"tau21/f");
+  tAux->Branch("tau21SD",&(gt->fj1Tau21SD),"tau21SD/f");
+  tAux->Branch("eventNumber",&(gt->eventNumber),"eventNumber/l");
+  tAux->Branch("maxcsv",&(gt->fj1MaxCSV),"maxcsv/f");
+  tAux->Branch("mincsv",&(gt->fj1MinCSV),"mincsv/f");
+  tAux->Branch("doubleb",&(gt->fj1DoubleCSV),"doubleb/f");
+
+  gt->SetAuxTree(tAux);
+
+  fOut->cd();
+
+  if (tr)
+    tr->TriggerEvent("increment aux file");
+}
 
 void PandaAnalyzer::RegisterTriggers() 
 {
@@ -60,18 +159,18 @@ void PandaAnalyzer::TriggerEffs()
       if (gt->nLooseLep>1) mu2 = dynamic_cast<panda::Muon*>(looseLeps[1]);
       float eff1=0, eff2=0;
       if (mu1 && mu1->tight) {
-	eff1 = GetCorr(
-		       cTrigMu,
-		       fabs(mu1->eta()),
-		       TMath::Max((float)26.,TMath::Min((float)499.99,(float)mu1->pt()))
-		       );
-	if (mu2 && mu2->tight)
-	  eff2 = GetCorr(
-			 cTrigMu,
-			 fabs(mu2->eta()),
-			 TMath::Max((float)26.,TMath::Min((float)499.99,(float)mu2->pt()))
-			 );
-	gt->sf_muTrig = 1 - (1-eff1)*(1-eff2);
+        eff1 = GetCorr(
+          cTrigMu,
+          fabs(mu1->eta()),
+          TMath::Max((float)26.,TMath::Min((float)499.99,(float)mu1->pt()))
+        );
+        if (mu2 && mu2->tight)
+          eff2 = GetCorr(
+            cTrigMu,
+            fabs(mu2->eta()),
+            TMath::Max((float)26.,TMath::Min((float)499.99,(float)mu2->pt()))
+          );
+        gt->sf_muTrig = 1 - (1-eff1)*(1-eff2);
       }
     } // done with mu trig SF
 
@@ -202,7 +301,7 @@ void PandaAnalyzer::GetMETSignificance()
   float puppiEt = 0;
 
   TLorentzVector pfcand(0,0,0,0);
-  for (auto& pfCand : event.pfCandidates){
+  for (auto& pfCand : event.pfCandidates) {
     pfcand.SetPtEtaPhiM(pfCand.pt(),pfCand.eta(),pfCand.phi(),pfCand.m());
     puppiEt += pfcand.Et()*pfCand.puppiW();
     pfEt += pfcand.Et();

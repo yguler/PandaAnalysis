@@ -1,12 +1,10 @@
 #include "PandaAnalysis/Flat/interface/AnalyzerUtilities.h"
 #include "PandaAnalysis/Flat/interface/GeneralTree.h"
 #include "PandaAnalysis/Flat/interface/TagTree.h"
-#include "PandaAnalysis/Flat/interface/GeneralLeptonicTree.h"
 #include "PandaAnalysis/Flat/interface/JetCorrector.h"
 #include "PandaAnalysis/Flat/interface/LimitTreeBuilder.h"
 #include "PandaAnalysis/Flat/interface/PandaAnalyzer.h"
 #include "PandaAnalysis/Flat/interface/TagAnalyzer.h"
-#include "PandaAnalysis/Flat/interface/PandaLeptonicAnalyzer.h"
 #include "PandaAnalysis/Flat/interface/genericTree.h"
 
 
@@ -17,7 +15,6 @@
 #pragma link C++ nestedclass;
 #pragma link C++ nestedtypedef;
 
-#pragma link C++ enum panda::IDWorkingPoint;
 #pragma link C++ enum PandaAnalyzer::PreselectionBit;
 #pragma link C++ enum PandaAnalyzer::ProcessType;
 #pragma link C++ enum PandaAnalyzer::TriggerBits;
@@ -35,13 +32,11 @@
 #pragma link C++ class JetCorrector;
 #pragma link C++ class PandaAnalyzer;
 #pragma link C++ class TagAnalyzer;
-#pragma link C++ class PandaLeptonicAnalyzer;
 #pragma link C++ class GeneralTree;
 #pragma link C++ class GeneralTree::ECFParams;
 #pragma link C++ class GeneralTree::BTagParams;
 #pragma link C++ class TagTree;
 #pragma link C++ class TagTree::ECFParams;
-#pragma link C++ class GeneralLeptonicTree;
 #pragma link C++ class genericTree;
 #pragma link C++ class LimitTreeBuilder;
 #pragma link C++ class xformula;

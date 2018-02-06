@@ -109,29 +109,15 @@ void PandaAnalyzer::JetBtagSFs()
       vector<double> sf_cent, sf_bUp, sf_bDown, sf_mUp, sf_mDown;
       vector<double> sf_cent_alt, sf_bUp_alt, sf_bDown_alt, sf_mUp_alt, sf_mDown_alt;
 
-      unsigned int nJ = centralJets.size();
+      unsigned int nJ = bCandJets.size();
       for (unsigned int iJ=0; iJ!=nJ; ++iJ) {
-        panda::Jet *jet = centralJets.at(iJ);
+        panda::Jet *jet = bCandJets.at(iJ);
         bool isIsoJet=false;
-        if (std::find(isoJets.begin(), isoJets.end(), jet) != isoJets.end())
+        if (!analysis->fatjet || // if we do not consider fatjets, everything is an isojet 
+            std::find(isoJets.begin(), isoJets.end(), jet) != isoJets.end()) // otherwise, explicitly check isojet
           isIsoJet = true;
-        int flavor=0;
-        float genpt=0;
-        for (auto& gen : event.genParticles) {
-          int apdgid = abs(gen.pdgid);
-          if (apdgid==0 || (apdgid>5 && apdgid!=21)) // light quark or gluon
-            continue;
-          double dr2 = DeltaR2(jet->eta(),jet->phi(),gen.eta(),gen.phi());
-          if (dr2<0.09) {
-            genpt = gen.pt();
-            if (apdgid==4 || apdgid==5) {
-              flavor=apdgid;
-              break;
-            } else {
-              flavor=0;
-            }
-          }
-        } // finding the jet flavor
+        int flavor = bCandJetGenFlavor[jet];
+        // float genpt = bCandJetGenPt[jet]; // not needed right now but it's here if it becomes needed
         float pt = jet->pt();
         float btagUncFactor = 1;
         float eta = jet->eta();
@@ -144,21 +130,16 @@ void PandaAnalyzer::JetBtagSFs()
           eff = ceff[bineta][binpt];
         else
           eff = lfeff[bineta][binpt];
-        if (jet==centralJets.at(0)) {
-          gt->jet1Flav = flavor;
-          gt->jet1GenPt = genpt;
-        } else if (jet==centralJets.at(1)) {
-          gt->jet2Flav = flavor;
-          gt->jet2GenPt = genpt;
-        }
         if (isIsoJet) {
-          if (jet==isoJets.at(0))
-            gt->isojet1Flav = flavor;
-          else if (jet==isoJets.at(1))
-            gt->isojet2Flav = flavor;
+          if (analysis->fatjet) {
+            if (jet==isoJets.at(0))
+              gt->isojet1Flav = flavor;
+            else if (jet==isoJets.at(1))
+              gt->isojet2Flav = flavor;
+          }
 
           CalcBJetSFs(bJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
-          btagcands.push_back(btagcand(iJ,flavor,eff,sf,sfUp,sfDown));
+          btagcands.emplace_back(iJ,flavor,eff,sf,sfUp,sfDown);
           sf_cent.push_back(sf);
 
           if (flavor>0) {
@@ -208,28 +189,24 @@ void PandaAnalyzer::JetCMVAWeights()
     GeneralTree::csvShift shift = gt->csvShifts[iShift];
     gt->sf_csvWeights[shift] = 1;
   }
-  if (centralJets.size() < 1) return;
+  if (bCandJets.size() < 1) return;
 
   //get vectors of jet properties
   std::vector<double> jetPts, jetEtas, jetCSVs, jetCMVAs;
   std::vector<int> jetFlavors;
-  jetPts.reserve(centralJets.size());
-  jetEtas.reserve(centralJets.size());
-  jetCSVs.reserve(centralJets.size());
-  jetCMVAs.reserve(centralJets.size());
-  jetFlavors.reserve(centralJets.size());
-  for (auto *jet : centralJets) {
+  unsigned int nJ = bCandJets.size();
+  jetPts.reserve(nJ);
+  jetEtas.reserve(nJ);
+  jetCSVs.reserve(nJ);
+  jetCMVAs.reserve(nJ);
+  jetFlavors.reserve(nJ);
+  for (unsigned int iJ=0; iJ!=nJ; ++iJ) {
+    panda::Jet *jet = bCandJets.at(iJ);
     jetPts.push_back(jet->pt());
     jetEtas.push_back(jet->eta());
     jetCSVs.push_back(jet->csv);
     jetCMVAs.push_back(jet->cmva);
-    int flavor = 0;
-    for (auto &gen : event.ak4GenJets) {
-      if (DeltaR2(gen.eta(), gen.phi(), jet->eta(), jet->phi()) < 0.09) {
-        flavor=gen.pdgid;
-        break;
-      }
-    }
+    int flavor = bCandJetGenFlavor[jet];
     jetFlavors.push_back(flavor);
   }
   // throwaway addresses

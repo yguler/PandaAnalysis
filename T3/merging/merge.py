@@ -1,27 +1,41 @@
 #!/usr/bin/env python
 
+# imports and load libraries
 from array import array
 from glob import glob
 from re import sub
 from sys import argv,exit
-from os import environ,system,path
+import sys
+from os import environ,system,path,remove
 from argparse import ArgumentParser
 
 sname = argv[0]
 parser = ArgumentParser()
 parser.add_argument('--silent', action='store_true')
+parser.add_argument('--cfg', type=str, default='common')
 parser.add_argument('arguments', type=str, nargs='+')
 args = parser.parse_args()
 arguments = args.arguments
+VERBOSE = not args.silent
 argv=[]
 
 import ROOT as root
-from PandaCore.Tools.process import *
 from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import Load
 
+if args.cfg == 'leptonic':
+    from PandaCore.Tools.process_leptonic import *
+    xsecscale = 1000
+else:
+    from PandaCore.Tools.process import *
+    xsecscale = 1
+
+sys.path.append(environ['CMSSW_BASE'] + '/src/PandaAnalysis/T3/merging/configs/')
+cfg = __import__(args.cfg)
+
 Load('Normalizer')
 
+# global variables
 pds = {}
 for k,v in processes.iteritems():
     if v[1]=='MC':
@@ -29,42 +43,43 @@ for k,v in processes.iteritems():
     else:
         pds[v[0]] = (k,-1)
 
-VERBOSE = not args.silent
-
 user = environ['USER']
-system('mkdir -p /uscmst1b_scratch/lpc1/3DayLifetime/%s/split'%user) # tmp dir
-system('mkdir -p /uscmst1b_scratch/lpc1/3DayLifetime/%s/merged'%user) # tmp dir
+system('mkdir -p /tmp/%s/split'%user) # tmp dir
+system('mkdir -p /tmp/%s/merged'%user) # tmp dir
 
 inbase = environ['SUBMIT_OUTDIR']
-#inbase ="/eos/uscms/store/user/shoh/miniaod/Vector_Zprime_NLO_Mphi-1000_Mchi-300_gSM-0p25_gDM-1p0_13TeV-madgraph/"
-#inbase  ='root://cmseos.fnal.gov/'+ inbase1.split('/eos/uscms')[1]
 outbase = environ['PANDA_FLATDIR']
+
+hadd_cmd = 'hadd -k -f '
 
 if VERBOSE:
     suffix = ''
 else:
     suffix = ' > /dev/null '
 
+# helper functions
 def hadd(inpath,outpath):
     if type(inpath)==type('str'):
         infiles = glob(inpath)
-        PInfo(sname,'hadding %s into %s'%(inpath,outpath))
-        cmd = 'hadd -k -ff -n 100 -f %s %s %s'%(outpath,inpath,suffix)
-        print cmd
-        system(cmd)
-        return
+        if len(infiles) > 1: # if 1 file, use mv
+            PInfo(sname,'hadding %s into %s'%(inpath,outpath))
+            cmd = '%s %s %s %s'%(hadd_cmd, outpath,inpath,suffix)
+            system(cmd)
+            return
     else:
         infiles = inpath
     if len(infiles)==0:
-        PWarning(sname,'nothing hadded into',outpath)
+        PWarning(sname,'nothing hadded into '+outpath)
         return
     elif len(infiles)==1:
-        cmd = 'mv %s %s'%(infiles[0],outpath)
+        PInfo(sname,'moving %s to %s'%(inpath[0],outpath))
+        cmd = 'mv -v %s %s'%(infiles[0],outpath)
     else:
-        cmd = 'hadd -k -ff -n 100 -f %s '%outpath
+        cmd = '%s %s '%(hadd_cmd, outpath)
         for f in infiles:
             if path.isfile(f):
                 cmd += '%s '%f
+        PInfo(sname,'hadding into %s'%(outpath))
     if VERBOSE: PInfo(sname,cmd)
     system(cmd+suffix)
 
@@ -82,6 +97,7 @@ def normalizeFast(fpath,opt):
     if xsec<0:
         PError(sname,'could not find xsec, skipping %s!'%opt)
         return
+    xsec *= xsecscale
     PInfo(sname,'normalizing %s (%s) ...'%(fpath,opt))
     n = root.Normalizer();
     n.NormalizeTree(fpath,xsec)
@@ -94,19 +110,18 @@ def merge(shortnames,mergedname):
         elif 'Vector' in shortname:
             tmp_ = shortname
             replacements = {
-                'Vector_Zprime_NLO_Mphi-':'',
+                'Vector_MonoTop_NLO_Mphi-':'',
                 '_gSM-0p25_gDM-1p0_13TeV-madgraph':'',
                 '_Mchi-':'_',
                 }
             for k,v in replacements.iteritems():
                 tmp_ = tmp_.replace(k,v)
-            print "tmp_= ", tmp_
             m_V,m_DM = [int(x) for x in tmp_.split('_')]
             params = read_nr_model(m_V,m_DM)
             if params:
                 xsec = params.sigma
             else:
-                exit(1)
+                xsec = 1
         elif 'Scalar' in shortname:
             tmp_ = shortname
             replacements = {
@@ -121,7 +136,7 @@ def merge(shortnames,mergedname):
             if params:
                 xsec = params.sigma
             else:
-                exit(1)
+                xsec = 1
         elif shortname in pds:
             pd = pds[shortname][0]
             xsec = pds[shortname][1]
@@ -131,60 +146,28 @@ def merge(shortnames,mergedname):
                     pd = pds[shortname_][0]
                     xsec = pds[shortname_][1]
                     break
-
-        inpath = '`xrdfs root://cmseos.fnal.gov ls -u ' + inbase + ' | grep \'' + shortname + '_\'`'
-        print inpath
-        hadd(inpath,'/uscmst1b_scratch/lpc1/3DayLifetime/%s/split/%s.root'%(user,shortname))
+        inpath = inbase+shortname+'_*.root'
+        hadd(inpath,'/tmp/%s/split/%s.root'%(user,shortname))
         if xsec>0:
-            normalizeFast('/uscmst1b_scratch/lpc1/3DayLifetime/%s/split/%s.root'%(user,shortname),xsec)
-    hadd(['/uscmst1b_scratch/lpc1/3DayLifetime/%s/split/%s.root'%(user,x) for x in shortnames],'/uscmst1b_scratch/lpc1/3DayLifetime/%s/merged/%s.root'%(user,mergedname))
+            normalizeFast('/tmp/%s/split/%s.root'%(user,shortname),xsec)
+    to_hadd = ['/tmp/%s/split/%s.root'%(user,x) for x in shortnames]
+    hadd(to_hadd, '/tmp/%s/merged/%s.root'%(user,mergedname))
+    for f in to_hadd:
+        system('rm -f %s'%f)
 
-d = {
-    'test'                : ['Diboson_ww'],
-    'Diboson'             : ['Diboson_ww','Diboson_wz','Diboson_zz'],
-    'ZJets'               : ['ZJets_ht%sto%s'%(str(x[0]),str(x[1])) for x in [(100,200),(200,400),(400,600),(600,800),(800,1200),(1200,2500),(2500,'inf')]],
-    'ZtoNuNu'             : ['ZtoNuNu_ht100to200','ZtoNuNu_ht200to400','ZtoNuNu_ht400to600','ZtoNuNu_ht600to800','ZtoNuNu_ht800to1200','ZtoNuNu_ht1200to2500','ZtoNuNu_ht2500toinf'],
-    'GJets'               : ['GJets_ht100to200','GJets_ht200to400','GJets_ht400to600','GJets_ht600toinf'],
-    'WJets'               : ['WJets_ht100to200','WJets_ht200to400','WJets_ht400to600','WJets_ht600to800','WJets_ht800to1200','WJets_ht1200to2500','WJets_ht2500toinf'],
-    'TTbar'               : ['TTbar_Powheg'],
-    'TTbar_isrup'         : ['TTbar_PowhegISRUp'],
-    'TTbar_isrdown'       : ['TTbar_PowhegISRDown'],
-    'TTbar_tuneup'        : ['TTbar_PowhegTuneUp'],
-    'TTbar_tunedown'      : ['TTbar_PowhegTuneDown'],
-    'TTbar_FXFX'          : ['TTbar_FXFX'],
-    'TTbar_Herwig'        : ['TTbar_Herwig'],
-    'TTbar_Photon'        : ['TTbar_GJets'],
-    'SingleTop'           : ['SingleTop_tT','SingleTop_tTbar','SingleTop_tbarW','SingleTop_tW','SingleTop_tZll','SingleTop_tZnunu'],
-    'SingleTop_tG'        : ['SingleTop_tG'],
-    'QCD'                 : ['QCD_ht100to200','QCD_ht200to300','QCD_ht300to500','QCD_ht500to700','QCD_ht700to1000','QCD_ht1000to1500','QCD_ht1500to2000','QCD_ht2000toinf'],
-    'MET'                 : ['MET'],
-    'SingleElectron'      : ['SingleElectron'],
-    'DoubleEG'            : ['DoubleEG'],
-    'SinglePhoton'        : ['SinglePhoton'],
-    'WJets_nlo'           : ['WJets_pt%sto%s'%(str(x[0]),str(x[1])) for x in [(100,250),(250,400),(400,600),(600,'inf')] ],
-    'ZJets_nlo'           : ['ZJets_pt%sto%s'%(str(x[0]),str(x[1])) for x in [(50,100),(100,250),(250,400),(400,650),(650,'inf')] ],
-    'ZtoNuNu_nlo'         : ['ZtoNuNu_pt%sto%s'%(str(x[0]),str(x[1])) for x in [(100,250),(250,400),(400,650),(650,'inf')] ],
-    'ZHbb'                : ['ZHbb_mH125'],
-    'ggZHbb'              : ['ggZHbb_mH125'],
-    'WpH'                 : ['WpLNuHbb'],
-    'WmH'                 : ['WmLNuHbb'],
-    'ZpTT'                : ['ZpTT_med-%i'%m for m in [1000,1250,1500,2000,2500,3000,3500,4000,500,750]],
-    'ZpWW'                : ['ZpWW_med-%i'%m for m in [1000,1200,1400,1600,1800,2000,2500,800]],
-    'th'                  : ['thq','thw'],
-    'WJets_EWK'           : ['WJets_EWKWPlus', 'WJets_EWKWMinus'],
-    'ggFHinv_m125'        : ['ggFHinv'],
-}
 
 args = {}
 
 for pd in arguments:
-    if pd in d:
-        args[pd] = d[pd]
+    if pd in cfg.d:
+        args[pd] = cfg.d[pd]
     else:
         args[pd] = [pd]
 
 for pd in args:
     merge(args[pd],pd)
-    system('cp -r /uscmst1b_scratch/lpc1/3DayLifetime/%s/merged/%s.root %s'%(user,pd,outbase))
+    merged_file = '/tmp/%s/merged/%s.root'%(user,pd)
+    hadd(merged_file ,outbase) # really an mv
+    system('rm -f %s'%merged_file)
     PInfo(sname,'finished with '+pd)
 

@@ -3,7 +3,6 @@
 from glob import glob
 from os import stat,getenv,system,path
 from multiprocessing import Pool
-from PandaCore.Tools.process import *
 from PandaCore.Tools.Misc import *
 from re import sub, match
 from sys import argv
@@ -11,9 +10,11 @@ import argparse
 
 parser = argparse.ArgumentParser(description='make config file')
 parser.add_argument('--catalog',type=str,default='/home/cmsprod/catalog/t2mit/pandaf/008')
+parser.add_argument('--user_catalog', action='store_true')
 parser.add_argument('--mc_catalog',type=str,default=None)
 parser.add_argument('--data_catalog',type=str,default=None)
-parser.add_argument('--outfile',type=str)
+parser.add_argument('--cfg',type=str,default='common')
+parser.add_argument('--outfile',type=str,default=None)
 parser.add_argument('--include',nargs='+',type=str,default=None)
 parser.add_argument('--exclude',nargs='+',type=str,default=None)
 parser.add_argument('--smartcache',action='store_true')
@@ -25,6 +26,12 @@ if not args.mc_catalog:
 if not args.data_catalog:
     args.data_catalog = args.catalog
 
+if args.cfg == 'leptonic':
+    from PandaCore.Tools.process_leptonic import *
+else:
+    from PandaCore.Tools.process import *
+
+user = getenv('USER')
 
 class CatalogSample:
     def __init__(self,name,dtype,xsec):
@@ -43,15 +50,15 @@ class CatalogSample:
             book_ = '/'.join(args.catalog.split('/')[-2:])
             lines.append('{0:<25} {2:<10} {3:<15} {1}\n'.format(nickname,f,self.dtype,self.xsec)) 
             if smartcache_args is not None:
-                if not path.isfile(f.replace('root://xrootd.cmsaf.mit.edu','/mnt/hadoop/cms')):
-                    smartcache_args.append('/cms/store/user/paus/pandaf/%s/%s'%(book_,ds_))
+                smartcache_args.append('/cms/store/user/paus/%s/%s'%(book_,ds_))
         return lines
 
 def smartcache(arguments):
-    arguments = ' '.join(arguments)
-    cmd = ('dynamoCache request --datasets %s'%(arguments))
-#    PInfo(argv[0], cmd)
-    system(cmd)
+    #arguments = ' '.join(arguments)
+    for a in arguments:
+        cmd = ('dynamoCache request --datasets %s'%(a))
+        #print cmd
+        system(cmd)
 
 def checkDS(nickname,include,exclude):
   included=False
@@ -76,11 +83,11 @@ samples = {}
 
 could_not_find = []
 
-def cat(catalog, condition): 
+def cat(catalog, condition=lambda x : True): 
     global samples, could_not_find
     for d in sorted(glob(catalog+'/*')):
         dirname = d.split('/')[-1]
-        if 'AOD' not in dirname or not condition(dirname):
+        if not condition(dirname):
             continue
         shortname = dirname.split('+')[0]
         try:
@@ -99,6 +106,7 @@ def cat(catalog, condition):
           could_not_find.append(shortname)
         if properties[0] not in samples:
             samples[properties[0]] = CatalogSample(*properties)
+        PInfo(argv[0], 'Selecting %s'%properties[0])
         sample = samples[properties[0]]
         for rfpath in glob(d+'/RawFiles.*'):
             rawfile = open(rfpath)
@@ -107,6 +115,8 @@ def cat(catalog, condition):
 
 cat(args.mc_catalog, lambda x : bool(match('.*SIM$', x)))
 cat(args.data_catalog, lambda x : bool(match('.*AOD$', x)))
+if args.user_catalog:
+    cat(args.catalog.replace('cmsprod',user).replace('t2','t3'))
 
 if len(could_not_find)>0:
     PWarning(argv[0],"Could not properly catalog following datasets (force=%s)"%('True' if args.force else 'False'))

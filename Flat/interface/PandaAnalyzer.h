@@ -218,7 +218,6 @@ private:
                      double eff, double uncFactor, double &sf, double &sfUp, double &sfDown);
     void ComplicatedLeptons();
     void ComplicatedPhotons();
-    bool PFChargedPhotonMatch(const panda::Photon& photon);
     void EvalBTagSF(std::vector<btagcand> &cands, std::vector<double> &sfs,
                     GeneralTree::BTagShift shift,GeneralTree::BTagJet jettype, bool do2=false);
     void IncrementAuxFile(bool close=false);
@@ -246,6 +245,7 @@ private:
     void JetVBFSystem();
     void JetVaryJES(panda::Jet&);
     void LeptonSFs();
+    bool PFChargedPhotonMatch(const panda::Photon& photon);
     void PhotonSFs();
     void SimplePhotons();
     void QCDUncs();

@@ -289,7 +289,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
     gt->diLepMass = -1;
   }
 
-  tr->TriggerEvent("leptons");
+  tr->TriggerEvent("complicated leptons");
 }
 
 void PandaAnalyzer::SimplePhotons()
@@ -384,7 +384,7 @@ void PandaAnalyzer::ComplicatedPhotons()
         gt->sf_phoPurity = 0.02544;
     }
 
-    tr->TriggerEvent("photons");
+    tr->TriggerEvent("complicated photons");
 }
 
 bool PandaAnalyzer::PFChargedPhotonMatch(const panda::Photon& photon)
@@ -402,7 +402,9 @@ bool PandaAnalyzer::PFChargedPhotonMatch(const panda::Photon& photon)
     }
 
   }
-  
+
+  tr->TriggerSubEvent("pf photon match");
+
   if(matchedRelPt > 0.6) return true;
   
   return false;

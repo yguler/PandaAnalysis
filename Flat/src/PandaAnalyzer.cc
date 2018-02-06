@@ -1173,7 +1173,7 @@ void PandaAnalyzer::Run()
         TriggerEffs();
 
         if (analysis->complicatedLeptons ||
-	    analysis->complicatedPhotons)
+            analysis->complicatedPhotons)
           GenStudyEWK();
         else
           LeptonSFs();

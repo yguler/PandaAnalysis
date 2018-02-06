@@ -270,6 +270,8 @@ def classify_sample(full_path, isData):
             return root.kA
         elif 'TTJets' in full_path or 'TT_' in full_path:
             return root.kTT
+        elif 'HTo' in full_path:
+            return root.kH
     return root.kNoProcess
 
 

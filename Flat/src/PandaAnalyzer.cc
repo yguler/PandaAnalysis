@@ -222,6 +222,9 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     softDrop = new fastjet::contrib::SoftDrop(sdBeta,sdZcut,radius);
     tauN = new fastjet::contrib::Njettiness(fastjet::contrib::OnePass_KT_Axes(), 
                                             fastjet::contrib::NormalizedMeasure(1., radius));
+    if (analysis->deepGenGrid) {
+      grid = new ParticleGridder(250,157,5);
+    }
   } else { 
     std::vector<TString> droppable = {"fj1NConst","fj1NSDConst","fj1EFrac100","fj1SDEFrac100"};
     gt->RemoveBranches(droppable);
@@ -296,6 +299,8 @@ void PandaAnalyzer::Terminate()
   for (auto *f : fCorrs)
     if (f)
       f->Close();
+
+  delete grid;
 
   delete btagCalib;
   delete sj_btagCalib;

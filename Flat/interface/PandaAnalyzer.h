@@ -304,6 +304,7 @@ private:
     FactorizedJetCorrector *scaleReaderAK4=0;        
 
     EraHandler eras = EraHandler(2016); //!< determining data-taking era, to be used for era-dependent JEC
+    ParticleGridder *grid = 0;
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -426,6 +427,9 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
     }
   }
 
+  if (analysis->deepGenGrid)
+    grid->clear();
+  std::vector<int> leptonIndices; // hard leptons from t->W->lv decay
   std::vector<fastjet::PseudoJet> finalStates;
   unsigned idx = -1;
   for (auto &p : genParticles) {
@@ -438,42 +442,101 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
         apdgid == 16)
       continue; 
     if (p.pt() > 0.001) {
-      finalStates.emplace_back(p.px(), p.py(), p.pz(), p.e());
-      finalStates.back().set_user_index(idx);
+      if (!analysis->deepGenGrid || (pdgToQ[apdgid] != 0)) { // it's charged, so we have tracking
+        finalStates.emplace_back(p.px(), p.py(), p.pz(), p.e());
+        finalStates.back().set_user_index(idx);
+
+        if (apdgid == 11 ||
+            apdgid == 13 ||
+            apdgid == 15) {
+          const T *parent = &p;
+          bool foundW = false, foundT = false;
+          while (parent->parent.isValid()) {
+            parent = parent->parent.get();
+            unsigned parent_apdgid = abs(parent->pdgid);
+            if (!foundW) {
+              if (parent_apdgid == 24) {
+                foundW = true;
+                continue; 
+              } else if (parent_apdgid != apdgid) {
+                break; // if it's not a W, must be a parent of the particle we care about
+              }
+            } else {  // foundW = true
+              if (parent_apdgid == 6) {
+                foundT = true;
+                break;
+              } else if (parent_apdgid != 24) {
+                break; // if it's not a top, must be a parent of the W we found
+              }
+            }
+          }
+          if (foundT) {
+            leptonIndices.push_back(idx);
+          }
+        }
+      } else {
+        grid->add(p);
+      }
     }
+  }
+  if (analysis->deepGenGrid) {
+    int user_idx = -2;
+    for (auto &v : grid->get()) {
+      finalStates.emplace_back(v.Px(), v.Py(), v.Pz(), v.E());
+      finalStates.back().set_user_index(user_idx); // not associated with a real particle
+      --user_idx;
+    } 
   }
 
   // cluster the  jet 
   fastjet::ClusterSequenceArea seq(finalStates, *jetDef, *areaDef);
-  std::vector<fastjet::PseudoJet> allJets(seq.inclusive_jets(0.));
+  std::vector<fastjet::PseudoJet> allJets(fastjet::sorted_by_pt(seq.inclusive_jets(0.)));
 
-  if (allJets.size() == 0) {
+
+  fastjet::PseudoJet *fullJet = NULL;
+  for (auto testJet : allJets) {
+    if (testJet.perp() < 450)
+      break;
+    bool jetOverlapsLepton = false;
+    for (auto &c : testJet.constituents()) {
+      int idx = c.user_index();
+      if (std::find(leptonIndices.begin(),leptonIndices.end(),idx) != leptonIndices.end()) {
+        jetOverlapsLepton = true;
+        break;
+      }
+    }
+    if (!jetOverlapsLepton) {
+      fullJet = &testJet;
+      break;
+    }
+  }
+
+  if (fullJet == NULL) {
     tr->TriggerEvent("fill gen tree");
     return;
   }
 
-  fastjet::PseudoJet fullJet = fastjet::sorted_by_pt(allJets).at(0);
-  gt->genFatJetPt = fullJet.perp();
+  gt->genFatJetPt = fullJet->perp();
 
   if (gt->genFatJetPt < 450) {
     tr->TriggerEvent("fill gen tree");
     return;
   }
 
-  VPseudoJet allConstituents = fastjet::sorted_by_pt(fullJet.constituents());
+  VPseudoJet allConstituents = fastjet::sorted_by_pt(fullJet->constituents());
   genJetInfo.pt = gt->genFatJetPt;
-  genJetInfo.m = fullJet.m();
-  genJetInfo.eta = fullJet.eta();
-  genJetInfo.phi = fullJet.phi();
+  genJetInfo.m = fullJet->m();
+  genJetInfo.eta = fullJet->eta();
+  genJetInfo.phi = fullJet->phi();
 
   // softdrop the jet
-  fastjet::PseudoJet sdJet = (*softDrop)(fullJet);
+  fastjet::PseudoJet sdJet = (*softDrop)(*fullJet);
   VPseudoJet sdConstituents = fastjet::sorted_by_pt(sdJet.constituents());
   genJetInfo.msd = sdJet.m();
   std::vector<bool> survived(allConstituents.size());
   unsigned nC = allConstituents.size();
   for (unsigned iC = 0; iC != nC; ++iC) {
-    unsigned idx = allConstituents.at(iC).user_index();
+    int idx = allConstituents.at(iC).user_index();
     survived[iC] = false;
     for (auto &sdc : sdConstituents) {
       if (idx == sdc.user_index()) {
@@ -588,7 +651,7 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
     }
   }
 
-  JetRotation rot(fullJet.px(), fullJet.py(), fullJet.pz(),
+  JetRotation rot(fullJet->px(), fullJet->py(), fullJet->pz(),
                   axis2->px(), axis2->py(), axis2->pz());
 
   // now we fill the particles
@@ -596,12 +659,12 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
   for (unsigned iC = 0; iC != nC; ++iC) {
     fastjet::PseudoJet &c = allConstituents.at(iC);
 
-    if (c.perp() < 0.0001 || c.user_index() < 0) // not a real particle
+    if (c.perp() < 0.001) // not a real particle
       continue;
 
-    // genJetInfo.particles[iC][0] = c.perp() / fullJet.perp();
-    // genJetInfo.particles[iC][1] = c.eta() - fullJet.eta();
-    // genJetInfo.particles[iC][2] = SignedDeltaPhi(c.phi(), fullJet.phi());
+    // genJetInfo.particles[iC][0] = c.perp() / fullJet->perp();
+    // genJetInfo.particles[iC][1] = c.eta() - fullJet->eta();
+    // genJetInfo.particles[iC][2] = SignedDeltaPhi(c.phi(), fullJet->phi());
     // genJetInfo.particles[iC][3] = c.m();
     // genJetInfo.particles[iC][4] = c.e();
     float angle = DeltaR2(c.eta(), c.phi(), genJetInfo.eta, genJetInfo.phi);
@@ -615,37 +678,40 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
     genJetInfo.particles[iC][5] = survived[iC] ? 1 : 0;
 
     unsigned ptype = 0;
-    T &gen = genParticles.at(c.user_index());
-    int pdgid = gen.pdgid;
-    unsigned apdgid = abs(pdgid);
-    if (apdgid == 11) {
-      ptype = 1 * sign(pdgid * -11);
-    } else if (apdgid == 13) {
-      ptype = 2 * sign(pdgid * -13);
-    } else if (apdgid == 22) {
-      ptype = 3;
-    } else {
-      float q = pdgToQ[apdgid];
-      if (apdgid != pdgid)
-        q *= -1;
-      if (q == 0) 
-        ptype = 4;
-      else if (q > 0) 
-        ptype = 5;
-      else 
-        ptype = 6;
-    }
-    genJetInfo.particles[iC][6] = ptype;
-
-    const T *parent = &gen;
     int parent_idx = -1;
-    while (parent->parent.isValid()) {
-      parent = parent->parent.get();
-      if (partons.find(parent) != partons.end()) {
-        parent_idx = partonToIdx[parent];
-        break;
+    if (c.user_index() >= 0) {
+      T &gen = genParticles.at(c.user_index());
+      int pdgid = gen.pdgid;
+      unsigned apdgid = abs(pdgid);
+      if (apdgid == 11) {
+        ptype = 1 * sign(pdgid * -11);
+      } else if (apdgid == 13) {
+        ptype = 2 * sign(pdgid * -13);
+      } else if (apdgid == 22) {
+        ptype = 3;
+      } else {
+        float q = pdgToQ[apdgid];
+        if (apdgid != pdgid)
+          q *= -1;
+        if (q == 0) 
+          ptype = 4;
+        else if (q > 0) 
+          ptype = 5;
+        else 
+          ptype = 6;
+      }
+
+      const T *parent = &gen;
+      while (parent->parent.isValid()) {
+        parent = parent->parent.get();
+        if (partons.find(parent) != partons.end()) {
+          parent_idx = partonToIdx[parent];
+          break;
+        }
       }
     }
+
+    genJetInfo.particles[iC][6] = ptype;
     genJetInfo.particles[iC][7] = parent_idx;
   }
 

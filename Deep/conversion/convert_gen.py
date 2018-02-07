@@ -21,6 +21,7 @@ argv = []
 n_partons_proc = {
             'QCD'   : 1,
             'Top'   : 3,
+            'Top_lo': 3,
             'ZpTT'  : 3,
             'ZpWW'  : 2,
             'ZpA0h' : 2,
@@ -48,6 +49,7 @@ for fpath in fcfg.readlines():
         if v.shape[0]:
             if k not in data:
                 data[k] = []
+            #data[k].append(v)
             data[k].append(v[mask])
 
 if not len(data):

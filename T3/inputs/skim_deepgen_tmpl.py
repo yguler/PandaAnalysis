@@ -39,6 +39,7 @@ def fn(input_name, isData, full_path):
         processType = root.kTop
     analysis = deepgen() 
     analysis.processType=processType 
+    analysis.deepGenGrid = True
     analysis.dump()
     skimmer.SetAnalysis(analysis)
     skimmer.isData=isData

@@ -390,9 +390,6 @@ void PandaAnalyzer::SetDataDir(const char *s)
   if (analysis->complicatedLeptons) {
     // Corrections checked out from Gui's repository on Nov 12, 2017 ~DGH
     // https://github.com/GuillelmoGomezCeballos/MitAnalysisRunII/tree/master/data/80x
-    OpenCorrection(cZHEwkCorr,dirPath+"leptonic/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin",1);
-    OpenCorrection(cZHEwkCorrUp  ,dirPath+"leptonic/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin",1);
-    OpenCorrection(cZHEwkCorrDown,dirPath+"leptonic/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
     OpenCorrection(cMuLooseID,dirPath+"leptonic/muon_scalefactors_37ifb.root","scalefactors_MuonLooseId_Muon",2);
     OpenCorrection(cMuMediumID,dirPath+"leptonic/scalefactors_80x_dylan_37ifb.root","scalefactors_Medium_Muon",2);
     OpenCorrection(cMuTightID,dirPath+"leptonic/muon_scalefactors_37ifb.root","scalefactors_TightId_Muon",2);
@@ -423,6 +420,22 @@ void PandaAnalyzer::SetDataDir(const char *s)
     OpenCorrection(cMuTightIso,dirPath+"moriond17/muon_scalefactors_37ifb.root","scalefactors_Iso_MuonTightId",2);
     OpenCorrection(cMuReco,dirPath+"moriond17/Tracking_12p9.root","htrack2",1);
   }
+  // Differential Electroweak VH Corrections
+  if(analysis->hbb) {
+    OpenCorrection(cWmHEwkCorr    ,dirPath+"higgs/Wm_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin"     ,1);
+    OpenCorrection(cWmHEwkCorrUp  ,dirPath+"higgs/Wm_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
+    OpenCorrection(cWmHEwkCorrDown,dirPath+"higgs/Wm_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
+    OpenCorrection(cWpHEwkCorr    ,dirPath+"higgs/Wp_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin"     ,1);
+    OpenCorrection(cWpHEwkCorrUp  ,dirPath+"higgs/Wp_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
+    OpenCorrection(cWpHEwkCorrDown,dirPath+"higgs/Wp_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
+    OpenCorrection(cZnnHEwkCorr    ,dirPath+"higgs/Znn_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin"     ,1);
+    OpenCorrection(cZnnHEwkCorrUp  ,dirPath+"higgs/Znn_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
+    OpenCorrection(cZnnHEwkCorrDown,dirPath+"higgs/Znn_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
+    OpenCorrection(cZllHEwkCorr    ,dirPath+"higgs/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin"     ,1);
+    OpenCorrection(cZllHEwkCorrUp  ,dirPath+"higgs/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
+    OpenCorrection(cZllHEwkCorrDown,dirPath+"higgs/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
+  }
+
   // photons
   OpenCorrection(cPho,dirPath+"moriond17/scalefactors_80x_medium_photon_37ifb.root",
                  "EGamma_SF2D",2);
@@ -549,6 +562,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
     gSystem->Exec(
         Form("wget -O %s/trainings/bjet_regression_v0.weights.xml http://t3serv001.mit.edu/~snarayan/pandadata/trainings/bjet_regression_v0.weights.xml",dirPath.Data())
       );
+    bjetreg_reader->BookMVA( "BDT method", dirPath+"trainings/bjet_regression_v0.weights.xml" );
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded bjet regression weights");
   }

@@ -200,7 +200,7 @@ void GeneralTree::Reset() {
     //electronHOverE[iL] = -99;
     //electronEcalE[iL] = -99;
     //electronTrackP[iL] = -99;
-    //electronNMissingHits[iL] = -99;
+    electronNMissingHits[iL] = -99;
     electronTripleCharge[iL] = -99;
     electronCombIso[iL] = -99;
   }
@@ -241,6 +241,14 @@ void GeneralTree::Reset() {
     genLep2Eta = -1;
     genLep2Phi = -1;
     genLep2PdgId = 0;
+    genLep3Pt = -1;
+    genLep3Eta = -1;
+    genLep3Phi = -1;
+    genLep3PdgId = 0;
+    genLep4Pt = -1;
+    genLep4Eta = -1;
+    genLep4Phi = -1;
+    genLep4PdgId = 0;
     looseGenLep1PdgId = 0;
     looseGenLep2PdgId = 0;
     looseGenLep3PdgId = 0;
@@ -808,7 +816,7 @@ void GeneralTree::WriteTree(TTree *t) {
     //Book("electronHOverE",electronHOverE,"electronHOverE[nLooseElectron]/F");
     //Book("electronEcalE",electronEcalE,"electronEcalE[nLooseElectron]/F");
     //Book("electronTrackP",electronTrackP,"electronTrackP[nLooseElectron]/F");
-    //Book("electronNMissingHits",electronNMissingHits,"electronNMissingHits[nLooseElectron]/I");
+    Book("electronNMissingHits",electronNMissingHits,"electronNMissingHits[nLooseElectron]/I");
     Book("electronTripleCharge",electronTripleCharge,"electronTripleCharge[nLooseElectron]/I");
     Book("electronCombIso",electronCombIso,"electronCombIso[nLooseElectron]/F");
     // Gen study
@@ -826,6 +834,14 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("genLep2Eta",&genLep2Eta,"genLep2Eta/F");
     Book("genLep2Phi",&genLep2Phi,"genLep2Phi/F");
     Book("genLep2PdgId",&genLep2PdgId,"genLep2PdgId/I");
+    Book("genLep3Pt",&genLep3Pt,"genLep3Pt/F");
+    Book("genLep3Eta",&genLep3Eta,"genLep3Eta/F");
+    Book("genLep3Phi",&genLep3Phi,"genLep3Phi/F");
+    Book("genLep3PdgId",&genLep3PdgId,"genLep3PdgId/I");
+    Book("genLep4Pt",&genLep4Pt,"genLep4Pt/F");
+    Book("genLep4Eta",&genLep4Eta,"genLep4Eta/F");
+    Book("genLep4Phi",&genLep4Phi,"genLep4Phi/F");
+    Book("genLep4PdgId",&genLep4PdgId,"genLep4PdgId/I");
     Book("looseGenLep1PdgId",&looseGenLep1PdgId,"looseGenLep1PdgId/I");
     Book("looseGenLep2PdgId",&looseGenLep2PdgId,"looseGenLep2PdgId/I");
     Book("looseGenLep3PdgId",&looseGenLep3PdgId,"looseGenLep3PdgId/I");
@@ -938,7 +954,7 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("jet2CSV",&jet2CSV,"jet2CSV/F");
     Book("jet2CMVA",&jet2CMVA,"jet2CMVA/F");
   }
-//ENDCUSTOMWRITE
+  if (!leptonic) { // information about fat jets or recoil met not needed for leptonic analyses
     Book("genFatJetPt",&genFatJetPt,"genFatJetPt/F");
     Book("fj1NBPartons",&fj1NBPartons,"fj1NBPartons/I");
     Book("fj1NCPartons",&fj1NCPartons,"fj1NCPartons/I");
@@ -950,17 +966,47 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("fj1PartonM",&fj1PartonM,"fj1PartonM/F");
     Book("fj1PartonPt",&fj1PartonPt,"fj1PartonPt/F");
     Book("fj1PartonEta",&fj1PartonEta,"fj1PartonEta/F");
-    Book("trkmetphi",&trkmetphi,"trkmetphi/F");
-    Book("whichRecoil",&whichRecoil,"whichRecoil/I");
-    Book("badECALFilter",&badECALFilter,"badECALFilter/I");
-    Book("jetNMBtags",&jetNMBtags,"jetNMBtags/I");
-    Book("pfmetRaw",&pfmetRaw,"pfmetRaw/F");
     Book("nAK8jet",&nAK8jet,"nAK8jet/I");
     Book("ak81Pt",&ak81Pt,"ak81Pt/F");
     Book("ak81Eta",&ak81Eta,"ak81Eta/F");
     Book("ak81Phi",&ak81Phi,"ak81Phi/F");
     Book("ak81MaxCSV",&ak81MaxCSV,"ak81MaxCSV/F");
+    Book("puppiUWmag",&puppiUWmag,"puppiUWmag/F");
+    Book("puppiUWphi",&puppiUWphi,"puppiUWphi/F");
+    Book("puppiUZmag",&puppiUZmag,"puppiUZmag/F");
+    Book("puppiUZphi",&puppiUZphi,"puppiUZphi/F");
+    Book("puppiUAmag",&puppiUAmag,"puppiUAmag/F");
+    Book("puppiUAphi",&puppiUAphi,"puppiUAphi/F");
+    Book("puppiUperp",&puppiUperp,"puppiUperp/F");
+    Book("puppiUpara",&puppiUpara,"puppiUpara/F");
+    Book("puppiUmag",&puppiUmag,"puppiUmag/F");
+    Book("puppiUphi",&puppiUphi,"puppiUphi/F");
+    Book("pfUWmag",&pfUWmag,"pfUWmag/F");
+    Book("pfUWphi",&pfUWphi,"pfUWphi/F");
+    Book("pfUZmag",&pfUZmag,"pfUZmag/F");
+    Book("pfUZphi",&pfUZphi,"pfUZphi/F");
+    Book("pfUAmag",&pfUAmag,"pfUAmag/F");
+    Book("pfUAphi",&pfUAphi,"pfUAphi/F");
+    Book("pfUperp",&pfUperp,"pfUperp/F");
+    Book("pfUpara",&pfUpara,"pfUpara/F");
+    Book("pfUmag",&pfUmag,"pfUmag/F");
+    Book("pfUphi",&pfUphi,"pfUphi/F");
+    Book("dphipuppiUW",&dphipuppiUW,"dphipuppiUW/F");
+    Book("dphipuppiUZ",&dphipuppiUZ,"dphipuppiUZ/F");
+    Book("dphipuppiUA",&dphipuppiUA,"dphipuppiUA/F");
+    Book("dphipfUW",&dphipfUW,"dphipfUW/F");
+    Book("dphipfUZ",&dphipfUZ,"dphipfUZ/F");
+    Book("dphipfUA",&dphipfUA,"dphipfUA/F");
+    Book("dphipuppiU",&dphipuppiU,"dphipuppiU/F");
+    Book("dphipfU",&dphipfU,"dphipfU/F");
     Book("isGS",&isGS,"isGS/I");
+  }
+//ENDCUSTOMWRITE
+    Book("trkmetphi",&trkmetphi,"trkmetphi/F");
+    Book("whichRecoil",&whichRecoil,"whichRecoil/I");
+    Book("badECALFilter",&badECALFilter,"badECALFilter/I");
+    Book("jetNMBtags",&jetNMBtags,"jetNMBtags/I");
+    Book("pfmetRaw",&pfmetRaw,"pfmetRaw/F");
     Book("runNumber",&runNumber,"runNumber/I");
     Book("lumiNumber",&lumiNumber,"lumiNumber/I");
     Book("eventNumber",&eventNumber,"eventNumber/l");
@@ -1003,36 +1049,8 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("pfcalobalance",&pfcalobalance,"pfcalobalance/F");
     Book("sumET",&sumET,"sumET/F");
     Book("trkmet",&trkmet,"trkmet/F");
-    Book("puppiUWmag",&puppiUWmag,"puppiUWmag/F");
-    Book("puppiUWphi",&puppiUWphi,"puppiUWphi/F");
-    Book("puppiUZmag",&puppiUZmag,"puppiUZmag/F");
-    Book("puppiUZphi",&puppiUZphi,"puppiUZphi/F");
-    Book("puppiUAmag",&puppiUAmag,"puppiUAmag/F");
-    Book("puppiUAphi",&puppiUAphi,"puppiUAphi/F");
-    Book("puppiUperp",&puppiUperp,"puppiUperp/F");
-    Book("puppiUpara",&puppiUpara,"puppiUpara/F");
-    Book("puppiUmag",&puppiUmag,"puppiUmag/F");
-    Book("puppiUphi",&puppiUphi,"puppiUphi/F");
-    Book("pfUWmag",&pfUWmag,"pfUWmag/F");
-    Book("pfUWphi",&pfUWphi,"pfUWphi/F");
-    Book("pfUZmag",&pfUZmag,"pfUZmag/F");
-    Book("pfUZphi",&pfUZphi,"pfUZphi/F");
-    Book("pfUAmag",&pfUAmag,"pfUAmag/F");
-    Book("pfUAphi",&pfUAphi,"pfUAphi/F");
-    Book("pfUperp",&pfUperp,"pfUperp/F");
-    Book("pfUpara",&pfUpara,"pfUpara/F");
-    Book("pfUmag",&pfUmag,"pfUmag/F");
-    Book("pfUphi",&pfUphi,"pfUphi/F");
     Book("dphipfmet",&dphipfmet,"dphipfmet/F");
     Book("dphipuppimet",&dphipuppimet,"dphipuppimet/F");
-    Book("dphipuppiUW",&dphipuppiUW,"dphipuppiUW/F");
-    Book("dphipuppiUZ",&dphipuppiUZ,"dphipuppiUZ/F");
-    Book("dphipuppiUA",&dphipuppiUA,"dphipuppiUA/F");
-    Book("dphipfUW",&dphipfUW,"dphipfUW/F");
-    Book("dphipfUZ",&dphipfUZ,"dphipfUZ/F");
-    Book("dphipfUA",&dphipfUA,"dphipfUA/F");
-    Book("dphipuppiU",&dphipuppiU,"dphipuppiU/F");
-    Book("dphipfU",&dphipfU,"dphipfU/F");
     Book("trueGenBosonPt",&trueGenBosonPt,"trueGenBosonPt/F");
     Book("genBosonPt",&genBosonPt,"genBosonPt/F");
     Book("genBosonEta",&genBosonEta,"genBosonEta/F");
@@ -1065,4 +1083,3 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("pdfUp",&pdfUp,"pdfUp/F");
     Book("pdfDown",&pdfDown,"pdfDown/F");
 }
-

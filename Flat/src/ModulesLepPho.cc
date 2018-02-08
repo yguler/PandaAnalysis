@@ -170,7 +170,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
     //gt->electronHOverE[iL]       = ele.hOverE;
     //gt->electronEcalE[iL]        = ele.ecalE;
     //gt->electronTrackP[iL]       = ele.trackP;
-    //gt->electronNMissingHits[iL] = ele.nMissingHits;
+    gt->electronNMissingHits[iL] = ele.nMissingHits;
     gt->electronTripleCharge[iL] = ele.tripleCharge;
     gt->electronCombIso[iL] = ele.combIso();
     looseLeps.push_back(&ele);

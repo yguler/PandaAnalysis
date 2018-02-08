@@ -305,7 +305,7 @@ class GeneralTree : public genericTree {
       //float electronHOverE[NLEP];
       //float electronEcalE[NLEP];
       //float electronTrackP[NLEP];
-      //int electronNMissingHits[NLEP];
+      int electronNMissingHits[NLEP];
       int electronTripleCharge[NLEP];
       float electronCombIso[NLEP];
 
@@ -342,6 +342,14 @@ class GeneralTree : public genericTree {
     float genLep2Eta = -1;
     float genLep2Phi = -1;
     int genLep2PdgId = -1;
+    float genLep3Pt = -1;
+    float genLep3Eta = -1;
+    float genLep3Phi = -1;
+    int genLep3PdgId = -1;
+    float genLep4Pt = -1;
+    float genLep4Eta = -1;
+    float genLep4Phi = -1;
+    int genLep4PdgId = -1;
     int looseGenLep1PdgId = -1;
     int looseGenLep2PdgId = -1;
     int looseGenLep3PdgId = -1;

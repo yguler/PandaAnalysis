@@ -129,7 +129,8 @@ void PandaAnalyzer::JetBasics()
       }
 
       if (jet.pt()>jetPtThreshold) { // nominal jets
-        if(cleanedJets.size()>=NJET && (analyis->hbb || analysis->monoh)) continue;
+        if ((analyis->hbb || analysis->monoh) && cleanedJets.size() >= NJET) 
+          continue;
         cleanedJets.push_back(&jet);
         // Set jetGenPt, jetGenFlavor for these jets
         // This will be overwritten later if reclusterGen is turned on

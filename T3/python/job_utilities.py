@@ -179,7 +179,7 @@ def drop_branches(to_drop=None, to_keep=None):
 # then, check if the file exists:
 #  - if IS_T3, use os.path.isfile
 #  - else, use lcg-ls
-def stageout(outdir,outfilename,infilename='output.root',n_attempts=10):
+def stageout(outdir,outfilename,infilename='output.root',n_attempts=10,ls=True):
     if stageout_protocol is None:
         PError(sname+'.stageout',
                'Stageout protocol has not been satisfactorily determined! Cannot proceed.')
@@ -193,10 +193,16 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=10):
             lsargs = 'ls %s/%s'%(outdir,outfilename)
         elif stageout_protocol == 'gfal':
             cpargs = 'gfal-copy -f --transfer-timeout %i $PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(timeout,infilename,outdir,outfilename)
-            lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+            if ls:
+                lsargs = 'gfal-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+            else:
+                lsargs = 'gfal-copy -f --transfer-timeout %i srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s $PWD/testfile'%(timeout,outdir,outfilename)
         elif stageout_protocol == 'lcg':
             cpargs = 'lcg-cp -v -D srmv2 -b file://$PWD/%s srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(infilename,outdir,outfilename)
-            lsargs = 'lcg-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+            if ls:
+                lsargs = 'lcg-ls srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s'%(outdir,outfilename)
+            else:
+                lsargs = 'lcg-cp -v -D srmv2 -b srm://t3serv006.mit.edu:8443/srm/v2/server?SFN=%s/%s file://$PWD/testfile'%(outdir,outfilename)
         else:
             PError(sname+'.stageout','stageout_protocol not set!')
             raise RuntimeError
@@ -238,7 +244,7 @@ def write_lock(outdir,outfilename,processed):
     for k,v in processed.iteritems():
         flock.write(v+'\n')
     flock.close()
-    stageout(outdir,outfilename,outfilename)
+    stageout(outdir,outfilename,outfilename,ls=False)
 
 
 # make a record in the primary output of what

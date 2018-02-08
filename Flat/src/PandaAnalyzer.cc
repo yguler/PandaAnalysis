@@ -223,7 +223,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     tauN = new fastjet::contrib::Njettiness(fastjet::contrib::OnePass_KT_Axes(), 
                                             fastjet::contrib::NormalizedMeasure(1., radius));
     if (analysis->deepGenGrid) {
-      grid = new ParticleGridder(250,157,5);
+      // grid = new ParticleGridder(250,157,5); // 0.02x0.02
+      grid = new ParticleGridder(1000,628,5); // 0.005x0.005
     }
   } else { 
     std::vector<TString> droppable = {"fj1NConst","fj1NSDConst","fj1EFrac100","fj1SDEFrac100"};

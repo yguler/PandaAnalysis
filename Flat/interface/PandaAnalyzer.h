@@ -627,6 +627,7 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
   }
 
   genJetInfo.nprongs = partons.size();
+  gt->genFatJetNProngs = genJetInfo.nprongs;
 
   TLorentzVector vPartonSum;
   TLorentzVector vTmp;

@@ -27,62 +27,11 @@
 
 class ParticleGridder {
   public:
-    ParticleGridder(unsigned etaN, unsigned phiN, float etaMax=5) {
-      float phiMax = TMath::Pi();
-      hEta_ = new TH1F("eta","eta",etaN*2,-etaMax,etaMax);
-      hPhi_ = new TH1F("phi","phi",phiN*2,-phiMax,phiMax);
-      etaMax_ = etaMax; phiMax_ = phiMax;
-      collections_.resize(etaN*2);
-      for (auto &v : collections_)
-        v.resize(phiN*2);
-    }
+    ParticleGridder(unsigned etaN, unsigned phiN, float etaMax=5);
     ~ParticleGridder() { clear(); delete hEta_; delete hPhi_; }
-    void clear() { 
-      particles_.clear();
-      for (auto &v : collections_) {
-        for (auto &vv : v) {
-          vv.clear();
-        }
-      }
-      gridded_.clear();
-      nonEmpty_.clear();
-    }
-    void add(panda::Particle &p) {
-      particles_.push_back(p.p4());
-    }
-    std::vector<TLorentzVector>& get() {
-      for (auto &p : particles_) {
-        float eta = p.Eta();
-        float phi = p.Phi();
-        if (fabs(eta) > etaMax_)
-          continue;
-        int etabin = hEta_->FindBin(eta)-1;
-        int phibin = hPhi_->FindBin(phi)-1;
-        collections_.at(etabin).at(phibin).push_back(&p);
-        std::pair<int,int>bin(etabin,phibin);
-        if (std::find(nonEmpty_.begin(),nonEmpty_.end(),bin) == nonEmpty_.end())
-          nonEmpty_.push_back(bin);
-      }
-
-      // grid is filled
-      gridded_.clear();
-      for (auto &bin : nonEmpty_) {
-        int iEta = bin.first, iPhi = bin.second;
-        std::vector<TLorentzVector*> inBin = collections_.at(iEta).at(iPhi);
-        if (inBin.size() > 0) {
-          TLorentzVector vSum;
-          for (auto *p : inBin) {
-            vSum += *p;
-          }
-          float eta = hEta_->GetBinCenter(iEta);
-          float phi = hPhi_->GetBinCenter(iPhi);
-          vSum.SetPtEtaPhiM(vSum.Pt(), eta, phi, vSum.M());
-//          printf("converted %lu particles into vector of (%.3f,%.3f,%.3f,%.3f,%.3f)\n",inBin.size(),vSum.Pt(),eta,phi,vSum.M(),vSum.E());
-          gridded_.push_back(vSum);
-        }
-      }
-      return gridded_;
-    }
+    void clear();
+    void add(panda::Particle& p);
+    std::vector<TLorentzVector>& get();
   private:
     float etaMax_, phiMax_;
     TH1F *hEta_=0, *hPhi_=0;

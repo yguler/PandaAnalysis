@@ -3,6 +3,71 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
+ParticleGridder::ParticleGridder(unsigned etaN, unsigned phiN, float etaMax=5) 
+{
+  float phiMax = TMath::Pi();
+  hEta_ = new TH1F("eta","eta",etaN*2,-etaMax,etaMax);
+  hPhi_ = new TH1F("phi","phi",phiN*2,-phiMax,phiMax);
+  etaMax_ = etaMax; phiMax_ = phiMax;
+  collections_.resize(etaN*2);
+  for (auto &v : collections_)
+    v.resize(phiN*2);
+}
+
+void ParticleGridder::clear() 
+{
+  particles_.clear();
+  for (auto &v : collections_) {
+    for (auto &vv : v) {
+      vv.clear();
+    }
+  }
+  gridded_.clear();
+  nonEmpty_.clear();
+}
+
+void ParticleGridder::add(panda::Particle& p) 
+{
+  particles_.push_back(p.p4());
+}
+
+
+std::vector<TLorentzVector>& ParticleGridder::get() 
+{
+  for (auto &p : particles_) {
+    float eta = p.Eta();
+    float phi = p.Phi();
+    if (fabs(eta) > etaMax_)
+      continue;
+    int etabin = hEta_->FindBin(eta)-1;
+    int phibin = hPhi_->FindBin(phi)-1;
+    collections_.at(etabin).at(phibin).push_back(&p);
+    std::pair<int,int>bin(etabin,phibin);
+    if (std::find(nonEmpty_.begin(),nonEmpty_.end(),bin) == nonEmpty_.end())
+      nonEmpty_.push_back(bin);
+  }
+
+  // grid is filled
+  gridded_.clear();
+  for (auto &bin : nonEmpty_) {
+    int iEta = bin.first, iPhi = bin.second;
+    std::vector<TLorentzVector*> inBin = collections_.at(iEta).at(iPhi);
+    if (inBin.size() > 0) {
+      TLorentzVector vSum;
+      for (auto *p : inBin) {
+        vSum += *p;
+      }
+      float eta = hEta_->GetBinCenter(iEta);
+      float phi = hPhi_->GetBinCenter(iPhi);
+      vSum.SetPtEtaPhiM(vSum.Pt(), eta, phi, vSum.M());
+      gridded_.push_back(vSum);
+    }
+  }
+  return gridded_;
+}
+
+////////////////////////////////////////////////////////////////////////////////////
+
 JetRotation::JetRotation(float x1, float y1, float z1, float x2, float y2, float z2)
 {
   TVector3 axis1(x1, y1, z1); // this axis gets rotated onto the z-axis

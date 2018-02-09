@@ -421,6 +421,7 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
   genJetInfo.nprongs = -1;
   genJetInfo.partonpt = -1; genJetInfo.partonm = -1;
   gt->genFatJetPt = 0;
+  gt->genFatJetNProngs = -1;
   for (unsigned i = 0; i != NMAXPF; ++i) {
     for (unsigned j = 0; j != NGENPROPS; ++j) {
       genJetInfo.particles[i][j] = 0;

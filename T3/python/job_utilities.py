@@ -218,7 +218,10 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=10,ls=None):
         failed = False
         if stageout_protocol == 'cp':
             cpargs = 'cp -v $PWD/%s %s/%s'%(infilename,outdir,outfilename)
-            lsargs = 'ls %s/%s'%(outdir,outfilename)
+            if ls:
+                lsargs = 'ls %s/%s'%(outdir,outfilename)
+            else:
+                lsargs = 'cp -v %s/%s $PWD/testfile'%(outdir,outfilename)
         elif stageout_protocol == 'gfal':
             cpargs =     ' '.join(['gfal-copy',
                                    '-f', 

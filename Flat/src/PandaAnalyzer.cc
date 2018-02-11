@@ -677,7 +677,7 @@ bool PandaAnalyzer::PassPreselection()
   }
 
   else if (preselBits & kLeptonFake) {
-    bool passFakeTrigger = (gt->trigger & kMuFakeTrig) != 0 || (gt->trigger & kEleFakeTrig) != 0;
+    bool passFakeTrigger = (gt->trigger & (1<<kMuFakeTrig)) != 0 || (gt->trigger & (1<<kEleFakeTrig)) != 0;
     if (passFakeTrigger == true) {
       double mll = 0.0;
       if (gt->nLooseLep == 2) {

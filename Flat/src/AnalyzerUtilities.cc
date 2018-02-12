@@ -3,7 +3,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-ParticleGridder::ParticleGridder(unsigned etaN, unsigned phiN, float etaMax=5) 
+ParticleGridder::ParticleGridder(unsigned etaN, unsigned phiN, float etaMax) 
 {
   float phiMax = TMath::Pi();
   hEta_ = new TH1F("eta","eta",etaN*2,-etaMax,etaMax);

@@ -37,7 +37,7 @@ for k,v in n_partons_proc.iteritems():
 
 import ROOT as root 
 f_pt = root.TFile.Open(datadir + 'flatten_gen.root')
-h_pt = f_pt.Get('h_%s'%(name.split('_')[0]))
+h_pt = f_pt.Get('h_%s'%('_'.join(name.split('_')[:-1])))
 f_pt_scaled = root.TFile.Open(datadir + 'flatten_gen_scaled.root')
 h_pt_scaled = f_pt_scaled.Get('h_%s'%(name.split('_')[0]))
 

@@ -18,7 +18,7 @@ argv = []
 import ROOT as root
 from PandaCore.Tools.Load import *
 from PandaAnalysis.Flat.analysis import deep, deepgen
-import PandaAnalysis.T3.job_utilities as utils
+import PandaAnalysis.LPC_T3.job_utilities as utils
 
 Load('PandaAnalyzer')
 

@@ -37,7 +37,7 @@ std::vector<TLorentzVector>& ParticleGridder::get()
   for (auto &p : particles_) {
     float eta = p.Eta();
     float phi = p.Phi();
-    if (fabs(eta) > etaMax_)
+    if (fabs(eta) >= etaMax_)
       continue;
     int etabin = hEta_->FindBin(eta)-1;
     int phibin = hPhi_->FindBin(phi)-1;

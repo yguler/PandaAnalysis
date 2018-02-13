@@ -39,10 +39,13 @@ import ROOT as root
 f_pt = root.TFile.Open(datadir + 'flatten_gen.root')
 h_pt = f_pt.Get('h_%s'%('_'.join(name.split('_')[:-1])))
 f_pt_scaled = root.TFile.Open(datadir + 'flatten_gen_scaled.root')
-h_pt_scaled = f_pt_scaled.Get('h_%s'%(name.split('_')[0]))
+h_pt_scaled = f_pt_scaled.Get('h_%s'%('_'.join(name.split('_')[:-1])))
+
+print 'h_%s'%('_'.join(name.split('_')[:-1]))
 
 data = {}
 for fpath in fcfg.readlines():
+    print fpath.strip()
     d = np.load(fpath.strip())
     mask = (d['nprongs'] == n_partons)
     for k,v in d.iteritems():

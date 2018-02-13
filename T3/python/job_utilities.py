@@ -207,6 +207,7 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=10,ls=None):
     if ls is None:
         # if it's not on hadoop, copy the file to test it exists, to force nfs refresh
         ls = not('hadoop' in outdir) 
+    ls = False # override, I don't trust network-mounted filesystems anymore 
     if stageout_protocol is None:
         PError(_sname+'.stageout',
                'Stageout protocol has not been satisfactorily determined! Cannot proceed.')
@@ -227,54 +228,44 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=10,ls=None):
                                    '-f', 
                                    '--transfer-timeout %i'%timeout,
                                    '$PWD/%s'%infilename,
-                                   'gsiftp://%s:2811/srm/v2/server?SFN=%s/%s'%(door,outdir,outfilename)])
+                                   'gsiftp://%s:2811//%s/%s'%(door,outdir,outfilename)])
             if ls:
                 lsargs = ' '.join(['gfal-ls',
-                                   'gsiftp://%s:2811/srm/v2/server?SFN=%s/%s'%(door,outdir,outfilename)])
+                                   'gsiftp://%s:2811//%s/%s'%(door,outdir,outfilename)])
             else:
                 lsargs = ' '.join(['gfal-copy',
                                    '-f', 
                                    '--transfer-timeout %i'%timeout,
-                                   'gsiftp://%s:2811/srm/v2/server?SFN=%s/%s'%(door,outdir,outfilename),
+                                   'gsiftp://%s:2811//%s/%s'%(door,outdir,outfilename),
                                    '$PWD/testfile'])
         elif stageout_protocol == 'lcg':
             cpargs =     ' '.join(['lcg-cp',
                                    '-v -D srmv2 -b', 
                                    'file://$PWD/%s'%infilename,
-                                   'gsiftp://%s:2811/srm/v2/server?SFN=%s/%s'%(door,outdir,outfilename)])
+                                   'gsiftp://%s:2811//%s/%s'%(door,outdir,outfilename)])
             if ls:       
                 lsargs = ' '.join(['lcg-ls',
                                    '-v -D srmv2 -b', 
-                                   'gsiftp://%s:2811/srm/v2/server?SFN=%s/%s'%(door,outdir,outfilename)])
+                                   'gsiftp://%s:2811//%s/%s'%(door,outdir,outfilename)])
             else:
                 lsargs = ' '.join(['lcg-cp',
                                    '-v -D srmv2 -b', 
-                                   'gsiftp://%s:2811/srm/v2/server?SFN=%s/%s'%(door,outdir,outfilename),
+                                   'gsiftp://%s:2811//%s/%s'%(door,outdir,outfilename),
                                    'file://$PWD/testfile'])
-        else:
-            PError(_sname+'.stageout','stageout_protocol not set!')
-            raise RuntimeError
         PInfo(_sname+'.stageout',cpargs)
         ret = system(cpargs)
         if not ret:
             PInfo(_sname+'.stageout','Move exited with code %i'%ret)
-            sleep(5) # give the filesystem a chance to respond
+            sleep(10) # give the filesystem a chance to respond
         else:
             PError(_sname+'.stageout','Move exited with code %i'%ret)
             failed = True
         if not failed:
-            if stageout_protocol == 'cp' and False:
-                if not path.isfile('%s/%s'%(outdir,outfilename)):
-                    PError(_sname+'.stageout','Output file is missing!')
-                    failed = True
-                else:
-                    PInfo(_sname+'.stageout','Found output file via os.path.isfile!')
-            else: 
-                PInfo(_sname+'.stageout',lsargs)
-                ret = system(lsargs)
-                if ret:
-                    PError(_sname+'.stageout','Output file is missing!')
-                    failed = True
+            PInfo(_sname+'.stageout',lsargs)
+            ret = system(lsargs)
+            if ret:
+                PError(_sname+'.stageout','Output file is missing!')
+                failed = True
         if not failed:
             PInfo(_sname+'.stageout', 'Copy succeeded after %i attempts'%(i_attempt+1))
             return ret

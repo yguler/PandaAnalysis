@@ -108,7 +108,7 @@ void PandaAnalyzer::JetBasics()
         }
       }
 
-      if (jet.pt()>bJetPtThreshold && fabs(jet.eta())<2.5) { // b jets
+      if (jet.pt()>bJetPtThreshold && fabs(jet.eta())<2.4) { // b jets
 
         if (jet.csv > 0.5426) {
           // loose WP
@@ -129,6 +129,8 @@ void PandaAnalyzer::JetBasics()
       }
 
       if (jet.pt()>jetPtThreshold) { // nominal jets
+        if ((analyis->hbb || analysis->monoh) && cleanedJets.size() >= NJET) 
+          continue;
         cleanedJets.push_back(&jet);
         // Set jetGenPt, jetGenFlavor for these jets
         // This will be overwritten later if reclusterGen is turned on

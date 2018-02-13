@@ -122,9 +122,18 @@ private:
         cEleMedium,   //!< monojet SF, Tight ID for e
         cEleTight,    //!< monojet SF, Tight ID for e
         cEleReco,     //!< monojet SF, tracking for e
-        cZHEwkCorr,     //!< ZH Ewk Corr weight  
-        cZHEwkCorrUp,   //!< ZH Ewk Corr weight Up  
-        cZHEwkCorrDown, //!< ZH Ewk Corr weight Down  
+        cWmHEwkCorr,     //!< W(l-V)H Ewk Corr weight  
+        cWmHEwkCorrUp,   //!< W(l-V)H Ewk Corr weight Up  
+        cWmHEwkCorrDown, //!< W(l-V)H Ewk Corr weight Down  
+        cWpHEwkCorr,     //!< W(l+v)H Ewk Corr weight  
+        cWpHEwkCorrUp,   //!< W(l+v)H Ewk Corr weight Up  
+        cWpHEwkCorrDown, //!< W(l+v)H Ewk Corr weight Down  
+        cZnnHEwkCorr,     //!< Z(vv)H Ewk Corr weight  
+        cZnnHEwkCorrUp,   //!< Z(vv)H Ewk Corr weight Up  
+        cZnnHEwkCorrDown, //!< Z(vv)H Ewk Corr weight Down  
+        cZllHEwkCorr,     //!< Z(ll)H Ewk Corr weight  
+        cZllHEwkCorrUp,   //!< Z(ll)H Ewk Corr weight Up  
+        cZllHEwkCorrDown, //!< Z(ll)H Ewk Corr weight Down  
         cWZEwkCorr,
         cqqZZQcdCorr,
         cMuLooseID,   //!< MUO POG SF, Loose ID for mu 

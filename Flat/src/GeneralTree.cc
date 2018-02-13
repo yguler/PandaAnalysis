@@ -225,9 +225,9 @@ void GeneralTree::Reset() {
     sf_zzUnc = 1;
     sf_zz = 1;
     sf_wz = 1;
-    sf_zh = 1;
-    sf_zhUp = 1;
-    sf_zhDown = 1;
+    sf_vh = 1;
+    sf_vhUp = 1;
+    sf_vhDown = 1;
     genLep1Pt = -1;
     genLep1Eta = -1;
     genLep1Phi = -1;
@@ -790,9 +790,9 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("sf_zz",&sf_zz,"sf_zz/F");
     Book("sf_zzUnc",&sf_zzUnc,"sf_zzUnc/F");
     Book("sf_wz",&sf_wz,"sf_wz/F");
-    Book("sf_zh",&sf_zh,"sf_zh/F");
-    Book("sf_zhUp",&sf_zhUp,"sf_zhUp/F");
-    Book("sf_zhDown",&sf_zhDown,"sf_zhDown/F");
+    Book("sf_vh",&sf_vh,"sf_vh/F");
+    Book("sf_vhUp",&sf_vhUp,"sf_vhUp/F");
+    Book("sf_vhDown",&sf_vhDown,"sf_vhDown/F");
     Book("genLep1Pt",&genLep1Pt,"genLep1Pt/F");
     Book("genLep1Eta",&genLep1Eta,"genLep1Eta/F");
     Book("genLep1Phi",&genLep1Phi,"genLep1Phi/F");

@@ -36,13 +36,14 @@ n_partons = {
         'Higgs' : 2,
         'W' : 2,
         }
+n_parton = n_partons[args.proc]
 
 f = root.TFile(basedir + '/' + args.proc + '.root')
 t = f.Get('events')
 
 s = Selector()
 
-s.read_tree(t, branches = ['genFatJetPt'], cut = 'genFatJetPt>450 && genFatJetPt<1200')
+s.read_tree(t, branches = ['genFatJetPt'], cut = 'genFatJetPt>450 && genFatJetPt<1200 && genFatJetNProngs==%i'%n_parton)
 
 h = s.draw('genFatJetPt', fbins = binning)
 

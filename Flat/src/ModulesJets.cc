@@ -129,7 +129,7 @@ void PandaAnalyzer::JetBasics()
       }
 
       if (jet.pt()>jetPtThreshold) { // nominal jets
-        if ((analyis->hbb || analysis->monoh) && cleanedJets.size() >= NJET) 
+        if ((analysis->hbb || analysis->monoh) && cleanedJets.size() >= NJET) 
           continue;
         cleanedJets.push_back(&jet);
         // Set jetGenPt, jetGenFlavor for these jets
@@ -473,12 +473,6 @@ void PandaAnalyzer::JetVBFSystem()
 
 void PandaAnalyzer::JetHbbReco() 
 {
-  float tmp_hbbpt=-99;
-  float tmp_hbbeta=-99;
-  float tmp_hbbphi=-99;
-  float tmp_hbbm=-99;
-  int tmp_hbbjtidx1=-1;
-  int tmp_hbbjtidx2=-1;
   if (centralJets.size() > 1) {
     vector<Jet*> btagSortedJets = centralJets;
     sort(

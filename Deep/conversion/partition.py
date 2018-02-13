@@ -78,3 +78,4 @@ shuffle(arglist)
 with open('partitions/' + args.proc + '.txt', 'w') as fout:
     for i,a in enumerate(arglist):
         fout.write(path.realpath(a) + ' %s_%i \n'%(args.proc,i))
+print len(arglist)

@@ -31,6 +31,8 @@ void PandaAnalyzer::SimpleLeptons() {
     if (isMedium) eleSelBit |= kMedium;
     if (isTight ) eleSelBit |= kTight;
     if (isDxyz  ) eleSelBit |= kDxyz;
+    if (ele.mvaWP90) eleSelBit |= kEleMvaWP90;
+    if (ele.mvaWP80) eleSelBit |= kEleMvaWP80;
     gt->electronPt[iL]           = pt;
     gt->electronEta[iL]          = eta;
     gt->electronPhi[iL]          = ele.phi();
@@ -143,6 +145,8 @@ void PandaAnalyzer::ComplicatedLeptons() {
     if (isMedium) eleSelBit |= kMedium;
     if (isTight ) eleSelBit |= kTight;
     if (isDxyz  ) eleSelBit |= kDxyz;
+    if (ele.mvaWP90) eleSelBit |= kEleMvaWP90;
+    if (ele.mvaWP80) eleSelBit |= kEleMvaWP80;
     gt->electronPt[iL]           = pt;
     gt->electronEta[iL]          = eta;
     gt->electronPhi[iL]          = ele.phi();

@@ -741,6 +741,13 @@ void PandaAnalyzer::JetHbbSoftActivity() {
     panda::PFCand *softTrack=0;
     for (auto &softTrackRef : allTracks) {
       softTrack = &softTrackRef;
+      // Minimum track pT threshold (300 MeV default)
+      if (softTrack->pt() < minSoftTrackPt) continue;
+      // High quality track flag
+      if (!softTrack->track.isValid() || !softTrack->track.get()->highPurity) continue;
+      // Only consider tracks with dz < 0.2 w.r.t. the primary vertex
+      if (fabs(softTrack->track.get()->dz()) > 0.2) continue;
+      // Track cannot be a constituent of loose leptons or the two b-jets
       bool trackIsSpokenFor=false;
       if (!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet1Tracks.size(); iJetTrack++) {
         if (!jet1Tracks.at(iJetTrack).isValid()) continue;
@@ -755,9 +762,6 @@ void PandaAnalyzer::JetHbbSoftActivity() {
         if (softTrack==looseLeps[iLep]->matchedPF.get()) { trackIsSpokenFor=true; break; }
       }
       if (trackIsSpokenFor) continue;
-      if (softTrack->pt() < minSoftTrackPt) continue;
-      // Only consider tracks with dz < 0.2 w.r.t. the primary vertex
-      if (!softTrack->track.isValid() || fabs(softTrack->track.get()->dz()) > 0.2) continue;
       // Require tracks to have the lowest |dz| with the hardest PV amongst all others
       int idxVertexWithMinAbsDz=-1; float minAbsDz=9999;
       for (int iV=0; iV!=event.vertices.size(); iV++) {

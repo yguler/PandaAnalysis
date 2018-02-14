@@ -25,6 +25,24 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
+class ParticleGridder {
+  public:
+    ParticleGridder(unsigned etaN, unsigned phiN, float etaMax=5);
+    ~ParticleGridder() { clear(); delete hEta_; delete hPhi_; }
+    void clear();
+    void add(panda::Particle& p);
+    std::vector<TLorentzVector>& get();
+  private:
+    float etaMax_, phiMax_;
+    TH1F *hEta_=0, *hPhi_=0;
+    std::vector<std::vector<std::vector<TLorentzVector*>>> collections_;
+    std::vector<TLorentzVector> particles_;
+    std::vector<std::pair<int,int>> nonEmpty_;
+    std::vector<TLorentzVector> gridded_; 
+};
+
+////////////////////////////////////////////////////////////////////////////////////
+
 class JetRotation {
   public:
     JetRotation(float x1, float y1, float z1,
@@ -73,6 +91,7 @@ public:
   bool deep = false;
   bool deepAntiKtSort = false;
   bool deepGen = false;
+  bool deepGenGrid = false;
   bool deepKtSort = false;
   bool deepSVs = false;
   bool deepTracks = false;

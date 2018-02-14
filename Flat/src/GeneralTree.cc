@@ -209,6 +209,7 @@ void GeneralTree::Reset() {
   }
 
 //ENDCUSTOMRESET
+    genFatJetNProngs = 0;
     genFatJetPt = -1;
     fj1NBPartons = 0;
     fj1NCPartons = 0;
@@ -898,6 +899,7 @@ void GeneralTree::WriteTree(TTree *t) {
     }
   }
 //ENDCUSTOMWRITE
+    Book("genFatJetNProngs",&genFatJetNProngs,"genFatJetNProngs/I");
     Book("genFatJetPt",&genFatJetPt,"genFatJetPt/F");
     Book("fj1NBPartons",&fj1NBPartons,"fj1NBPartons/I");
     Book("fj1NCPartons",&fj1NCPartons,"fj1NCPartons/I");

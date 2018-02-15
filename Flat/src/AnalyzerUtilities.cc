@@ -8,7 +8,7 @@ ParticleGridder::ParticleGridder(unsigned etaN, unsigned phiN, float etaMax)
   float phiMax = TMath::Pi();
   hEta_ = new TH1F("eta","eta",etaN*2,-etaMax,etaMax);
   hPhi_ = new TH1F("phi","phi",phiN*2,-phiMax,phiMax);
-  etaMax_ = etaMax; phiMax_ = phiMax;
+  etaMax_ = etaMax; phiMax_ = phiMax - 0.000001;
   collections_.resize(etaN*2);
   for (auto &v : collections_)
     v.resize(phiN*2);
@@ -39,6 +39,7 @@ std::vector<TLorentzVector>& ParticleGridder::get()
     float phi = p.Phi();
     if (fabs(eta) >= etaMax_)
       continue;
+    phi = bound(phi, -phiMax_, phiMax_);
     int etabin = hEta_->FindBin(eta)-1;
     int phibin = hPhi_->FindBin(phi)-1;
     collections_.at(etabin).at(phibin).push_back(&p);

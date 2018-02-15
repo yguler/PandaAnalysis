@@ -30,11 +30,12 @@ skimmer = root.PandaAnalyzer(debug_level)
 #gghbb.dump()
 a = wlnhbb()
 skimmer.SetPreselectionBit(root.PandaAnalyzer.kVHBB)
+skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)
 skimmer.SetAnalysis(a)
 
 skimmer.firstEvent=214
 skimmer.lastEvent=215
-skimmer.isData=False
+skimmer.isData=True
 if skimmer.isData:
     with open(getenv('CMSSW_BASE')+'/src/PandaAnalysis/data/certs/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt') as jsonFile:
         payload = json.load(jsonFile)

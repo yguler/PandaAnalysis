@@ -10,11 +10,6 @@
 using namespace panda;
 using namespace std;
 
-struct JetHistory {
-  int user_idx;
-  int child_idx;
-};
-
 void PandaAnalyzer::FatjetPartons() 
 {
   gt->fj1NPartons = 0;

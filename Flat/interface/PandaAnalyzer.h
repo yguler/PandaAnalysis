@@ -87,6 +87,7 @@ public :
         kNTrig
     };
 
+
     //////////////////////////////////////////////////////////////////////////////////////
 
     PandaAnalyzer(int debug_=0);
@@ -202,6 +203,11 @@ private:
       std::vector<std::vector<float>> particles;
     };
 
+    struct JetHistory {
+      int user_idx;
+      int child_idx;
+    };
+
     //////////////////////////////////////////////////////////////////////////////////////
 
     bool PassGoodLumis(int run, int lumi);
@@ -296,7 +302,8 @@ private:
     // CMSSW-provided utilities
     BTagCalibration *btagCalib=0;
     BTagCalibration *sj_btagCalib=0;
-    std::vector<BTagCalibrationReader*> btagReaders = std::vector<BTagCalibrationReader*>(bN,0); //!< maps BTagType to a reader 
+    std::vector<BTagCalibrationReader*> btagReaders = std::vector<BTagCalibrationReader*>(bN,0); 
+      //!< maps BTagType to a reader 
 
     Binner btagpt = Binner({});
     Binner btageta = Binner({});
@@ -665,10 +672,54 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
   JetRotation rot(fullJet->px(), fullJet->py(), fullJet->pz(),
                   axis2->px(), axis2->py(), axis2->pz());
 
+  std::vector<int> indices;
+  std::vector<int> unclustered; // I honestly don't know where these come from...
+  if (analysis->deepAntiKtSort) {
+    indices.reserve(nC);
+
+    unclustered.reserve(nC);
+    for (unsigned i_ = 0; i_ != nC; ++i_) 
+      unclustered.push_back(i_);
+
+    auto& history = seq.history();
+    auto& jets = seq.jets();
+    std::vector<JetHistory> ordered_jets;
+    for (auto& h : history) {
+      if (h.jetp_index >= 0) {
+        auto& j = jets.at(h.jetp_index);
+        if (j.user_index() != -1) { // >=0 implies a real particle, <=-2 implies a calo tower
+          auto iter = std::find(allConstituents.begin(), allConstituents.end(), j);
+          if (iter == allConstituents.end()) {
+            continue;
+          }
+          JetHistory jh;
+          jh.user_idx = static_cast<int>(iter - allConstituents.begin());
+          jh.child_idx = h.child;
+          ordered_jets.push_back(jh);
+        }
+      }
+    }
+    std::sort(ordered_jets.begin(), ordered_jets.end(),
+              [](JetHistory x, JetHistory y) { return x.child_idx < y.child_idx; });
+    for (auto& jh : ordered_jets) {
+      indices.push_back(jh.user_idx);
+      unclustered.erase(std::remove(unclustered.begin(), unclustered.end(), jh.user_idx),
+                        unclustered.end());
+    }
+  }
+
   // now we fill the particles
   nC = std::min(nC, (unsigned)NMAXPF);
   for (unsigned iC = 0; iC != nC; ++iC) {
-    fastjet::PseudoJet &c = allConstituents.at(iC);
+    unsigned iC_ = iC;
+    if (analysis->deepAntiKtSort) {
+      if (iC < indices.size()) {
+        iC_ = indices.at(iC);
+      } else {
+        iC_ = unclustered.at(iC - indices.size());
+      }
+    }
+    fastjet::PseudoJet &c = allConstituents.at(iC_);
 
     if (c.perp() < 0.001) // not a real particle
       continue;

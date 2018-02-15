@@ -94,7 +94,7 @@ wlnhbb = lambda v=False : _analysis(
         useCMVA = True,
         complicatedLeptons = True,
         hfCounting = True,
-        reclusterGen = False,
+        reclusterGen = True,
         bjetRegression = True,
         varyJES = True,
         rerunJES = True,

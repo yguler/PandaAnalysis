@@ -42,6 +42,7 @@ else:
         raise e
 
 
+# derived from t3serv006.mit.edu:/etc/bestman2/conf/bestman2.rc
 _gsiftp_doors = [
         't3btch000.mit.edu',
         't3btch001.mit.edu',
@@ -52,7 +53,6 @@ _gsiftp_doors = [
         't3btch010.mit.edu',
         't3btch013.mit.edu',
         't3btch014.mit.edu',
-        't3btch015.mit.edu',
         't3btch018.mit.edu',
         't3btch021.mit.edu',
         't3btch025.mit.edu',

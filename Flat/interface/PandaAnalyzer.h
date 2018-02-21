@@ -30,8 +30,11 @@
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+
+// Utils
 #include "PandaAnalysis/Utilities/interface/RoccoR.h"
 #include "PandaAnalysis/Utilities/interface/CSVHelper.h"
+#include "PandaAnalysis/Utilities/interface/EnergyCorrelations.h"
 
 // TMVA
 #include "TMVA/Reader.h"
@@ -194,13 +197,36 @@ private:
     };
 
     struct GenJetInfo {
-      float pt=0, eta=0, phi=0, m=0;
-      float msd=0;
-      float tau3=0, tau2=0, tau1=0;
-      float tau3sd=0, tau2sd=0, tau1sd=0;
-      int nprongs=0;
-      float partonpt=0, partonm=0;
+    public:
+      float pt=-1, eta=-1, phi=-1, m=-1;
+      float msd=-1;
+      float tau3=-1, tau2=-1, tau1=-1;
+      float tau3sd=-1, tau2sd=-1, tau1sd=-1;
+      int nprongs=-1;
+      float partonpt=-1, partonm=-1;
       std::vector<std::vector<float>> particles;
+      std::vector<std::vector<std::vector<float>>> ecfs; // uh
+      void reset() {
+        pt=-1; eta=-1; phi=-1; m=-1;
+        msd=-1;
+        tau3=-1; tau2=-1; tau1=-1;
+        tau3sd=-1; tau2sd=-1; tau1sd=-1;
+        nprongs=-1;
+        partonpt=-1; partonm=-1;
+        for (auto& v : particles) {
+          for (auto& vv : v) {
+            vv = 0;
+          }
+        }
+        for (auto& v : ecfs) {
+          for (auto& vv : v) {
+            for (auto& vvv : vv) {
+              vvv = -1;
+            }
+          }
+        }
+      }
+
     };
 
     struct JetHistory {
@@ -311,7 +337,7 @@ private:
     Binner btagpt = Binner({});
     Binner btageta = Binner({});
     std::vector<std::vector<double>> lfeff, ceff, beff;
-    TMVA::Reader *bjetreg_reader=0; 
+    TMVA::Reader *bjetregReader=0; 
 
     std::map<TString,JetCorrectionUncertainty*> ak8UncReader; //!< calculate JES unc on the fly
     JERReader *ak8JERReader{0}; //!< fatjet jet energy resolution reader
@@ -324,6 +350,7 @@ private:
 
     EraHandler eras = EraHandler(2016); //!< determining data-taking era, to be used for era-dependent JEC
     ParticleGridder *grid = 0;
+    pandaecf::ECFNManager *ecfnMan = 0;
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -365,38 +392,42 @@ private:
 
     //////////////////////////////////////////////////////////////////////////////////////
 
-    // any extra signal weights we want
     // stuff that gets passed between modules
     //
     // NB: ensure that any global vectors/maps that are per-event
     // are reset properly in ResetBranches(), or you can really
     // mess up behavior
+    std::vector<TString> wIDs;
     std::vector<TriggerHandler> triggerHandlers = std::vector<TriggerHandler>(kNTrig);
+
     std::vector<panda::Lepton*> looseLeps, tightLeps;
     std::vector<panda::Photon*> loosePhos;
+    int looseLep1PdgId, looseLep2PdgId, looseLep3PdgId, looseLep4PdgId;
+
     TLorentzVector vPFMET, vPuppiMET;
     TVector2 vMETNoMu;
     TLorentzVector vpfUW, vpfUZ, vpfUA, vpfU;
     TLorentzVector vpuppiUW, vpuppiUZ, vpuppiUA, vpuppiU;
+
     panda::FatJet *fj1 = 0;
-    std::vector<panda::Jet*> cleanedJets, isoJets, centralJets, bCandJets;
-    std::map<panda::Jet*,int> bCandJetGenFlavor;
-    std::map<panda::Jet*,float> bCandJetGenPt;
-    TLorentzVector vJet, vBarrelJets;
     panda::FatJetCollection *fatjets = 0;
+    std::vector<panda::Jet*> cleanedJets, isoJets, centralJets, bCandJets;
+    TLorentzVector vJet, vBarrelJets;
     panda::JetCollection *jets = 0;
     panda::Jet *jot1 = 0, *jot2 = 0;
     panda::Jet *jotUp1 = 0, *jotUp2 = 0;
     panda::Jet *jotDown1 = 0, *jotDown2 = 0;
     panda::Jet *jetUp1 = 0, *jetUp2 = 0;
     panda::Jet *jetDown1 = 0, *jetDown2 = 0;
-    std::vector<panda::GenJet> genJetsNu;
-    float genBosonPtMin, genBosonPtMax;
-    int looseLep1PdgId, looseLep2PdgId, looseLep3PdgId, looseLep4PdgId;
-    std::vector<TString> wIDs;
-    float *bjetreg_vars = 0;
     float jetPtThreshold=30;
     float bJetPtThreshold=30;
+    std::map<panda::Jet*,int> bCandJetGenFlavor;
+    std::map<panda::Jet*,float> bCandJetGenPt;
+
+    std::vector<panda::GenJet> genJetsNu;
+    float genBosonPtMin, genBosonPtMax;
+
+    float *bjetreg_vars = 0;
 
     std::vector<std::vector<float>> pfInfo;
     std::vector<std::vector<float>> svInfo; 

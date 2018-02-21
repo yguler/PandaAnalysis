@@ -110,19 +110,9 @@ template <typename T>
 void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
 {
 
-  genJetInfo.pt = -1; genJetInfo.eta = -1; genJetInfo.phi = -1; genJetInfo.m = -1;
-  genJetInfo.msd = -1;
-  genJetInfo.tau3 = -1; genJetInfo.tau2 = -1; genJetInfo.tau1 = -1;
-  genJetInfo.tau3sd = -1; genJetInfo.tau2sd = -1; genJetInfo.tau1sd = -1;
-  genJetInfo.nprongs = -1;
-  genJetInfo.partonpt = -1; genJetInfo.partonm = -1;
+  genJetInfo.reset();  
   gt->genFatJetPt = 0;
   gt->genFatJetNProngs = -1;
-  for (unsigned i = 0; i != NMAXPF; ++i) {
-    for (unsigned j = 0; j != NGENPROPS; ++j) {
-      genJetInfo.particles[i][j] = 0;
-    }
-  }
   if (analysis->deepGenGrid)
     grid->clear();
 
@@ -190,12 +180,12 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
   std::vector<fastjet::PseudoJet> allJets(fastjet::sorted_by_pt(seq.inclusive_jets(0.)));
 
 
-  fastjet::PseudoJet *fullJet = NULL;
+  fastjet::PseudoJet* fullJet = NULL;
   for (auto& testJet : allJets) {
     if (testJet.perp() < 450)
       break;
     bool jetOverlapsLepton = false;
-    for (auto &c : testJet.constituents()) {
+    for (auto& c : testJet.constituents()) {
       int idx = c.user_index();
       if (std::find(leptonIndices.begin(),leptonIndices.end(),idx) != leptonIndices.end()) {
         jetOverlapsLepton = true;
@@ -207,6 +197,8 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
       break;
     }
   }
+
+  tr->TriggerSubEvent("clustering gen");
 
   if (fullJet == NULL) {
     tr->TriggerEvent("fill gen tree");
@@ -234,7 +226,7 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
   for (unsigned iC = 0; iC != nC; ++iC) {
     int idx = allConstituents.at(iC).user_index();
     survived[iC] = false;
-    for (auto &sdc : sdConstituents) {
+    for (auto& sdc : sdConstituents) {
       if (idx == sdc.user_index()) {
         survived[iC] = true; 
         break;
@@ -250,17 +242,35 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
   genJetInfo.tau2sd = tauN->getTau(2, sdConstituents);
   genJetInfo.tau3sd = tauN->getTau(3, sdConstituents);
 
+  tr->TriggerSubEvent("sd and tau");
+
+  // get ecfs
+  unsigned nFilter = std::min(25, (int)sdConstituents.size());
+  VPseudoJet sdConstsFiltered(sdConstituents.begin(), sdConstituents.begin() + nFilter);
+
+  for (int beta = 1; beta != 3; ++beta) {
+    pandaecf::calcECFN(beta+1, sdConstsFiltered, ecfnMan);
+    for (int N = 1; N != 5 ; ++N) {
+      for (int o = 1; o != 4; ++o) {
+        genJetInfo.ecfs[o-1][N-1][beta-1] = ecfnMan->ecfns[Form("%i_%i", N, o)];
+      }
+    }
+  }
+  
+  tr->TriggerSubEvent("ecfs");
+
+
   // now we have to count the number of prongs 
   std::unordered_set<const T*> partons; 
   CountGenPartons(partons, genParticles); // fill the parton set
 
   std::map<const T*, unsigned> partonToIdx;
-  for (auto &parton : partons) 
+  for (auto& parton : partons) 
     partonToIdx[parton] = partonToIdx.size(); // just some arbitrary ordering 
 
   // get the hardest particle with angle wrt jet axis > 0.1
-  fastjet::PseudoJet *axis2 = NULL;
-  for (auto &c : allConstituents) {
+  fastjet::PseudoJet* axis2 = NULL;
+  for (auto& c : allConstituents) {
     if (DeltaR2(c.eta(), c.phi(), genJetInfo.eta, genJetInfo.phi) > 0.01) {
       if (!axis2 || (c.perp() > axis2->perp())) {
         axis2 = &c;

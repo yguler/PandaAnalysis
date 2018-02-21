@@ -222,10 +222,14 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     softDrop = new fastjet::contrib::SoftDrop(sdBeta,sdZcut,radius);
     tauN = new fastjet::contrib::Njettiness(fastjet::contrib::OnePass_KT_Axes(), 
                                             fastjet::contrib::NormalizedMeasure(1., radius));
-    if (analysis->deepGenGrid) {
-      grid = new ParticleGridder(250,157,5); // 0.02x0.02
-      // grid = new ParticleGridder(1000,628,5); // 0.005x0.005
-      // grid = new ParticleGridder(2500,1570,5); // 0.002x0.002
+
+    if (analysis->deepGen) {
+      ecfnMan = new pandaecf::ECFNManager();
+      if (analysis->deepGenGrid) {
+        grid = new ParticleGridder(250,157,5); // 0.02x0.02
+        // grid = new ParticleGridder(1000,628,5); // 0.005x0.005
+        // grid = new ParticleGridder(2500,1570,5); // 0.002x0.002
+      }
     }
   } else { 
     std::vector<TString> droppable = {"fj1NConst","fj1NSDConst","fj1EFrac100","fj1SDEFrac100"};
@@ -284,7 +288,6 @@ void PandaAnalyzer::Terminate()
   fOut->Close();
   fOut = 0; tOut = 0;
 
-
   if (analysis->deep)
     IncrementAuxFile(true);
   if (analysis->deepGen)
@@ -302,11 +305,9 @@ void PandaAnalyzer::Terminate()
     if (f)
       f->Close();
 
-  delete grid;
-
   delete btagCalib;
   delete sj_btagCalib;
-  for (auto *reader : btagReaders )
+  for (auto *reader : btagReaders)
     delete reader;
 
   for (auto& iter : ak8UncReader)
@@ -332,8 +333,11 @@ void PandaAnalyzer::Terminate()
 
   delete hDTotalMCWeight;
   
-  delete bjetreg_reader;
+  delete bjetregReader;
   delete rochesterCorrection;
+
+  delete ecfnMan;
+  delete grid;
 
   if (DEBUG) PDebug("PandaAnalyzer::Terminate","Finished with output");
 }
@@ -550,23 +554,23 @@ void PandaAnalyzer::SetDataDir(const char *s)
   // bjet regression
   if (analysis->bjetRegression) {
     bjetreg_vars = new float[10];
-    bjetreg_reader = new TMVA::Reader("!Color:!Silent");
+    bjetregReader = new TMVA::Reader("!Color:!Silent");
 
-    bjetreg_reader->AddVariable("jetPt[hbbjtidx[0]]",&bjetreg_vars[0]);
-    bjetreg_reader->AddVariable("nJot",&bjetreg_vars[1]);
-    bjetreg_reader->AddVariable("jetEta[hbbjtidx[0]]",&bjetreg_vars[2]);
-    bjetreg_reader->AddVariable("jetE[hbbjtidx[0]]",&bjetreg_vars[3]);
-    bjetreg_reader->AddVariable("npv",&bjetreg_vars[4]);
-    bjetreg_reader->AddVariable("jetLeadingTrkPt[hbbjtidx[0]]",&bjetreg_vars[5]);
-    bjetreg_reader->AddVariable("jetLeadingLepPt[hbbjtidx[0]]",&bjetreg_vars[6]);
-    bjetreg_reader->AddVariable("jetNLep[hbbjtidx[0]]",&bjetreg_vars[7]);
-    bjetreg_reader->AddVariable("jetEMFrac[hbbjtidx[0]]",&bjetreg_vars[8]);
-    bjetreg_reader->AddVariable("jetHadFrac[hbbjtidx[0]]",&bjetreg_vars[9]);
+    bjetregReader->AddVariable("jetPt[hbbjtidx[0]]",&bjetreg_vars[0]);
+    bjetregReader->AddVariable("nJot",&bjetreg_vars[1]);
+    bjetregReader->AddVariable("jetEta[hbbjtidx[0]]",&bjetreg_vars[2]);
+    bjetregReader->AddVariable("jetE[hbbjtidx[0]]",&bjetreg_vars[3]);
+    bjetregReader->AddVariable("npv",&bjetreg_vars[4]);
+    bjetregReader->AddVariable("jetLeadingTrkPt[hbbjtidx[0]]",&bjetreg_vars[5]);
+    bjetregReader->AddVariable("jetLeadingLepPt[hbbjtidx[0]]",&bjetreg_vars[6]);
+    bjetregReader->AddVariable("jetNLep[hbbjtidx[0]]",&bjetreg_vars[7]);
+    bjetregReader->AddVariable("jetEMFrac[hbbjtidx[0]]",&bjetreg_vars[8]);
+    bjetregReader->AddVariable("jetHadFrac[hbbjtidx[0]]",&bjetreg_vars[9]);
 
     gSystem->Exec(
         Form("wget -O %s/trainings/bjet_regression_v0.weights.xml http://t3serv001.mit.edu/~snarayan/pandadata/trainings/bjet_regression_v0.weights.xml",dirPath.Data())
       );
-    bjetreg_reader->BookMVA( "BDT method", dirPath+"trainings/bjet_regression_v0.weights.xml" );
+    bjetregReader->BookMVA( "BDT method", dirPath+"trainings/bjet_regression_v0.weights.xml" );
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded bjet regression weights");
   }
@@ -1144,6 +1148,7 @@ void PandaAnalyzer::Run()
         tAux->Fill();
       if (tAux->GetEntriesFast() == 2500)
         IncrementGenAuxFile();
+      tr->TriggerEvent("fill gen aux");
     }
 
 
@@ -1239,9 +1244,12 @@ void PandaAnalyzer::Run()
       tAux->Fill();
       if (tAux->GetEntriesFast() == 2500)
         IncrementAuxFile();
+      tr->TriggerEvent("aux fill");
     }
 
     gt->Fill();
+
+    tr->TriggerEvent("fill");
 
   } // entry loop
 

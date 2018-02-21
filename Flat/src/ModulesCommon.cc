@@ -292,18 +292,8 @@ void PandaAnalyzer::HeavyFlavorCounting()
 
 void PandaAnalyzer::GetMETSignificance()
 {
-  float pfEt = 0;
-  float puppiEt = 0;
-
-  TLorentzVector pfcand(0,0,0,0);
-  for (auto& pfCand : event.pfCandidates) {
-    pfcand.SetPtEtaPhiM(pfCand.pt(),pfCand.eta(),pfCand.phi(),pfCand.m());
-    puppiEt += pfcand.Et()*pfCand.puppiW();
-    pfEt += pfcand.Et();
-  }
-
-  gt->pfmetsig = event.pfMet.pt/sqrt(pfEt);
-  gt->puppimetsig = event.puppiMet.pt/sqrt(puppiEt);
+  gt->pfmetsig = event.pfMet.significance;
+  gt->puppimetsig = event.puppiMet.significance;
 
   tr->TriggerEvent("MET significance");
 }

@@ -69,11 +69,13 @@ public :
     };
     
     enum LepSelectionBit {
-     kLoose   =(1<<0),
-     kFake    =(1<<1),
-     kMedium  =(1<<2),
-     kTight   =(1<<3),
-     kDxyz    =(1<<4)
+     kLoose     =(1<<0),
+     kFake      =(1<<1),
+     kMedium    =(1<<2),
+     kTight     =(1<<3),
+     kDxyz      =(1<<4),
+     kEleMvaWP90=(1<<5),
+     kEleMvaWP80=(1<<6)
     };
 
     enum PhoSelectionBit {

@@ -1,6 +1,31 @@
 #include "PandaAnalysis/Flat/interface/AnalyzerUtilities.h"
 #include <cassert>
 
+using namespace fastjet;
+using namespace std;
+
+////////////////////////////////////////////////////////////////////////////////////
+
+JetTree::Node::Node(PseudoJet& pj_):
+  _pj(pj_)
+{
+  PseudoJet dau1, dau2;
+  if (_pj.has_parents(dau1, dau2)) {
+    l = new Node(dau1);
+    r = new Node(dau2);
+  }
+}
+
+void JetTree::Node::GetTerminals(vector<int>& terminals_)
+{
+  if (l && r) {
+    l->GetTerminals(terminals_);
+    r->GetTerminals(terminals_);
+  } else {
+    terminals_.push_back(_pj.user_index());
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 ParticleGridder::ParticleGridder(unsigned etaN, unsigned phiN, float etaMax) 

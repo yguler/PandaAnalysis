@@ -354,12 +354,12 @@ void PandaAnalyzer::ComplicatedPhotons()
         gt->loosePho1Eta = eta;
         gt->loosePho1Phi = phi;
         int phoSelBit = 0;
-        if(pho.medium)                 phoSelBit |= pMedium; // this is always true as of now, but safer to have it like this
-        if(pho.tight)                  phoSelBit |= pTight;
-        if(pho.highpt)                 phoSelBit |= pHighPt;
-        if(pho.csafeVeto)              phoSelBit |= pCsafeVeto;
-        if(pho.pixelVeto)              phoSelBit |= pPixelVeto;
-        if(!PFChargedPhotonMatch(pho)) phoSelBit |= pTrkVeto;
+        if (pho.medium)                 phoSelBit |= pMedium; // this is always true as of now, but safer to have it like this
+        if (pho.tight)                  phoSelBit |= pTight;
+        if (pho.highpt)                 phoSelBit |= pHighPt;
+        if (pho.csafeVeto)              phoSelBit |= pCsafeVeto;
+        if (pho.pixelVeto)              phoSelBit |= pPixelVeto;
+        if (!PFChargedPhotonMatch(pho)) phoSelBit |= pTrkVeto;
         gt->loosePho1SelBit = phoSelBit;
         if (pho.medium && pho.csafeVeto && pho.pixelVeto) gt->loosePho1IsTight = 1;
 	else                                              gt->loosePho1IsTight = 0;
@@ -405,7 +405,7 @@ bool PandaAnalyzer::PFChargedPhotonMatch(const panda::Photon& photon)
 
   tr->TriggerSubEvent("pf photon match");
 
-  if(matchedRelPt > 0.6) return true;
+  if (matchedRelPt > 0.6) return true;
   
   return false;
 
@@ -413,27 +413,26 @@ bool PandaAnalyzer::PFChargedPhotonMatch(const panda::Photon& photon)
 
 void PandaAnalyzer::Taus()
 {
-
-    for (auto& tau : event.taus) {
-      if (analysis->vbf) {
-        if (!tau.decayMode || !tau.decayModeNew)
-          continue;
-        if (!tau.looseIsoMVAOld)
-          continue;
-      } else {
-        if (!tau.decayMode || !tau.decayModeNew)
-          continue;
-        if (!tau.looseIsoMVA)
-          continue;
-      }
-      if (tau.pt()<18 || fabs(tau.eta())>2.3)
-        continue;
-      if (IsMatched(&matchLeps,0.16,tau.eta(),tau.phi()))
-        continue;
-      gt->nTau++;
+  for (auto& tau : event.taus) {
+    if (analysis->vbf) {
+      if (!tau.decayMode || !tau.decayModeNew)
+	continue;
+      if (!tau.looseIsoMVAOld)
+	continue;
+    } else {
+      if (!tau.decayMode || !tau.decayModeNew)
+	continue;
+      if (!tau.looseIsoMVA)
+	continue;
     }
+    if (tau.pt()<18 || fabs(tau.eta())>2.3)
+      continue;
+    if (IsMatched(&matchLeps,0.16,tau.eta(),tau.phi()))
+      continue;
+    gt->nTau++;
+  }
 
-    tr->TriggerEvent("taus");
+  tr->TriggerEvent("taus");
 }
 
 

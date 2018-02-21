@@ -467,7 +467,7 @@ void PandaAnalyzer::GenStudyEWK() {
   for (int jG : targetsPhoton) {
     auto& partph(event.genParticles.at(jG));
     
-    if(partph.pt() <= 10) continue; // ignore low pt photons
+    if (partph.pt() <= 10) continue; // ignore low pt photons
 
     if (p1.Pt() > 0 && DeltaR2(partph.eta(),partph.phi(),p1.Eta(),p1.Phi()) < 0.01) {
         gt->looseGenPho1PdgId = 3;
@@ -721,7 +721,7 @@ void PandaAnalyzer::GenStudyEWK() {
   } else {
     gt->sf_wz = 1.0;
   }
-  if(analysis->processType==kH) { 
+  if (analysis->processType==kH) { 
     if (nZBosons == 1 && gt->genLep2PdgId!=0) {
       gt->sf_vh     = WeightZHEWKCorr(GetCorr(cZllHEwkCorr,bound(zBosons.Pt(),0,499.999)));
       gt->sf_vhUp   = WeightZHEWKCorr(GetCorr(cZllHEwkCorrUp,bound(zBosons.Pt(),0,499.999)));
@@ -730,7 +730,7 @@ void PandaAnalyzer::GenStudyEWK() {
       gt->genBosonEta  = zBosons.Eta();
       gt->genBosonPt   = zBosons.Pt();
       gt->trueGenBosonPt = higgsBosons.Pt();
-    } else if(nZBosons==1 && nNeutrinos>0) {
+    } else if (nZBosons==1 && nNeutrinos>0) {
       gt->sf_vh     = WeightZHEWKCorr(GetCorr(cZnnHEwkCorr,bound(zBosons.Pt(),0,499.999)));
       gt->sf_vhUp   = WeightZHEWKCorr(GetCorr(cZnnHEwkCorrUp,bound(zBosons.Pt(),0,499.999)));
       gt->sf_vhDown = WeightZHEWKCorr(GetCorr(cZnnHEwkCorrDown,bound(zBosons.Pt(),0,499.999)));
@@ -738,8 +738,8 @@ void PandaAnalyzer::GenStudyEWK() {
       gt->genBosonEta  = zBosons.Eta();
       gt->genBosonPt   = zBosons.Pt();
       gt->trueGenBosonPt = higgsBosons.Pt();
-    } else if(nWBosons==1 && gt->genLep1PdgId!=0 && nNeutrinos>0) {
-      if(wBosonQ[0]>0) {
+    } else if (nWBosons==1 && gt->genLep1PdgId!=0 && nNeutrinos>0) {
+      if (wBosonQ[0]>0) {
         gt->sf_vh     = WeightZHEWKCorr(GetCorr(cWpHEwkCorr,bound(wBosons.Pt(),0,499.999)));
         gt->sf_vhUp   = WeightZHEWKCorr(GetCorr(cWpHEwkCorrUp,bound(wBosons.Pt(),0,499.999)));
         gt->sf_vhDown = WeightZHEWKCorr(GetCorr(cWpHEwkCorrDown,bound(wBosons.Pt(),0,499.999)));

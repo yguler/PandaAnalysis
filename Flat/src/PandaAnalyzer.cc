@@ -74,6 +74,7 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
   gt->vbf            = analysis->vbf;
   gt->fatjet         = analysis->fatjet;
   gt->leptonic       = analysis->complicatedLeptons;
+  gt->photonic       = analysis->complicatedPhotons;
   gt->hfCounting     = analysis->hfCounting;
   gt->btagWeights    = analysis->btagWeights;
   gt->useCMVA        = analysis->useCMVA;
@@ -108,6 +109,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   }
   tIn = t;
 
+  ////////////////////////////////////////////////////////////////////// 
+  // manipulate which branches to read
   event.setStatus(*t, {"!*"}); // turn everything off first
 
   TString jetname = (analysis->puppi_jets) ? "puppi" : "chs";
@@ -128,7 +131,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     else if (analysis->fatjet) 
       readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
     
-    if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->hbb) {
+    if (analysis->recluster || analysis->bjetRegression || 
+        analysis->deep || analysis->hbb || analysis->complicatedPhotons) {
       readlist.push_back("pfCandidates");
     }
     if (analysis->deepTracks || analysis->bjetRegression || analysis->hbb) {
@@ -147,10 +151,12 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     }
   }
 
-
   event.setAddress(*t, readlist); // pass the readlist so only the relevant branches are turned on
   if (DEBUG) PDebug("PandaAnalyzer::Init","Set addresses");
 
+  ////////////////////////////////////////////////////////////////////// 
+
+  // read MC weights
   hDTotalMCWeight = new TH1F("hDTotalMCWeight","hDTotalMCWeight",1,0,2);
   hDTotalMCWeight->SetDirectory(0);
   hDTotalMCWeight->SetBinContent(1,hweights->GetBinContent(1));
@@ -175,7 +181,10 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   }
 
 
+  ////////////////////////////////////////////////////////////////////// 
+
   // manipulate the output tree
+  gt->RemoveBranches({"ak81.*"}); // unused
   if (isData) {
     std::vector<TString> droppable = {"mcWeight","scale","scaleUp",
                                       "trueGenBosonPt",
@@ -189,20 +198,19 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
                                      "trueGenBosonPt","sf_qcd.*","sf_ewk.*"};
     gt->RemoveBranches({".*"},keepable);
   }
-
-  gt->RemoveBranches({"ak81.*"}); // unused
-  
-  if (analysis->recluster || analysis->reclusterGen || analysis->deep || analysis->deepGen || analysis->hbb) {
-    int activeAreaRepeats = 1;
-    double ghostArea = 0.01;
-    double ghostEtaMax = 7.0;
-    activeArea = new fastjet::GhostedAreaSpec(ghostEtaMax,activeAreaRepeats,ghostArea);
-    areaDef = new fastjet::AreaDefinition(fastjet::active_area_explicit_ghosts,*activeArea);
-  }
-
   if (!analysis->fatjet && !analysis->ak8) {
     gt->RemoveBranches({"fj1.*"});
-  } else if (analysis->recluster || analysis->deep || analysis->deepGen) {
+  }
+  if (analysis->complicatedLeptons) {
+    gt->RemoveBranches({"genJet.*","puppiU.*","pfU.*","dphipfU.*","dphipuppi.*","jet.*"});
+  }
+
+
+  ////////////////////////////////////////////////////////////////////// 
+  
+  // remaining configuraiton of objects
+  if ((analysis->fatjet || analysis->ak8) || 
+      (analysis->recluster || analysis->deep || analysis->deepGen)) {
     double radius = 1.5;
     double sdZcut = 0.15;
     double sdBeta = 1.;
@@ -231,9 +239,14 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
         // grid = new ParticleGridder(2500,1570,5); // 0.002x0.002
       }
     }
-  } else { 
-    std::vector<TString> droppable = {"fj1NConst","fj1NSDConst","fj1EFrac100","fj1SDEFrac100"};
-    gt->RemoveBranches(droppable);
+  }
+
+  if (analysis->recluster || analysis->reclusterGen || analysis->deep || analysis->deepGen || analysis->hbb) {
+    int activeAreaRepeats = 1;
+    double ghostArea = 0.01;
+    double ghostEtaMax = 7.0;
+    activeArea = new fastjet::GhostedAreaSpec(ghostEtaMax,activeAreaRepeats,ghostArea);
+    areaDef = new fastjet::AreaDefinition(fastjet::active_area_explicit_ghosts,*activeArea);
   }
 
   if (analysis->deepTracks) {
@@ -717,7 +730,7 @@ bool PandaAnalyzer::PassPreselection()
   }
 
   else if (preselBits & kLeptonFake) {
-    bool passFakeTrigger = (gt->trigger & kMuFakeTrig) != 0 || (gt->trigger & kEleFakeTrig) != 0;
+    bool passFakeTrigger = (gt->trigger & (1<<kMuFakeTrig)) != 0 || (gt->trigger & (1<<kEleFakeTrig)) != 0;
     if (passFakeTrigger == true) {
       double mll = 0.0;
       if (gt->nLooseLep == 2) {
@@ -1161,7 +1174,11 @@ void PandaAnalyzer::Run()
       }
       
       // photons
-      Photons();
+      if (analysis->complicatedPhotons) {
+        ComplicatedPhotons();
+      } else {
+        SimplePhotons();
+      }
 
       // recoil!
       if (analysis->recoil)
@@ -1206,7 +1223,8 @@ void PandaAnalyzer::Run()
         
         TriggerEffs();
 
-        if (analysis->complicatedLeptons) 
+        if (analysis->complicatedLeptons ||
+            analysis->complicatedPhotons)
           GenStudyEWK();
         else
           LeptonSFs();

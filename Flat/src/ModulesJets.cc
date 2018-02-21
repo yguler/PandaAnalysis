@@ -377,6 +377,7 @@ void PandaAnalyzer::JetVaryJES(panda::Jet& jet)
         jotUp2 = jotUp1;
         gt->jot2PtUp = gt->jot1PtUp;
         gt->jot2EtaUp = gt->jot1EtaUp;
+        gt->jot2PhiUp = gt->jot1PhiUp;
       }
       jotUp1 = &jet;
       gt->jot1PtUp = jet.ptCorrUp;
@@ -385,6 +386,7 @@ void PandaAnalyzer::JetVaryJES(panda::Jet& jet)
       jotUp2 = &jet;
       gt->jot2PtUp = jet.ptCorrUp;
       gt->jot2EtaUp = jet.eta();
+      gt->jot2PhiUp = jet.phi();
     }
     // central only jets:
     if (fabs(jet.eta()) < 2.4) {
@@ -411,6 +413,7 @@ void PandaAnalyzer::JetVaryJES(panda::Jet& jet)
         jotDown2 = jotDown1;
         gt->jot2PtDown = gt->jot1PtDown;
         gt->jot2EtaDown = gt->jot1EtaDown;
+        gt->jot2PhiDown = gt->jot1PhiDown;
       }
       jotDown1 = &jet;
       gt->jot1PtDown = jet.ptCorrDown;
@@ -419,6 +422,7 @@ void PandaAnalyzer::JetVaryJES(panda::Jet& jet)
       jotDown2 = &jet;
       gt->jot2PtDown = jet.ptCorrDown;
       gt->jot2EtaDown = jet.eta();
+      gt->jot2PhiDown = jet.phi();
     }
     // central only jets:
     if (fabs(jet.eta()) < 2.4) {

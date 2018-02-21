@@ -204,7 +204,7 @@ class GeneralTree : public genericTree {
       std::vector<int> get_orders() const { return orders; }
         
       // public config
-      bool monohiggs=false, vbf=false, fatjet=true, leptonic=false, hfCounting=false;
+      bool monohiggs=false, vbf=false, fatjet=true, leptonic=false, photonic=false, hfCounting=false;
       bool btagWeights=false, useCMVA=false;
 
 //STARTCUSTOMDEF
@@ -305,12 +305,18 @@ class GeneralTree : public genericTree {
       //float electronHOverE[NLEP];
       //float electronEcalE[NLEP];
       //float electronTrackP[NLEP];
-      //int electronNMissingHits[NLEP];
+      int electronNMissingHits[NLEP];
       int electronTripleCharge[NLEP];
       float electronCombIso[NLEP];
 
 //ENDCUSTOMDEF
     int genFatJetNProngs = -1;
+    float jot1PhiUp = -1;
+    float jot1PhiDown = -1;
+    float jot2PhiUp = -1;
+    float jot2PhiDown = -1;
+    int loosePho1SelBit = -1;
+    int looseGenPho1PdgId = -1;
     float genFatJetPt = -1;
     int fj1NBPartons = -1;
     int fj1NCPartons = -1;
@@ -337,6 +343,14 @@ class GeneralTree : public genericTree {
     float genLep2Eta = -1;
     float genLep2Phi = -1;
     int genLep2PdgId = -1;
+    float genLep3Pt = -1;
+    float genLep3Eta = -1;
+    float genLep3Phi = -1;
+    int genLep3PdgId = -1;
+    float genLep4Pt = -1;
+    float genLep4Eta = -1;
+    float genLep4Phi = -1;
+    int genLep4PdgId = -1;
     int looseGenLep1PdgId = -1;
     int looseGenLep2PdgId = -1;
     int looseGenLep3PdgId = -1;

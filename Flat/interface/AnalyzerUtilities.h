@@ -118,6 +118,7 @@ public:
   bool btagSFs = true;
   bool btagWeights = false;
   bool complicatedLeptons = false;
+  bool complicatedPhotons = false;
   bool deep = false;
   bool deepAntiKtSort = false;
   bool deepGen = false;

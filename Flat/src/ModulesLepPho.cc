@@ -170,7 +170,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
     //gt->electronHOverE[iL]       = ele.hOverE;
     //gt->electronEcalE[iL]        = ele.ecalE;
     //gt->electronTrackP[iL]       = ele.trackP;
-    //gt->electronNMissingHits[iL] = ele.nMissingHits;
+    gt->electronNMissingHits[iL] = ele.nMissingHits;
     gt->electronTripleCharge[iL] = ele.tripleCharge;
     gt->electronCombIso[iL] = ele.combIso();
     looseLeps.push_back(&ele);
@@ -289,10 +289,10 @@ void PandaAnalyzer::ComplicatedLeptons() {
     gt->diLepMass = -1;
   }
 
-  tr->TriggerEvent("leptons");
+  tr->TriggerEvent("complicated leptons");
 }
 
-void PandaAnalyzer::Photons()
+void PandaAnalyzer::SimplePhotons()
 {
     for (auto& pho : event.photons) {
       if (!pho.loose || !pho.csafeVeto)
@@ -333,6 +333,82 @@ void PandaAnalyzer::Photons()
     }
 
     tr->TriggerEvent("photons");
+}
+
+void PandaAnalyzer::ComplicatedPhotons()
+{
+    for (auto& pho : event.photons) {
+      if (!pho.medium)
+        continue;
+      float pt = pho.pt() * EGMSCALE;
+      if (pt<1) continue;
+      float eta = pho.eta(), phi = pho.phi();
+      if (pt<25 || fabs(eta)>2.5)
+        continue;
+      if (IsMatched(&matchLeps,0.16,pho.eta(),pho.phi()))
+        continue;
+      loosePhos.push_back(&pho);
+      gt->nLoosePhoton++;
+      if (gt->loosePho1Pt < pt) {
+        gt->loosePho1Pt = pt;
+        gt->loosePho1Eta = eta;
+        gt->loosePho1Phi = phi;
+        int phoSelBit = 0;
+        if(pho.medium)                 phoSelBit |= pMedium; // this is always true as of now, but safer to have it like this
+        if(pho.tight)                  phoSelBit |= pTight;
+        if(pho.highpt)                 phoSelBit |= pHighPt;
+        if(pho.csafeVeto)              phoSelBit |= pCsafeVeto;
+        if(pho.pixelVeto)              phoSelBit |= pPixelVeto;
+        if(!PFChargedPhotonMatch(pho)) phoSelBit |= pTrkVeto;
+        gt->loosePho1SelBit = phoSelBit;
+        if (pho.medium && pho.csafeVeto && pho.pixelVeto) gt->loosePho1IsTight = 1;
+	else                                              gt->loosePho1IsTight = 0;
+      }
+      if ( pho.medium && pho.csafeVeto && pho.pixelVeto) { // apply eta cut offline
+        gt->nTightPhoton++;
+        matchPhos.push_back(&pho);
+      }
+    }
+
+    // TODO - store in a THCorr
+    if (isData && gt->nLoosePhoton>0) {
+      if (gt->loosePho1Pt>=175 && gt->loosePho1Pt<200)
+        gt->sf_phoPurity = 0.04802;
+      else if (gt->loosePho1Pt>=200 && gt->loosePho1Pt<250)
+        gt->sf_phoPurity = 0.04241;
+      else if (gt->loosePho1Pt>=250 && gt->loosePho1Pt<300)
+        gt->sf_phoPurity = 0.03641;
+      else if (gt->loosePho1Pt>=300 && gt->loosePho1Pt<350)
+        gt->sf_phoPurity = 0.0333;
+      else if (gt->loosePho1Pt>=350)
+        gt->sf_phoPurity = 0.02544;
+    }
+
+    tr->TriggerEvent("complicated photons");
+}
+
+bool PandaAnalyzer::PFChargedPhotonMatch(const panda::Photon& photon)
+{
+  double matchedRelPt = -1.;
+
+  for (auto& cand : event.pfCandidates) {
+    if (cand.q() == 0) continue;
+
+    double dr(cand.dR(photon));
+    double rawPt = photon.pt();
+    double relPt(cand.pt() / rawPt);
+    if (dr < 0.1 && relPt > matchedRelPt) {
+      matchedRelPt = relPt;
+    }
+
+  }
+
+  tr->TriggerSubEvent("pf photon match");
+
+  if(matchedRelPt > 0.6) return true;
+  
+  return false;
+
 }
 
 void PandaAnalyzer::Taus()

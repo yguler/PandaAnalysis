@@ -290,7 +290,6 @@ private:
     void LeptonSFs();
     bool PFChargedPhotonMatch(const panda::Photon& photon);
     void PhotonSFs();
-    void SimplePhotons();
     void QCDUncs();
     void Recoil();
     bool RecoilPresel();
@@ -299,6 +298,7 @@ private:
     void SignalInfo();
     void SignalReweights();
     void SimpleLeptons();
+    void SimplePhotons();
     void Taus();
     void TopPTReweight();
     void TriggerEffs();

@@ -209,13 +209,13 @@ void GeneralTree::Reset() {
   }
 
 //ENDCUSTOMRESET
-    genFatJetNProngs = 0;
     jot1PhiUp = -1;
     jot1PhiDown = -1;
     jot2PhiUp = -1;
     jot2PhiDown = -1;
     loosePho1SelBit = 0;
     looseGenPho1PdgId = 0;
+    genFatJetNProngs = 0;
     genFatJetPt = -1;
     fj1NBPartons = 0;
     fj1NCPartons = 0;
@@ -771,36 +771,9 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("muonDZ",muonDZ,"muonDZ[nLooseMuon]/F");
     Book("muonIsSoftMuon",muonIsSoftMuon,"muonIsSoftMuon[nLooseMuon]/I");
     Book("muonCombIso",muonCombIso,"muonCombIso[nLooseMuon]/F");
-    //Book("muonIsGlobalMuon",muonIsGlobalMuon,"muonIsGlobalMuon[nLooseMuon]/I");
-    //Book("muonIsTrackerMuon",muonIsTrackerMuon,"muonIsTrackerMuon[nLooseMuon]/I");
-    //Book("muonNValidMuon",muonNValidMuon,"muonNValidMuon[nLooseMuon]/I");
-    //Book("muonNValidPixel",muonNValidPixel,"muonNValidPixel[nLooseMuon]/I");
-    //Book("muonTrkLayersWithMmt",muonTrkLayersWithMmt,"muonTrkLayersWithMmt[nLooseMuon]/I");
-    //Book("muonPixLayersWithMmt",muonPixLayersWithMmt,"muonPixLayersWithMmt[nLooseMuon]/I");
-    //Book("muonNMatched",muonNMatched,"muonNMatched[nLooseMuon]/I");
-    //Book("muonChi2LocalPosition",muonChi2LocalPosition,"muonChi2LocalPosition[nLooseMuon]/I");
-    //Book("muonTrkKink",muonTrkKink,"muonTrkKink[nLooseMuon]/I");
-    //Book("muonValidFraction",muonValidFraction,"muonValidFraction[nLooseMuon]/F");
-    //Book("muonNormChi2",muonNormChi2,"muonNormChi2[nLooseMuon]/F");
-    //Book("muonSegmentCompatibility",muonSegmentCompatibility,"muonSegmentCompatibility[nLooseMuon]/F");
     // Advanced electron properties for nerds
     Book("electronD0",electronD0,"electronD0[nLooseElectron]/F");
     Book("electronDZ",electronDZ,"electronDZ[nLooseElectron]/F");
-    //Book("electronChIsoPh",electronChIsoPh,"electronChIsoPh[nLooseElectron]/F");
-    //Book("electronNhIsoPh",electronNhIsoPh,"electronNhIsoPh[nLooseElectron]/F");
-    //Book("electronPhIsoPh",electronPhIsoPh,"electronPhIsoPh[nLooseElectron]/F");
-    //Book("electronEcalIso",electronEcalIso,"electronEcalIso[nLooseElectron]/F");
-    //Book("electronHcalIso",electronHcalIso,"electronHcalIso[nLooseElectron]/F");
-    //Book("electronTrackIso",electronTrackIso,"electronTrackIso[nLooseElectron]/F");
-    //Book("electronIsoPUOffset",electronIsoPUOffset,"electronIsoPUOffset[nLooseElectron]/F");
-    //Book("electronSieie",electronSieie,"electronSieie[nLooseElectron]/F");
-    //Book("electronSipip",electronSipip,"electronSipip[nLooseElectron]/F");
-    //Book("electronDEtaInSeed",electronDEtaInSeed,"electronDEtaInSeed[nLooseElectron]/F");
-    //Book("electronDPhiIn",electronDPhiIn,"electronDPhiIn[nLooseElectron]/F");
-    //Book("electronEseed",electronEseed,"electronEseed[nLooseElectron]/F");
-    //Book("electronHOverE",electronHOverE,"electronHOverE[nLooseElectron]/F");
-    //Book("electronEcalE",electronEcalE,"electronEcalE[nLooseElectron]/F");
-    //Book("electronTrackP",electronTrackP,"electronTrackP[nLooseElectron]/F");
     Book("electronNMissingHits",electronNMissingHits,"electronNMissingHits[nLooseElectron]/I");
     Book("electronTripleCharge",electronTripleCharge,"electronTripleCharge[nLooseElectron]/I");
     Book("electronCombIso",electronCombIso,"electronCombIso[nLooseElectron]/F");
@@ -916,6 +889,7 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("looseGenPho1PdgId",&looseGenPho1PdgId,"looseGenPho1PdgId/I");
   }
 //ENDCUSTOMWRITE
+
   Book("genFatJetNProngs",&genFatJetNProngs,"genFatJetNProngs/I");
   Book("genJet1Pt",&genJet1Pt,"genJet1Pt/F");
   Book("genJet2Pt",&genJet2Pt,"genJet2Pt/F");

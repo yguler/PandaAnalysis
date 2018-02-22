@@ -17,22 +17,25 @@ argv = []
 
 import ROOT as root
 from PandaCore.Tools.Load import *
-from PandaAnalysis.Flat.analysis import gghbb
+from PandaAnalysis.Flat.analysis import *
 
 Load('PandaAnalyzer')
 
 skimmer = root.PandaAnalyzer(debug_level)
-gghbb = gghbb()
-gghbb.reclusterGen = False
-gghbb.bjetRegression = False
-gghbb.btagSFs = False
-gghbb.deep = True
-gghbb.dump()
-skimmer.SetAnalysis(gghbb)
+#gghbb = gghbb()
+#gghbb.reclusterGen = False
+#gghbb.bjetRegression = False
+#gghbb.btagSFs = False
+#gghbb.deep = True
+#gghbb.dump()
+a = wlnhbb()
+skimmer.SetPreselectionBit(root.PandaAnalyzer.kVHBB)
+skimmer.SetPreselectionBit(root.PandaAnalyzer.kPassTrig)
+skimmer.SetAnalysis(a)
 
-skimmer.firstEvent=0
-skimmer.lastEvent=1000
-skimmer.isData=False
+skimmer.firstEvent=214
+skimmer.lastEvent=215
+skimmer.isData=True
 if skimmer.isData:
     with open(getenv('CMSSW_BASE')+'/src/PandaAnalysis/data/certs/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt') as jsonFile:
         payload = json.load(jsonFile)

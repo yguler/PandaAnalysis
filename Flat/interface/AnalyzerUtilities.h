@@ -2,7 +2,7 @@
 #define ANALYZERUTILS_H
 
 // PandaProd Objects
-#include "PandaTree/Objects/interface/Event.h"
+#include "PandaTree/Objects/interface/EventAnalysis.h"
 
 // PANDACore
 #include "PandaCore/Tools/interface/Common.h"
@@ -19,56 +19,79 @@
 #include "fastjet/contrib/Njettiness.hh"
 #include "fastjet/contrib/MeasureDefinition.hh"
 
+// root
+#include "TRotation.h"
+
 ////////////////////////////////////////////////////////////////////////////////////
+
+class JetTree {
+  public:
+    JetTree(fastjet::PseudoJet& root): _root(root) { }
+    ~JetTree() { }
+    std::vector<int> GetTerminals() {
+      std::vector<int> v;
+      _root.GetTerminals(v);
+      return v;
+    }
+
+    struct compare : public std::unary_function<fastjet::PseudoJet, bool> {
+      explicit compare(int x_) : _x(x_) {}
+      bool operator() (const fastjet::PseudoJet& y_) { return _x == y_.user_index(); }
+      int _x;
+    };
+
+  private:
+    class Node {
+      public:
+        Node(fastjet::PseudoJet& pj_);
+        ~Node() { delete l; delete r; }
+        void GetTerminals(std::vector<int>&);
+        fastjet::PseudoJet _pj;
+        Node *l=0, *r=0;   
+    };
+
+    Node _root;
+};
+
+////////////////////////////////////////////////////////////////////////////////////
+
+class ParticleGridder {
+  public:
+    ParticleGridder(unsigned etaN, unsigned phiN, float etaMax=5);
+    ~ParticleGridder() { clear(); delete hEta_; delete hPhi_; }
+    void clear();
+    void add(panda::Particle& p);
+    std::vector<TLorentzVector>& get();
+  private:
+    float etaMax_, phiMax_;
+    TH1F *hEta_=0, *hPhi_=0;
+    std::vector<std::vector<std::vector<TLorentzVector*>>> collections_;
+    std::vector<TLorentzVector> particles_;
+    std::vector<std::pair<int,int>> nonEmpty_;
+    std::vector<TLorentzVector> gridded_; 
+};
+
+////////////////////////////////////////////////////////////////////////////////////
+
+class JetRotation {
+  public:
+    JetRotation(float x1, float y1, float z1,
+                float x2, float y2, float z2);
+    void Rotate(float& x, float& y, float& z);
+  private:
+    TRotation r_toz;
+    TRotation r_inxy;
+};
+
+////////////////////////////////////////////////////////////////////////////////////
+
 typedef std::vector<fastjet::PseudoJet> VPseudoJet;
-
-inline VPseudoJet ConvertPFCands(std::vector<const panda::PFCand*> &incoll, bool puppi, double minPt=0.001) {
-  VPseudoJet vpj;
-  vpj.reserve(incoll.size());
-  int idx = -1;
-  for (auto *incand : incoll) {
-    double factor = puppi ? incand->puppiW() : 1;
-    idx++;
-    if (factor*incand->pt()<minPt)
-      continue;
-    vpj.emplace_back(factor*incand->px(),factor*incand->py(),
-                     factor*incand->pz(),factor*incand->e());
-    vpj.back().set_user_index(idx);
-  }
-  return vpj;
-}
-
-inline VPseudoJet ConvertPFCands(panda::RefVector<panda::PFCand> &incoll, bool puppi, double minPt=0.001) {
-  std::vector<const panda::PFCand*> outcoll;
-  outcoll.reserve(incoll.size());
-  for (auto incand : incoll)
-    outcoll.push_back(incand.get());
-
-  return ConvertPFCands(outcoll, puppi, minPt);
-}
-
-inline VPseudoJet ConvertPFCands(panda::PFCandCollection &incoll, bool puppi, double minPt=0.001) {
-  std::vector<const panda::PFCand*> outcoll;
-  outcoll.reserve(incoll.size());
-  for (auto &incand : incoll)
-    outcoll.push_back(&incand);
-
-  return ConvertPFCands(outcoll, puppi, minPt);
-}
+VPseudoJet ConvertPFCands(std::vector<const panda::PFCand*> &incoll, bool puppi, double minPt=0.001);
+VPseudoJet ConvertPFCands(panda::RefVector<panda::PFCand> &incoll, bool puppi, double minPt=0.001);
+VPseudoJet ConvertPFCands(panda::PFCandCollection &incoll, bool puppi, double minPt=0.001);
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-inline double TTNLOToNNLO(double pt) {
-    double a = 0.1102;
-    double b = 0.1566;
-    double c = -3.685e-4;
-    double d = 1.098;
-
-    return TMath::Min(1.25,
-                        a*TMath::Exp(-b*pow(pt,2)+1) + c*pt + d);
-}
-
-////////////////////////////////////////////////////////////////////////////////////
 enum ProcessType { 
     kNoProcess,
     kZ,
@@ -99,6 +122,7 @@ public:
   bool deep = false;
   bool deepAntiKtSort = false;
   bool deepGen = false;
+  bool deepGenGrid = false;
   bool deepKtSort = false;
   bool deepSVs = false;
   bool deepTracks = false;
@@ -137,6 +161,7 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////
+
 class TriggerHandler {  
 public:
   TriggerHandler() {};
@@ -152,8 +177,8 @@ public:
   std::vector<TString> paths;
 };
 
-
 ////////////////////////////////////////////////////////////////////////////////////
+
 template <typename T>
 class TCorr {
 public:
@@ -181,7 +206,6 @@ public:
   TF1 *GetFunc() { return h; }
 };
 
-
 template <typename T>
 class THCorr : public TCorr<T> {
 public:
@@ -189,7 +213,6 @@ public:
   THCorr(T *h_):
     TCorr<T>(h_)
   {
-//    h_->SetDirectory(0);
     this->h = h_;
     dim = this->h->GetDimension();
     TAxis *thurn = this->h->GetXaxis(); 
@@ -213,7 +236,7 @@ public:
 
   double Eval(double x, double y) {
     if (dim!=2) {
-      PError("THCorr1::Eval",
+      PError("THCorr1::Error",
        TString::Format("Trying to access a non-2D histogram (%s)!",this->h->GetName()));
       return -1;
     }
@@ -222,7 +245,7 @@ public:
 
   double Error(double x) {
     if (dim!=1) {
-      PError("THCorr1::Eval",
+      PError("THCorr1::Error",
         TString::Format("Trying to access a non-1D histogram (%s)!",this->h->GetName()));
       return -1;
     }
@@ -250,32 +273,11 @@ typedef THCorr<TH2D> THCorr2;
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-inline bool ElectronIP(double eta, double dxy, double dz) {
-  double aeta = fabs(eta);
-  if (aeta<1.4442) {
-    return (dxy < 0.05 && dz < 0.10) ;
-  } else {
-    return (dxy < 0.10 && dz < 0.20);
-  }
-}
-
-inline bool MuonIP(double dxy, double dz) {
-  return (dxy < 0.02 && dz < 0.10);
-}
-
-////////////////////////////////////////////////////////////////////////////////////
-
-
-inline bool IsMatched(std::vector<panda::Particle*>*objects,
-               double deltaR2, double eta, double phi) {
-  for (auto *x : *objects) {
-    if (x->pt()>0) {
-      if ( DeltaR2(x->eta(),x->phi(),eta,phi) < deltaR2 )
-        return true;
-    }
-  }
-  return false;
-}
+bool ElectronIP(double eta, double dxy, double dz); 
+bool MuonIP(double dxy, double dz); 
+double TTNLOToNNLO(double pt);
+bool IsMatched(std::vector<panda::Particle*>*objects,
+               double deltaR2, double eta, double phi);
 
 ////////////////////////////////////////////////////////////////////////////////////
 

@@ -21,6 +21,7 @@ argv = []
 n_partons_proc = {
             'QCD'   : 1,
             'Top'   : 3,
+            'Top_lo': 3,
             'ZpTT'  : 3,
             'ZpWW'  : 2,
             'ZpA0h' : 2,
@@ -36,18 +37,22 @@ for k,v in n_partons_proc.iteritems():
 
 import ROOT as root 
 f_pt = root.TFile.Open(datadir + 'flatten_gen.root')
-h_pt = f_pt.Get('h_%s'%(name.split('_')[0]))
+h_pt = f_pt.Get('h_%s'%('_'.join(name.split('_')[:-1])))
 f_pt_scaled = root.TFile.Open(datadir + 'flatten_gen_scaled.root')
-h_pt_scaled = f_pt_scaled.Get('h_%s'%(name.split('_')[0]))
+h_pt_scaled = f_pt_scaled.Get('h_%s'%('_'.join(name.split('_')[:-1])))
+
+print 'h_%s'%('_'.join(name.split('_')[:-1]))
 
 data = {}
 for fpath in fcfg.readlines():
+    print fpath.strip()
     d = np.load(fpath.strip())
     mask = (d['nprongs'] == n_partons)
     for k,v in d.iteritems():
         if v.shape[0]:
             if k not in data:
                 data[k] = []
+            #data[k].append(v)
             data[k].append(v[mask])
 
 if not len(data):

@@ -112,37 +112,40 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   event.setStatus(*t, {"!*"}); // turn everything off first
 
   TString jetname = (analysis->puppi_jets) ? "puppi" : "chs";
-  panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber", "rho", 
-                                     "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
-                                     "electrons", "muons", "taus", "photons", 
-                                     "pfMet", "caloMet", "puppiMet", "rawMet", "trkMet", 
-                                     "recoil","metFilters","trkMet"});
+  panda::utils::BranchList readlist({"runNumber", "lumiNumber", "eventNumber","weight"});
   readlist.setVerbosity(0);
 
-  if (analysis->ak8)
-    readlist += {jetname+"AK8Jets", "subjets", jetname+"AK8Subjets","Subjets"};
-  else if (analysis->fatjet) 
-    readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
-  
-  if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->hbb || analysis->complicatedPhotons) {
-    readlist.push_back("pfCandidates");
-  }
-  if (analysis->deepTracks || analysis->bjetRegression || analysis->hbb) {
-    readlist += {"tracks","vertices"};
-  }
+  if (analysis->genOnly) {
+    readlist += {"genParticles","genReweight","ak4GenJets","genMet","genParticlesU","electrons"};
+  } else { 
+    readlist += {"runNumber", "lumiNumber", "eventNumber", "rho", 
+                 "isData", "npv", "npvTrue", "weight", "chsAK4Jets", 
+                 "electrons", "muons", "taus", "photons", 
+                 "pfMet", "caloMet", "puppiMet", "rawMet", "trkMet", 
+                 "recoil","metFilters","trkMet"};
 
-  if (analysis->bjetRegression || analysis->deepSVs)
-    readlist.push_back("secondaryVertices");
+    if (analysis->ak8)
+      readlist += {jetname+"AK8Jets", "subjets", jetname+"AK8Subjets","Subjets"};
+    else if (analysis->fatjet) 
+      readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
+    
+    if (analysis->recluster || analysis->bjetRegression || analysis->deep || analysis->hbb || analysis->complicatedPhotons) {
+      readlist.push_back("pfCandidates");
+    }
+    if (analysis->deepTracks || analysis->bjetRegression || analysis->hbb) {
+      readlist += {"tracks","vertices"};
+    }
 
-  if (isData || analysis->applyMCTriggers) {
-    readlist.push_back("triggers");
-  }
+    if (analysis->bjetRegression || analysis->deepSVs)
+      readlist.push_back("secondaryVertices");
 
-  if (!isData) {
-    readlist.push_back("genParticles");
-    readlist.push_back("genReweight");
-    readlist.push_back("ak4GenJets");
-    readlist.push_back("genMet");
+    if (isData || analysis->applyMCTriggers) {
+      readlist.push_back("triggers");
+    }
+
+    if (!isData) {
+      readlist += {"genParticles","genReweight","ak4GenJets","genMet"};
+    }
   }
 
 
@@ -182,8 +185,8 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
   }
   if (analysis->genOnly) {
     std::vector<TString> keepable = {"mcWeight","scale","scaleUp",
-                                     "scaleDown","pdf.*","gen.*","fj1.*",
-                                     "nFatjet","sf_tt.*","sf_qcdTT.*",
+                                     "scaleDown","pdf.*","gen.*",
+                                     "sf_tt.*","sf_qcdTT.*",
                                      "trueGenBosonPt","sf_qcd.*","sf_ewk.*"};
     gt->RemoveBranches({".*"},keepable);
   }
@@ -220,6 +223,15 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     softDrop = new fastjet::contrib::SoftDrop(sdBeta,sdZcut,radius);
     tauN = new fastjet::contrib::Njettiness(fastjet::contrib::OnePass_KT_Axes(), 
                                             fastjet::contrib::NormalizedMeasure(1., radius));
+
+    if (analysis->deepGen) {
+      ecfnMan = new pandaecf::ECFNManager();
+      if (analysis->deepGenGrid) {
+        grid = new ParticleGridder(250,157,5); // 0.02x0.02
+        // grid = new ParticleGridder(1000,628,5); // 0.005x0.005
+        // grid = new ParticleGridder(2500,1570,5); // 0.002x0.002
+      }
+    }
   } else { 
     std::vector<TString> droppable = {"fj1NConst","fj1NSDConst","fj1EFrac100","fj1SDEFrac100"};
     gt->RemoveBranches(droppable);
@@ -277,7 +289,6 @@ void PandaAnalyzer::Terminate()
   fOut->Close();
   fOut = 0; tOut = 0;
 
-
   if (analysis->deep)
     IncrementAuxFile(true);
   if (analysis->deepGen)
@@ -297,7 +308,7 @@ void PandaAnalyzer::Terminate()
 
   delete btagCalib;
   delete sj_btagCalib;
-  for (auto *reader : btagReaders )
+  for (auto *reader : btagReaders)
     delete reader;
 
   for (auto& iter : ak8UncReader)
@@ -322,6 +333,12 @@ void PandaAnalyzer::Terminate()
   delete softDrop;
 
   delete hDTotalMCWeight;
+  
+  delete bjetregReader;
+  delete rochesterCorrection;
+
+  delete ecfnMan;
+  delete grid;
 
   if (DEBUG) PDebug("PandaAnalyzer::Terminate","Finished with output");
 }
@@ -381,9 +398,6 @@ void PandaAnalyzer::SetDataDir(const char *s)
   if (analysis->complicatedLeptons) {
     // Corrections checked out from Gui's repository on Nov 12, 2017 ~DGH
     // https://github.com/GuillelmoGomezCeballos/MitAnalysisRunII/tree/master/data/80x
-    OpenCorrection(cZHEwkCorr,dirPath+"leptonic/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin",1);
-    OpenCorrection(cZHEwkCorrUp  ,dirPath+"leptonic/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin",1);
-    OpenCorrection(cZHEwkCorrDown,dirPath+"leptonic/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
     OpenCorrection(cMuLooseID,dirPath+"leptonic/muon_scalefactors_37ifb.root","scalefactors_MuonLooseId_Muon",2);
     OpenCorrection(cMuMediumID,dirPath+"leptonic/scalefactors_80x_dylan_37ifb.root","scalefactors_Medium_Muon",2);
     OpenCorrection(cMuTightID,dirPath+"leptonic/muon_scalefactors_37ifb.root","scalefactors_TightId_Muon",2);
@@ -399,6 +413,11 @@ void PandaAnalyzer::SetDataDir(const char *s)
     // EWK corrections 
     OpenCorrection(cWZEwkCorr,dirPath+"leptonic/data.root","hEWKWZCorr",1);
     OpenCorrection(cqqZZQcdCorr,dirPath+"leptonic/data.root","hqqZZKfactor",2);
+
+    if (DEBUG>5) PDebug("PandaAnalyzer::Run","Loading the Rochester corrections with random seed 3393");
+    // TO DO: Hard coded to 2016 rochester corrections for now, need to do this in a better way later
+    rochesterCorrection = new RoccoR(Form("%s/rcdata.2016.v3",dirPath.Data()));
+    rng=TRandom3(3393); //Dylan's b-day
   } else {
     OpenCorrection(cEleVeto,dirPath+"moriond17/scaleFactor_electron_summer16.root","scaleFactor_electron_vetoid_RooCMSShape_pu_0_100",2);
     OpenCorrection(cEleTight,dirPath+"moriond17/scaleFactor_electron_summer16.root","scaleFactor_electron_tightid_RooCMSShape_pu_0_100",2);
@@ -409,6 +428,22 @@ void PandaAnalyzer::SetDataDir(const char *s)
     OpenCorrection(cMuTightIso,dirPath+"moriond17/muon_scalefactors_37ifb.root","scalefactors_Iso_MuonTightId",2);
     OpenCorrection(cMuReco,dirPath+"moriond17/Tracking_12p9.root","htrack2",1);
   }
+  // Differential Electroweak VH Corrections
+  if(analysis->hbb) {
+    OpenCorrection(cWmHEwkCorr    ,dirPath+"higgs/Wm_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin"     ,1);
+    OpenCorrection(cWmHEwkCorrUp  ,dirPath+"higgs/Wm_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
+    OpenCorrection(cWmHEwkCorrDown,dirPath+"higgs/Wm_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
+    OpenCorrection(cWpHEwkCorr    ,dirPath+"higgs/Wp_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin"     ,1);
+    OpenCorrection(cWpHEwkCorrUp  ,dirPath+"higgs/Wp_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
+    OpenCorrection(cWpHEwkCorrDown,dirPath+"higgs/Wp_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
+    OpenCorrection(cZnnHEwkCorr    ,dirPath+"higgs/Znn_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin"     ,1);
+    OpenCorrection(cZnnHEwkCorrUp  ,dirPath+"higgs/Znn_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
+    OpenCorrection(cZnnHEwkCorrDown,dirPath+"higgs/Znn_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
+    OpenCorrection(cZllHEwkCorr    ,dirPath+"higgs/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin"     ,1);
+    OpenCorrection(cZllHEwkCorrUp  ,dirPath+"higgs/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
+    OpenCorrection(cZllHEwkCorrDown,dirPath+"higgs/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
+  }
+
   // photons
   OpenCorrection(cPho,dirPath+"moriond17/scalefactors_80x_medium_photon_37ifb.root",
                  "EGamma_SF2D",2);
@@ -510,27 +545,33 @@ void PandaAnalyzer::SetDataDir(const char *s)
   } 
   if (analysis->btagWeights) {
     if (analysis->useCMVA) 
-      cmvaReweighter = new CSVHelper("PandaAnalysis/data/csvweights/cmva_rwt_fit_hf_v0_final_2017_3_29.root"   , "PandaAnalysis/data/csvweights/cmva_rwt_fit_lf_v0_final_2017_3_29.root"   , 5);
+      cmvaReweighter = new CSVHelper("PandaAnalysis/data/csvweights/cmva_rwt_fit_hf_v0_final_2017_3_29.root"   , 
+                                     "PandaAnalysis/data/csvweights/cmva_rwt_fit_lf_v0_final_2017_3_29.root"   , 5);
     else
-      csvReweighter  = new CSVHelper("PandaAnalysis/data/csvweights/csv_rwt_fit_hf_v2_final_2017_3_29test.root", "PandaAnalysis/data/csvweights/csv_rwt_fit_lf_v2_final_2017_3_29test.root", 5);
+      csvReweighter  = new CSVHelper("PandaAnalysis/data/csvweights/csv_rwt_fit_hf_v2_final_2017_3_29test.root", 
+                                     "PandaAnalysis/data/csvweights/csv_rwt_fit_lf_v2_final_2017_3_29test.root", 5);
   }
 
   // bjet regression
   if (analysis->bjetRegression) {
     bjetreg_vars = new float[10];
+    bjetregReader = new TMVA::Reader("!Color:!Silent");
 
-    bjetreg_reader->AddVariable("jetPt[hbbjtidx[0]]",&bjetreg_vars[0]);
-    bjetreg_reader->AddVariable("nJot",&bjetreg_vars[1]);
-    bjetreg_reader->AddVariable("jetEta[hbbjtidx[0]]",&bjetreg_vars[2]);
-    bjetreg_reader->AddVariable("jetE[hbbjtidx[0]]",&bjetreg_vars[3]);
-    bjetreg_reader->AddVariable("npv",&bjetreg_vars[4]);
-    bjetreg_reader->AddVariable("jetLeadingTrkPt[hbbjtidx[0]]",&bjetreg_vars[5]);
-    bjetreg_reader->AddVariable("jetLeadingLepPt[hbbjtidx[0]]",&bjetreg_vars[6]);
-    bjetreg_reader->AddVariable("jetNLep[hbbjtidx[0]]",&bjetreg_vars[7]);
-    bjetreg_reader->AddVariable("jetEMFrac[hbbjtidx[0]]",&bjetreg_vars[8]);
-    bjetreg_reader->AddVariable("jetHadFrac[hbbjtidx[0]]",&bjetreg_vars[9]);
+    bjetregReader->AddVariable("jetPt[hbbjtidx[0]]",&bjetreg_vars[0]);
+    bjetregReader->AddVariable("nJot",&bjetreg_vars[1]);
+    bjetregReader->AddVariable("jetEta[hbbjtidx[0]]",&bjetreg_vars[2]);
+    bjetregReader->AddVariable("jetE[hbbjtidx[0]]",&bjetreg_vars[3]);
+    bjetregReader->AddVariable("npv",&bjetreg_vars[4]);
+    bjetregReader->AddVariable("jetLeadingTrkPt[hbbjtidx[0]]",&bjetreg_vars[5]);
+    bjetregReader->AddVariable("jetLeadingLepPt[hbbjtidx[0]]",&bjetreg_vars[6]);
+    bjetregReader->AddVariable("jetNLep[hbbjtidx[0]]",&bjetreg_vars[7]);
+    bjetregReader->AddVariable("jetEMFrac[hbbjtidx[0]]",&bjetreg_vars[8]);
+    bjetregReader->AddVariable("jetHadFrac[hbbjtidx[0]]",&bjetreg_vars[9]);
 
-    bjetreg_reader->BookMVA( "BDT method", dirPath+"trainings/bjet_regression_v0.weights.xml" );    
+    gSystem->Exec(
+        Form("wget -O %s/trainings/bjet_regression_v0.weights.xml http://t3serv001.mit.edu/~snarayan/pandadata/trainings/bjet_regression_v0.weights.xml",dirPath.Data())
+      );
+    bjetregReader->BookMVA( "BDT method", dirPath+"trainings/bjet_regression_v0.weights.xml" );
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded bjet regression weights");
   }
@@ -851,13 +892,6 @@ void PandaAnalyzer::Run()
           {0.739,0.767,0.780,0.789,0.776,0.771,0.779,0.787,0.806}};
   btagpt = Binner(vbtagpt);
   btageta = Binner(vbtageta);
-  if (analysis->complicatedLeptons) {
-    if (DEBUG) PDebug("PandaAnalyzer::Run","Loading the Rochester corrections with random seed 3393");
-    // TO DO: Hard coded to 2016 rochester corrections for now, need to do this in a better way later
-    TString dirPath1 = TString(gSystem->Getenv("CMSSW_BASE")) + "/src/";
-    rochesterCorrection = new RoccoR(Form("%sPandaAnalysis/data/rcdata.2016.v3",dirPath1.Data()));
-    rng=TRandom3(3393); //Dylan's b-day
-  }
 
   std::vector<unsigned int> metTriggers;
   std::vector<unsigned int> eleTriggers;
@@ -1107,10 +1141,15 @@ void PandaAnalyzer::Run()
 
     // do this up here before the preselection
     if (analysis->deepGen) {
-      FillGenTree();
-      tAux->Fill();
+      if (event.genParticles.size() > 0) 
+        FillGenTree(event.genParticles);
+      else
+        FillGenTree(event.genParticlesU);
+      if (gt->genFatJetPt > 400) 
+        tAux->Fill();
       if (tAux->GetEntriesFast() == 2500)
         IncrementGenAuxFile();
+      tr->TriggerEvent("fill gen aux");
     }
 
 
@@ -1189,8 +1228,6 @@ void PandaAnalyzer::Run()
 
       SignalInfo();
 
-      PhotonSFs();
-
       if (analysis->reclusterGen && analysis->hbb) {
         GenJetsNu();
         MatchGenJets(genJetsNu);
@@ -1213,9 +1250,12 @@ void PandaAnalyzer::Run()
       tAux->Fill();
       if (tAux->GetEntriesFast() == 2500)
         IncrementAuxFile();
+      tr->TriggerEvent("aux fill");
     }
 
     gt->Fill();
+
+    tr->TriggerEvent("fill");
 
   } // entry loop
 

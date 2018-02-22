@@ -108,7 +108,7 @@ void PandaAnalyzer::JetBasics()
         }
       }
 
-      if (jet.pt()>bJetPtThreshold && fabs(jet.eta())<2.5) { // b jets
+      if (jet.pt()>bJetPtThreshold && fabs(jet.eta())<2.4) { // b jets
 
         if (jet.csv > 0.5426) {
           // loose WP
@@ -129,6 +129,8 @@ void PandaAnalyzer::JetBasics()
       }
 
       if (jet.pt()>jetPtThreshold) { // nominal jets
+        if ((analysis->hbb || analysis->monoh) && cleanedJets.size() >= NJET) 
+          continue;
         cleanedJets.push_back(&jet);
         // Set jetGenPt, jetGenFlavor for these jets
         // This will be overwritten later if reclusterGen is turned on
@@ -475,12 +477,6 @@ void PandaAnalyzer::JetVBFSystem()
 
 void PandaAnalyzer::JetHbbReco() 
 {
-  float tmp_hbbpt=-99;
-  float tmp_hbbeta=-99;
-  float tmp_hbbphi=-99;
-  float tmp_hbbm=-99;
-  int tmp_hbbjtidx1=-1;
-  int tmp_hbbjtidx2=-1;
   if (centralJets.size() > 1) {
     vector<Jet*> btagSortedJets = centralJets;
     sort(
@@ -553,7 +549,7 @@ void PandaAnalyzer::JetHbbReco()
         // Don't propagate the JES uncertainty to the hardest track/lepton or the EM fraction for now
         bjetreg_vars[0] = gt->jetPtUp[gt->hbbjtidx[i]];
         bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtUp[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
-        gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+        gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
         hbbdaughters_corr_jesUp[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPtUp[gt->hbbjtidx[i]],
           gt->jetEta[gt->hbbjtidx[i]],
@@ -563,7 +559,7 @@ void PandaAnalyzer::JetHbbReco()
         // B-jet regression with jet energy varied down
         bjetreg_vars[0] = gt->jetPtDown[gt->hbbjtidx[i]];
         bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtDown[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
-        gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+        gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
         hbbdaughters_corr_jesDown[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPtDown[gt->hbbjtidx[i]],
           gt->jetEta[gt->hbbjtidx[i]],
@@ -572,7 +568,7 @@ void PandaAnalyzer::JetHbbReco()
         );
         // B-jet regression with central value for jet energy
         // Call this last so that the central value for jetRegFac[i] is stored in gt
-        gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+        gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
         hbbdaughters_corr[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPt[gt->hbbjtidx[i]],
           gt->jetEta[gt->hbbjtidx[i]],

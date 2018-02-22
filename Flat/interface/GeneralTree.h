@@ -316,6 +316,7 @@ class GeneralTree : public genericTree {
     float jot2PhiDown = -1;
     int loosePho1SelBit = -1;
     int looseGenPho1PdgId = -1;
+    int genFatJetNProngs = -1;
     float genFatJetPt = -1;
     int fj1NBPartons = -1;
     int fj1NCPartons = -1;
@@ -331,9 +332,9 @@ class GeneralTree : public genericTree {
     float sf_zzUnc = -1;
     float sf_zz = -1;
     float sf_wz = -1;
-    float sf_zh = -1;
-    float sf_zhUp = -1;
-    float sf_zhDown = -1;
+    float sf_vh = -1;
+    float sf_vhUp = -1;
+    float sf_vhDown = -1;
     float genLep1Pt = -1;
     float genLep1Eta = -1;
     float genLep1Phi = -1;

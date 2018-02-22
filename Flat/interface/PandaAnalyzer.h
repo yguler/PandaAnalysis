@@ -3,6 +3,7 @@
 
 // STL
 #include "vector"
+#include <unordered_set>
 #include "map"
 #include <string>
 #include <cmath>
@@ -29,8 +30,11 @@
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+
+// Utils
 #include "PandaAnalysis/Utilities/interface/RoccoR.h"
 #include "PandaAnalysis/Utilities/interface/CSVHelper.h"
+#include "PandaAnalysis/Utilities/interface/EnergyCorrelations.h"
 
 // TMVA
 #include "TMVA/Reader.h"
@@ -95,6 +99,7 @@ public :
         kNTrig
     };
 
+
     //////////////////////////////////////////////////////////////////////////////////////
 
     PandaAnalyzer(int debug_=0);
@@ -130,9 +135,18 @@ private:
         cEleMedium,   //!< monojet SF, Tight ID for e
         cEleTight,    //!< monojet SF, Tight ID for e
         cEleReco,     //!< monojet SF, tracking for e
-        cZHEwkCorr,     //!< ZH Ewk Corr weight  
-        cZHEwkCorrUp,   //!< ZH Ewk Corr weight Up  
-        cZHEwkCorrDown, //!< ZH Ewk Corr weight Down  
+        cWmHEwkCorr,     //!< W(l-V)H Ewk Corr weight  
+        cWmHEwkCorrUp,   //!< W(l-V)H Ewk Corr weight Up  
+        cWmHEwkCorrDown, //!< W(l-V)H Ewk Corr weight Down  
+        cWpHEwkCorr,     //!< W(l+v)H Ewk Corr weight  
+        cWpHEwkCorrUp,   //!< W(l+v)H Ewk Corr weight Up  
+        cWpHEwkCorrDown, //!< W(l+v)H Ewk Corr weight Down  
+        cZnnHEwkCorr,     //!< Z(vv)H Ewk Corr weight  
+        cZnnHEwkCorrUp,   //!< Z(vv)H Ewk Corr weight Up  
+        cZnnHEwkCorrDown, //!< Z(vv)H Ewk Corr weight Down  
+        cZllHEwkCorr,     //!< Z(ll)H Ewk Corr weight  
+        cZllHEwkCorrUp,   //!< Z(ll)H Ewk Corr weight Up  
+        cZllHEwkCorrDown, //!< Z(ll)H Ewk Corr weight Down  
         cWZEwkCorr,
         cqqZZQcdCorr,
         cMuLooseID,   //!< MUO POG SF, Loose ID for mu 
@@ -192,13 +206,41 @@ private:
     };
 
     struct GenJetInfo {
-      float pt=0, eta=0, phi=0, m=0;
-      float msd=0;
-      float tau3=0, tau2=0, tau1=0;
-      float tau3sd=0, tau2sd=0, tau1sd=0;
-      int nprongs=0;
-      float partonpt=0, partonm=0;
+    public:
+      float pt=-1, eta=-1, phi=-1, m=-1;
+      float msd=-1;
+      float tau3=-1, tau2=-1, tau1=-1;
+      float tau3sd=-1, tau2sd=-1, tau1sd=-1;
+      int nprongs=-1;
+      float partonpt=-1, partonm=-1;
       std::vector<std::vector<float>> particles;
+      std::vector<std::vector<std::vector<float>>> ecfs; // uh
+      void reset() {
+        pt=-1; eta=-1; phi=-1; m=-1;
+        msd=-1;
+        tau3=-1; tau2=-1; tau1=-1;
+        tau3sd=-1; tau2sd=-1; tau1sd=-1;
+        nprongs=-1;
+        partonpt=-1; partonm=-1;
+        for (auto& v : particles) {
+          for (auto& vv : v) {
+            vv = 0;
+          }
+        }
+        for (auto& v : ecfs) {
+          for (auto& vv : v) {
+            for (auto& vvv : vv) {
+              vvv = -1;
+            }
+          }
+        }
+      }
+
+    };
+
+    struct JetHistory {
+      int user_idx;
+      int child_idx;
     };
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -226,7 +268,6 @@ private:
     void FatjetMatching();
     void FatjetPartons();
     void FatjetRecluster();
-    void FillGenTree();
     void FillPFTree();
     void GenFatJet();
     void GenJetsNu();
@@ -262,21 +303,11 @@ private:
     void VJetsReweight();
     double WeightEWKCorr(float pt, int type);
     double WeightZHEWKCorr(float baseCorr);
-    // templated function needs to be defined here, ugh
-    template <typename T> void MatchGenJets(T& genJets) {
-      unsigned N = cleanedJets.size();
-      for (unsigned i = 0; i != N; ++i) {
-        panda::Jet *reco = cleanedJets.at(i);
-        for (auto &gen : genJets) {
-          if (DeltaR2(gen.eta(), gen.phi(), reco->eta(), reco->phi()) < 0.09) {
-            gt->jetGenPt[i] = gen.pt();
-            gt->jetGenFlavor[i] = gen.pdgid;
-            break;
-          }
-        }
-      }
-      tr->TriggerEvent("match gen jets");
-    }
+
+    // templated functions
+    template <typename T> void CountGenPartons(std::unordered_set<const T*>&, const panda::Collection<T>&);
+    template <typename T> void FillGenTree(panda::Collection<T>& genParticles);
+    template <typename T> void MatchGenJets(T& genJets);
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -312,25 +343,30 @@ private:
     BTagCalibration *btagCalib=0;
     BTagCalibration *sj_btagCalib=0;
     std::vector<BTagCalibrationReader*> btagReaders = std::vector<BTagCalibrationReader*>(bN,0); 
-        //!< maps BTagType to a reader 
+      //!< maps BTagType to a reader 
+
+    Binner btagpt = Binner({});
+    Binner btageta = Binner({});
+    std::vector<std::vector<double>> lfeff, ceff, beff;
+    TMVA::Reader *bjetregReader=0; 
+
     std::map<TString,JetCorrectionUncertainty*> ak8UncReader; //!< calculate JES unc on the fly
     JERReader *ak8JERReader{0}; //!< fatjet jet energy resolution reader
     std::map<TString,JetCorrectionUncertainty*> ak4UncReader; //!< calculate JES unc on the fly
     std::map<TString,FactorizedJetCorrector*> ak4ScaleReader; //!< calculate JES on the fly
     JERReader *ak4JERReader{0}; //!< fatjet jet energy resolution reader
-    EraHandler eras = EraHandler(2016); //!< determining data-taking era, to be used for era-dependent JEC
     JetCorrectionUncertainty *uncReader=0;           
     JetCorrectionUncertainty *uncReaderAK4=0;        
     FactorizedJetCorrector *scaleReaderAK4=0;        
-    Binner btagpt = Binner({});
-    Binner btageta = Binner({});
-    std::vector<std::vector<double>> lfeff, ceff, beff;
-    TMVA::Reader *bjetreg_reader = new TMVA::Reader("!Color:!Silent");
+
+    EraHandler eras = EraHandler(2016); //!< determining data-taking era, to be used for era-dependent JEC
+    ParticleGridder *grid = 0;
+    pandaecf::ECFNManager *ecfnMan = 0;
 
     //////////////////////////////////////////////////////////////////////////////////////
 
     // files and histograms containing weights
-    std::vector<TFile*> fCorrs = std::vector<TFile*>(cN,0); //!< files containing corrections
+    std::vector<TFile*>   fCorrs  = std::vector<TFile*>  (cN,0); //!< files containing corrections
     std::vector<THCorr1*> h1Corrs = std::vector<THCorr1*>(cN,0); //!< histograms for binned corrections
     std::vector<THCorr2*> h2Corrs = std::vector<THCorr2*>(cN,0); //!< histograms for binned corrections
     std::vector<TF1Corr*> f1Corrs = std::vector<TF1Corr*>(cN,0); //!< TF1s for continuous corrections
@@ -356,7 +392,7 @@ private:
     TH1F *hDTotalMCWeight=0;
     TTree *tIn=0;    // input tree to read
     unsigned int preselBits=0;
-    panda::Event event;
+    panda::EventAnalysis event;
 
     //////////////////////////////////////////////////////////////////////////////////////
 
@@ -367,38 +403,42 @@ private:
 
     //////////////////////////////////////////////////////////////////////////////////////
 
-    // any extra signal weights we want
     // stuff that gets passed between modules
     //
     // NB: ensure that any global vectors/maps that are per-event
     // are reset properly in ResetBranches(), or you can really
     // mess up behavior
+    std::vector<TString> wIDs;
     std::vector<TriggerHandler> triggerHandlers = std::vector<TriggerHandler>(kNTrig);
+
     std::vector<panda::Lepton*> looseLeps, tightLeps;
     std::vector<panda::Photon*> loosePhos;
+    int looseLep1PdgId, looseLep2PdgId, looseLep3PdgId, looseLep4PdgId;
+
     TLorentzVector vPFMET, vPuppiMET;
     TVector2 vMETNoMu;
     TLorentzVector vpfUW, vpfUZ, vpfUA, vpfU;
     TLorentzVector vpuppiUW, vpuppiUZ, vpuppiUA, vpuppiU;
+
     panda::FatJet *fj1 = 0;
-    std::vector<panda::Jet*> cleanedJets, isoJets, centralJets, bCandJets;
-    std::map<panda::Jet*,int> bCandJetGenFlavor;
-    std::map<panda::Jet*,float> bCandJetGenPt;
-    TLorentzVector vJet, vBarrelJets;
     panda::FatJetCollection *fatjets = 0;
+    std::vector<panda::Jet*> cleanedJets, isoJets, centralJets, bCandJets;
+    TLorentzVector vJet, vBarrelJets;
     panda::JetCollection *jets = 0;
     panda::Jet *jot1 = 0, *jot2 = 0;
     panda::Jet *jotUp1 = 0, *jotUp2 = 0;
     panda::Jet *jotDown1 = 0, *jotDown2 = 0;
     panda::Jet *jetUp1 = 0, *jetUp2 = 0;
     panda::Jet *jetDown1 = 0, *jetDown2 = 0;
-    std::vector<panda::GenJet> genJetsNu;
-    float genBosonPtMin, genBosonPtMax;
-    int looseLep1PdgId, looseLep2PdgId, looseLep3PdgId, looseLep4PdgId;
-    std::vector<TString> wIDs;
-    float *bjetreg_vars = 0;
     float jetPtThreshold=30;
     float bJetPtThreshold=30;
+    std::map<panda::Jet*,int> bCandJetGenFlavor;
+    std::map<panda::Jet*,float> bCandJetGenPt;
+
+    std::vector<panda::GenJet> genJetsNu;
+    float genBosonPtMin, genBosonPtMax;
+
+    float *bjetreg_vars = 0;
 
     std::vector<std::vector<float>> pfInfo;
     std::vector<std::vector<float>> svInfo; 
@@ -411,6 +451,10 @@ private:
     float minSoftTrackPt=0.3; // 300 MeV
 };
 
+
+/** templated functions **/
+
+#include "TemplatedPandaAnalyzer.h"
 
 #endif
 

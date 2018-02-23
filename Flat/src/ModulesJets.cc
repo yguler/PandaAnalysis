@@ -129,12 +129,12 @@ void PandaAnalyzer::JetBasics()
       }
 
       if (jet.pt()>jetPtThreshold) { // nominal jets
-        if ((analysis->hbb || analysis->monoh) && cleanedJets.size() >= NJET) 
+        if ((analysis->hbb || analysis->boosted) && cleanedJets.size() >= NJET) 
           continue;
         cleanedJets.push_back(&jet);
         // Set jetGenPt, jetGenFlavor for these jets
         // This will be overwritten later if reclusterGen is turned on
-        if (analysis->hbb || analysis->monoh) {
+        if (analysis->hbb || analysis->boosted) {
           gt->jetGenFlavor[cleanedJets.size()-1] = flavor;
           gt->jetGenPt    [cleanedJets.size()-1] = genpt ;
         }
@@ -179,7 +179,7 @@ void PandaAnalyzer::JetBasics()
         if (analysis->vbf || analysis->complicatedLeptons)
           JetVBFBasics(jet);
 
-        if (analysis->monoh || analysis->hbb) {
+        if (analysis->boosted || analysis->hbb) {
           JetHbbBasics(jet);
           if (analysis->bjetRegression)
             JetBRegressionInfo(jet);
@@ -341,7 +341,7 @@ void PandaAnalyzer::JetVBFBasics(panda::Jet& jet)
 
 void PandaAnalyzer::IsoJet(panda::Jet& jet) 
 {
-  float maxIsoEta = (analysis->monoh) ? 4.5 : 2.5;
+  float maxIsoEta = (analysis->boosted) ? 4.5 : 2.5;
   bool isIsoJet = ( (gt->nFatjet==0) || 
       (fabs(jet.eta())<maxIsoEta 
        && DeltaR2(gt->fj1Eta,gt->fj1Phi,jet.eta(),jet.phi())>FATJETMATCHDR2) ); 
@@ -358,10 +358,10 @@ void PandaAnalyzer::IsoJet(panda::Jet& jet)
       gt->isojet2Pt = jet.pt();
       gt->isojet2CSV = jet.csv;
     }
-    if (analysis->monoh)
+    if (analysis->boosted)
       gt->jetIso[cleanedJets.size()-1]=1;
   } else {
-    if (analysis->monoh)
+    if (analysis->boosted)
       gt->jetIso[cleanedJets.size()-1]=0;
   }
   tr->TriggerSubEvent("iso jets");
@@ -469,6 +469,44 @@ void PandaAnalyzer::JetVBFSystem()
   }
 
   tr->TriggerSubEvent("VBF jet system");
+}
+
+void PandaAnalyzer::ResolvedJet()
+{ 
+  float tmp_hbbpt=-99;
+  float tmp_hbbeta=-99;
+  float tmp_hbbphi=-99;
+  float tmp_hbbm=-99;
+  int tmp_hbbjtidx1=-1;
+  int tmp_hbbjtidx2=-1;
+  if (cleanedJets.size() > 1) {
+     for (unsigned int i = 0;i<cleanedJets.size();i++){
+         panda::Jet *jet_1 = cleanedJets.at(i);
+         TLorentzVector hbbdaughter1, hbbdaughter2, hbbsystem;
+         hbbdaughter1.SetPtEtaPhiM(jet_1->pt(),jet_1->eta(),jet_1->phi(),jet_1->m());
+         for (unsigned int j = i+1;j<cleanedJets.size();j++){
+             panda::Jet *jet_2 = cleanedJets.at(j);
+             hbbdaughter2.SetPtEtaPhiM(jet_2->pt(),jet_2->eta(),jet_2->phi(),jet_2->m());
+             hbbsystem = hbbdaughter1 + hbbdaughter2;
+             if (hbbsystem.Pt()>tmp_hbbpt){
+                tmp_hbbpt = hbbsystem.Pt();
+                tmp_hbbeta = hbbsystem.Eta();
+                tmp_hbbphi = hbbsystem.Phi();
+                tmp_hbbm = hbbsystem.M();
+                tmp_hbbjtidx1 = i; 
+                tmp_hbbjtidx2 = j;  
+             }
+         }
+     }
+      gt->hbbpt = tmp_hbbpt;
+      gt->hbbeta = tmp_hbbeta;
+      gt->hbbphi = tmp_hbbphi;
+      gt->hbbm = tmp_hbbm;
+      gt->hbbjtidx[0] = tmp_hbbjtidx1;
+      gt->hbbjtidx[1] = tmp_hbbjtidx2;
+
+      tr.TriggerEvent("monohiggs");
+  }
 }
 
 void PandaAnalyzer::JetHbbReco() 

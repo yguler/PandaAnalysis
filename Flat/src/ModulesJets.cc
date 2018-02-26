@@ -471,7 +471,7 @@ void PandaAnalyzer::JetVBFSystem()
   tr->TriggerSubEvent("VBF jet system");
 }
 
-void PandaAnalyzer::ResolvedJet()
+void PandaAnalyzer::RJet()
 { 
   float tmp_hbbpt=-99;
   float tmp_hbbeta=-99;

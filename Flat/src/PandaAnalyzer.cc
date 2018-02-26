@@ -199,10 +199,10 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     gt->RemoveBranches({".*"},keepable);
   }
   if (!analysis->fatjet && !analysis->ak8) {
-    gt->RemoveBranches({"fj1.*"});
+    gt->RemoveBranches({"fj1.*","nAK8jet*"});
   }
   if (analysis->complicatedLeptons) {
-    gt->RemoveBranches({"genJet.*","puppiU.*","pfU.*","dphipfU.*","dphipuppi.*","jet.*"});
+    gt->RemoveBranches({"genJet.*","puppiU.*","pfU.*","dphipfU.*","dphipuppi.*","jet1.*","jet2.*"});
   }
 
 

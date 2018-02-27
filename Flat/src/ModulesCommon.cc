@@ -272,7 +272,7 @@ void PandaAnalyzer::Recoil()
 
 void PandaAnalyzer::HeavyFlavorCounting() 
 {
-  // For now, simple B and C counting
+  // Simple B and C counting stored in nB, nHF
   for (auto& gen : event.genParticles) {
     float pt = gen.pt();
     int pdgid = gen.pdgid;
@@ -287,6 +287,11 @@ void PandaAnalyzer::HeavyFlavorCounting()
       if (apdgid==5)
         gt->nB++;
     }
+  }
+  // Gen B jet counting stored in nBGenJets
+  for (auto &gen : event.ak4GenJets) {
+    if (gen.pt() > 20 && std::abs(gen.eta()) < 2.4 && (gen.numB != 0 || abs(gen.pdgid)==5))
+      ++(gt->nBGenJets);
   }
 }
 

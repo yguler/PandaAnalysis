@@ -874,7 +874,7 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("nFatjet",&nFatjet,"nFatjet/I");
     Book("nIsoJet",&nIsoJet,"nIsoJet/I");
   }
-  if (fatjet || hfCounting) {
+  if (hfCounting) {
     Book("nHF",&nHF,"nHF/I");
     Book("nB",&nB,"nB/I");
     Book("nBGenJets",&nBGenJets,"nBGenJets/I");

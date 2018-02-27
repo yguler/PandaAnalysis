@@ -95,9 +95,9 @@ void PandaAnalyzer::JetBasics()
       } else if (analysis->jetFlavorJets) {
         // or we can match to gen jets (probably better)
         for (auto &gen : event.ak4GenJets) {
-	  // first count how many gen b jets are there
-	  if (gen.pt() > 20 && std::abs(gen.eta()) < 2.4 && gen.numB != 0)
-	    ++(gt->nBGenJets);
+          // first count how many gen b jets are there
+          if (gen.pt() > 20 && std::abs(gen.eta()) < 2.4 && gen.numB != 0)
+            ++(gt->nBGenJets);
           if (DeltaR2(gen.eta(), gen.phi(), jet.eta(), jet.phi()) < 0.09) {
             int apdgid = abs(gen.pdgid);
             genpt = gen.pt();

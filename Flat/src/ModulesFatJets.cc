@@ -758,7 +758,7 @@ void PandaAnalyzer::FatjetMatching()
           eff = lfeff[bineta][binpt];
         }
         if (analysis->hbb)
-          CalcBJetSFs(bSubJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
+          CalcBJetSFs(bSubJetM,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
         else
           CalcBJetSFs(bSubJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
         sj_btagcands.push_back(btagcand(iSJ,flavor,eff,sf,sfUp,sfDown));

@@ -87,6 +87,7 @@ wlnhbb = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,
         hbb = True,
+        monoh = False,
         recoil = True,
         fatjet = True,
         btagSFs = True,

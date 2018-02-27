@@ -189,6 +189,7 @@ private:
         bJetL=0,
         bSubJetL,
         bJetM,
+        bSubJetM,
         bN
     };
 

@@ -552,6 +552,11 @@ void PandaAnalyzer::SetDataDir(const char *s)
     btagReaders[bJetM]->load(*btagCalib,BTagEntry::FLAV_B,"comb");
     btagReaders[bJetM]->load(*btagCalib,BTagEntry::FLAV_C,"comb");
     btagReaders[bJetM]->load(*btagCalib,BTagEntry::FLAV_UDSG,"incl");
+    
+    btagReaders[bSubJetM] = new BTagCalibrationReader(BTagEntry::OP_MEDIUM,"central",{"up","down"});
+    btagReaders[bSubJetM]->load(*sj_btagCalib,BTagEntry::FLAV_B,"lt");
+    btagReaders[bSubJetM]->load(*sj_btagCalib,BTagEntry::FLAV_C,"lt");
+    btagReaders[bSubJetM]->load(*sj_btagCalib,BTagEntry::FLAV_UDSG,"incl");
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded btag SFs");
   } 

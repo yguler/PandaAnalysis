@@ -298,8 +298,19 @@ void PandaAnalyzer::FatjetBasics()
       ptcut = 200;
     if (analysis->deep)
       ptcut = 400;
-
-    if (pt<ptcut || fabs(eta)>2.4 || !fj.monojet)
+    
+    // Here, we require the Fatjet pt's to be larger than some nominal value, ptcut
+    // if flag rerunJES is on, Fatjets will pass if their JES uncertainties could
+    // put them over the threshold.
+    // However, this does not account for the smearing pushing a jet over the threshold,
+    // so the analysis fatjet pt threshold must be sufficiently larger than this number
+    // if the JER uncertainty is to be considered properly.
+    float bestPt = pt;
+    if (analysis->rerunJES) {
+      bestPt = TMath::Max(bestPt, fj.ptCorrUp);
+      bestPt = TMath::Max(bestPt, fj.ptCorrDown);
+    }
+    if (bestPt<ptcut || fabs(eta)>2.4 || !fj.monojet)
       continue;
 
     float phi = fj.phi();
@@ -388,8 +399,8 @@ void PandaAnalyzer::FatjetBasics()
         gt->fj1MSDScaleDown_sj = gt->fj1MSD * (sjSumDown.Pt()/sjSum.Pt());
         gt->fj1MSDSmeared_sj = gt->fj1MSD * (sjSumSmear.Pt()/sjSum.Pt());
       }
-
-      if (analysis->monoh) {
+       
+      if (analysis->monoh || analysis->hbb) {
         // mSD correction
         float corrweight=1.;
         corrweight = GetMSDCorr(pt,eta);

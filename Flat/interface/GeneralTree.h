@@ -392,6 +392,7 @@ class GeneralTree : public genericTree {
     float ak81Phi = -1;
     float ak81MaxCSV = -1;
     int nB = -1;
+    int nBGenJets = -1;
     float fj1MSDScaleUp_sj = -1;
     float fj1MSDScaleDown_sj = -1;
     float fj1MSDSmeared_sj = -1;

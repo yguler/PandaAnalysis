@@ -131,8 +131,11 @@ void PandaAnalyzer::ComplicatedLeptons() {
   looseLep1PdgId=-1, looseLep2PdgId=-1, looseLep3PdgId=-1, looseLep4PdgId=-1;
   for (auto& ele : event.electrons) {
     float pt = ele.smearedPt; float eta = ele.eta(); float aeta = fabs(eta);
-    if (pt<10 || aeta>2.5 /* || (aeta>1.4442 && aeta<1.566) */) continue;
-    if (!ele.veto) continue;
+    if (analysis->hbb) {
+      if (pt<7 || aeta>2.4 || fabs(ele.dxy)>0.05 || fabs(ele.dz)>0.2 || ele.combIso()/pt>0.4) continue;
+    } else {
+      if (pt<10 || aeta>2.5 || !ele.veto) continue;
+    }
     ele.setPtEtaPhiM(pt,eta,ele.phi(),511e-6);
     unsigned iL=gt->nLooseElectron;
     bool isFake   = ele.hltsafe;
@@ -210,9 +213,12 @@ void PandaAnalyzer::ComplicatedLeptons() {
         ptCorrection=rochesterCorrection->kScaleAndSmearMC((int)mu.charge, pt, eta, mu.phi(), mu.trkLayersWithMmt, random1, random2, 0, 0);
       }
       pt *= ptCorrection;
-    } 
-    if (pt<10 || aeta>2.4) continue;
-    if (!mu.loose) continue;
+    }
+    if (analysis->hbb) {
+      if (pt<5 || aeta>2.4 || !mu.loose || fabs(mu.dxy)>0.5 || fabs(mu.dz)>1.0 || mu.combIso()/pt>0.4) continue;
+    } else {
+      if (pt<10 || aeta>2.4 || !mu.loose) continue;
+    }
     mu.setPtEtaPhiM(pt,eta,mu.phi(),0.106);
     bool isFake   = mu.tight  && mu.combIso()/mu.pt() < 0.4 && mu.chIso/mu.pt() < 0.4;
     bool isMedium = mu.medium && mu.combIso()/mu.pt() < 0.15;

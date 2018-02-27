@@ -552,6 +552,11 @@ void PandaAnalyzer::SetDataDir(const char *s)
     btagReaders[bJetM]->load(*btagCalib,BTagEntry::FLAV_B,"comb");
     btagReaders[bJetM]->load(*btagCalib,BTagEntry::FLAV_C,"comb");
     btagReaders[bJetM]->load(*btagCalib,BTagEntry::FLAV_UDSG,"incl");
+    
+    btagReaders[bSubJetM] = new BTagCalibrationReader(BTagEntry::OP_MEDIUM,"central",{"up","down"});
+    btagReaders[bSubJetM]->load(*sj_btagCalib,BTagEntry::FLAV_B,"lt");
+    btagReaders[bSubJetM]->load(*sj_btagCalib,BTagEntry::FLAV_C,"lt");
+    btagReaders[bSubJetM]->load(*sj_btagCalib,BTagEntry::FLAV_UDSG,"incl");
 
     if (DEBUG) PDebug("PandaAnalyzer::SetDataDir","Loaded btag SFs");
   } 
@@ -806,7 +811,7 @@ bool PandaAnalyzer::PassPreselection()
     if (
       bestMet>150 && 
       bestLeadingJet>50 && bestSubLeadingJet>25 &&
-      (gt->hbbpt>50 || (gt->nFatjet>0 && gt->fj1Pt>200))
+      (gt->hbbpt>50 || gt->nFatjet>0)
     ) isGood=true;
     // WlnHbb
     else if (
@@ -815,7 +820,7 @@ bool PandaAnalyzer::PassPreselection()
        (gt->nTightElectron >0 && gt->electronPt[0]>25) ||
        (gt->nTightMuon > 0 && gt->muonPt[0]>25)
       ) &&
-      (gt->hbbpt>50 || (gt->nFatjet>0 && gt->fj1Pt>200))
+      (gt->hbbpt>50 || gt->nFatjet>0)
     ) isGood=true;
     // ZllHbb
     else if (
@@ -833,7 +838,7 @@ bool PandaAnalyzer::PassPreselection()
         gt->muonPt[1]>20 
        )
       ) &&
-      (gt->hbbpt>50 || (gt->nFatjet>0 && gt->fj1Pt>200))
+      (gt->hbbpt>50 || gt->nFatjet>0)
     ) isGood=true;
   }
 

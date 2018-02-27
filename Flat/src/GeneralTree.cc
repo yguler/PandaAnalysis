@@ -291,6 +291,7 @@ void GeneralTree::Reset() {
     ak81Phi = -1;
     ak81MaxCSV = -1;
     nB = 0;
+    nBGenJets = 0;
     fj1MSDScaleUp_sj = -1;
     fj1MSDScaleDown_sj = -1;
     fj1MSDSmeared_sj = -1;
@@ -873,9 +874,10 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("nFatjet",&nFatjet,"nFatjet/I");
     Book("nIsoJet",&nIsoJet,"nIsoJet/I");
   }
-  if (fatjet || hfCounting) {
+  if (hfCounting) {
     Book("nHF",&nHF,"nHF/I");
     Book("nB",&nB,"nB/I");
+    Book("nBGenJets",&nBGenJets,"nBGenJets/I");
   }
   if (btagWeights) { 
     for (unsigned iShift=0; iShift<nCsvShifts; iShift++) {

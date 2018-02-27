@@ -348,6 +348,7 @@ void PandaAnalyzer::IsoJet(panda::Jet& jet)
 
   if (isIsoJet) {
     isoJets.push_back(&jet);
+    gt->nIsoJet++;
     float csv = (fabs(jet.eta())<2.5) ? jet.csv : -1;
     if (csv>0.5426)
       ++gt->isojetNBtags;

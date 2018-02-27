@@ -86,10 +86,12 @@ deepgen = lambda v=False : _analysis(
 wlnhbb = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,
+        ak8 = True,
         hbb = True,
+        monoh = False,
         recoil = True,
         fatjet = True,
-        btagSFs = False,
+        btagSFs = True,
         btagWeights = True,
         useCMVA = True,
         complicatedLeptons = True,

@@ -291,7 +291,7 @@ void PandaAnalyzer::HeavyFlavorCounting()
   // Gen B jet counting stored in nBGenJets
   for (auto &gen : event.ak4GenJets) {
     if (gen.pt() > 20 && std::abs(gen.eta()) < 2.4 && (gen.numB != 0 || abs(gen.pdgid)==5))
-      ++(gt->nBGenJets);
+      gt->nBGenJets++;
   }
 }
 

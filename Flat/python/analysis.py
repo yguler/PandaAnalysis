@@ -86,6 +86,7 @@ deepgen = lambda v=False : _analysis(
 wlnhbb = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,
+        ak8 = True,
         hbb = True,
         monoh = False,
         recoil = True,

@@ -89,7 +89,7 @@ wlnhbb = lambda v=False : _analysis(
         hbb = True,
         recoil = True,
         fatjet = True,
-        btagSFs = False,
+        btagSFs = True,
         btagWeights = True,
         useCMVA = True,
         complicatedLeptons = True,

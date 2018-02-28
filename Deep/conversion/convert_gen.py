@@ -8,11 +8,11 @@ import PandaAnalysis.Deep.job_deepgen_utilities as deep_utils
 from glob import glob 
 
 deep_utils.NORM = True
-singletons = deep_utils.singleton_branches
 truth = ['nprongs']
 fractions = {'train':0.7, 'test':0.15}
 fcfg = open(argv[1])
 name = argv[2]
+singletons = None
 outdir = getenv('SUBMIT_NPY')
 datadir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/deep/'
 me = argv[0].split('/')[-1]
@@ -49,6 +49,9 @@ for fpath in fcfg.readlines():
     d = np.load(fpath.strip())
     mask = (d['nprongs'] == n_partons)
     for k,v in d.iteritems():
+        if k == 'singleton_branches':
+            data[k] = v 
+            continue
         if v.shape[0]:
             if k not in data:
                 data[k] = []
@@ -60,6 +63,8 @@ if not len(data):
     exit(0)
 
 for k,v in data.iteritems():
+    if k == 'singleton_branches':
+        continue
     data[k] = np.concatenate(v)
 
 if not data['pt'].shape[0]:
@@ -84,9 +89,12 @@ data['ptweight_scaled'] = reweight_s(data['pt'])
 
 
 def dump(idx, partition):
+    global singletons 
+
     outpath = 'tmp/' + partition + '/' + name + '_%s.npy'
 
     # singletons
+    singletons = data['singleton_branches']
     d = np.vstack([data[x][idx] for x in singletons]).T 
     np.save(outpath%'singletons', d)
 
@@ -122,6 +130,11 @@ for d in ['train', 'test', 'validate']:
 dump(indices[:N['train']], 'train')
 dump(indices[N['train']:N['train']+N['test']], 'test')
 dump(indices[N['train']+N['test']:], 'validate')
+
+print "singletons = ["
+for s in singletons:
+    print "    '%s',"%s
+print "]"
 
 ret = None
 for d in ['train', 'test', 'validate']:

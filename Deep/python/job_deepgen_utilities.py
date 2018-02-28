@@ -21,19 +21,19 @@ SAVE = False
 STORE = False
 NORM = False
 
-singleton_branches = ['pt', 'eta', 'phi', 'm', 'msd',
-                      'tau3', 'tau2', 'tau1',
-                      'tau3sd', 'tau2sd', 'tau1sd',
-                      'nprongs', 'partonpt', 'partonm'
-                      ]
 
 def tree_to_arrays(infilepath, treename='inputs'):
     f = root.TFile(infilepath)
     t = f.Get(treename)
     data = {}
+    singleton_branches = [x.GetName() for x in t.GetListOfBranches()
+                                       if (x.GetName() != 'kinematics')]
+    singleton_branches = sorted(list(set(singleton_branches)))
     singletons = r.read_tree(t, branches=singleton_branches)
     for k in singleton_branches:
         data[k] = singletons[k]
+
+    data['singleton_branches'] = np.array(singleton_branches)
 
     arr = r.read_tree(t, branches=['kinematics'])
     data['particles'] = np.array([x[0].tolist() for x in arr])

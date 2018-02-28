@@ -481,7 +481,9 @@ void PandaAnalyzer::JetHbbReco()
   int tmp_hbbjtidx1=-1;
   int tmp_hbbjtidx2=-1;
   if (cleanedJets.size() > 1) {
-     TLorentzVector hbbdaughter1, hbbdaughter2, hbbsystem;
+     TLorentzVector hbbdaughter1, hbbdaughter2, hbbsystem,
+                    hbbdaughter1_jesUp, hbbdaughter2_jesUp, hbbsystem_jesUp,
+                    hbbdaughter1_jesDown, hbbdaughter2_jesDown, hbbsystem_jesDown;
      for (unsigned int i = 0;i<cleanedJets.size();i++){
          panda::Jet *jet_1 = cleanedJets.at(i);
          hbbdaughter1.SetPtEtaPhiM(jet_1->pt(),jet_1->eta(),jet_1->phi(),jet_1->m());

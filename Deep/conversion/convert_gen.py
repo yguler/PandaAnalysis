@@ -9,7 +9,7 @@ from glob import glob
 
 deep_utils.NORM = True
 truth = ['nprongs']
-fractions = {'train':0.7, 'test':0.15}
+fractions = {'train':0.6, 'test':0.15}
 fcfg = open(argv[1])
 name = argv[2]
 singletons = None

@@ -116,6 +116,7 @@ def cat(catalog, condition=lambda x : True):
 cat(args.mc_catalog, lambda x : bool(match('.*SIM$', x)))
 cat(args.data_catalog, lambda x : bool(match('.*AOD$', x)))
 if args.user_catalog:
+    cat(args.catalog.replace('cmsprod',user))
     cat(args.catalog.replace('cmsprod',user).replace('t2','t3'))
 
 if len(could_not_find)>0:

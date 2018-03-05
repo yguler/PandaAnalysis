@@ -569,6 +569,8 @@ void PandaAnalyzer::JetHbbReco()
         );
         // B-jet regression with central value for jet energy
         // Call this last so that the central value for jetRegFac[i] is stored in gt
+        bjetreg_vars[0] = gt->jetPt[gt->hbbjtidx[i]];
+        bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]];
         gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
         hbbdaughters_corr[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPt[gt->hbbjtidx[i]],

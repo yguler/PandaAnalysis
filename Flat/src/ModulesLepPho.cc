@@ -191,7 +191,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
   // muons
   for (auto& mu : event.muons) {
     float pt = mu.pt(); float eta = mu.eta(); float aeta = fabs(eta);
-    if (pt<5 || aeta>2.4) continue;
+    if (pt<2 || aeta>2.4) continue;
     double ptCorrection=1;
     if (isData) { // perform the rochester correction on the actual particle
       ptCorrection=rochesterCorrection->kScaleDT((int)mu.charge, pt, eta, mu.phi(), 0, 0);
@@ -212,8 +212,8 @@ void PandaAnalyzer::ComplicatedLeptons() {
         double random1=rng.Rndm(); double random2=rng.Rndm();
         ptCorrection=rochesterCorrection->kScaleAndSmearMC((int)mu.charge, pt, eta, mu.phi(), mu.trkLayersWithMmt, random1, random2, 0, 0);
       }
-      pt *= ptCorrection;
     }
+    pt *= ptCorrection;
     if (analysis->hbb) {
       if (pt<5 || aeta>2.4 || !mu.loose || fabs(mu.dxy)>0.5 || fabs(mu.dz)>1.0 || mu.combIso()/pt>0.4) continue;
     } else {

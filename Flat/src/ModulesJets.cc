@@ -63,8 +63,9 @@ void PandaAnalyzer::JetBasics()
     // For VBF we require nTightLep>0, but in monotop looseLep1IsTight
     // No good reason to do that, should switch to former
     // Should update jet cleaning accordingly (just check all loose objects)
-    if (IsMatched(&matchLeps,0.16,jet.eta(),jet.phi()) ||
-        IsMatched(&matchPhos,0.16,jet.eta(),jet.phi()))
+    if (IsMatched(&matchLeps,0.16,jet.eta(),jet.phi()))
+      continue;
+    if(!analysis->hbb && IsMatched(&matchPhos,0.16,jet.eta(),jet.phi()))
       continue;
     if ((analysis->vbf || analysis->hbb) && !jet.loose)
       continue;

@@ -268,7 +268,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
     matchLeps.push_back(&mu);
     TVector2 vMu; vMu.SetMagPhi(pt,mu.phi());
     vMETNoMu += vMu;
-    // WARNING: The definition of "loose" here may not match your analysis definition of a loose electron for lepton multiplicity or jet cleaning considerations.
+    // WARNING: The definition of "loose" here may not match your analysis definition of a loose muon for lepton multiplicity or jet cleaning considerations.
     // It is the user's responsibility to make sure he is cutting on the correct multiplicity. Enough information is provided to do this downstream.
     gt->nLooseMuon++;
     if (gt->nLooseMuon>=NLEP) break;

@@ -143,11 +143,23 @@ void PandaAnalyzer::ComplicatedLeptons() {
     bool isTight  = ele.tight;
     bool isDxyz   = ElectronIP(ele.eta(),ele.dxy,ele.dz);
     bool eleMVAPresel = 
-      pt>15 && ele.hOverE<0.09 && ele.combIso()/pt < 0.18 &&
-      (
-        (aeta<1.4442 && ele.sieie<0.012 && ele.ecalIso/pt < 0.25 && fabs(ele.dEtaInSeed)<0.0095 && fabs(ele.dPhiIn)<0.065) ||
-        (aeta>1.5660 && ele.sieie<0.033 && ele.ecalIso/pt < 0.45 && ele.hcalIso/pt<0.28)
-      );
+      pt > 15 && ((
+        aeta < 1.4442 && 
+        ele.sieie < 0.012 && 
+        ele.hOverE < 0.09 &&
+        ele.ecalIso/pt < 0.4 && 
+        ele.hcalIso/pt < 0.25 && 
+        ele.trackIso/pt < 0.18 &&
+        fabs(ele.dEtaInSeed) < 0.0095 && 
+        fabs(ele.dPhiIn) < 0.065
+      ) || (
+        aeta > 1.5660 && 
+        ele.sieie < 0.033 && 
+        ele.hOverE < 0.09 &&
+        ele.ecalIso/pt < 0.45 && 
+        ele.hcalIso/pt < 0.28 &&
+        ele.trackIso/pt < 0.18
+    ));
     if (isTight) gt->nTightElectron++;
     int eleSelBit            = kLoose;
     if (isFake  ) eleSelBit |= kFake;

@@ -235,7 +235,6 @@ void PandaAnalyzer::ComplicatedLeptons() {
     pt *= ptCorrection;
     if (analysis->hbb) {
       if (pt<5 || aeta>2.4 || !mu.loose || fabs(mu.dxy)>0.5 || fabs(mu.dz)>1.0 || mu.combIso()/pt>0.4) continue;
-      if (!(mu.pf && (mu.global or mu.tracker))) continue;
     } else {
       if (pt<10 || aeta>2.4 || !mu.loose) continue;
     }

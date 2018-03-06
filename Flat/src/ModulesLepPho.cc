@@ -176,6 +176,8 @@ void PandaAnalyzer::ComplicatedLeptons() {
     gt->electronSfLoose[iL]      = GetCorr(cEleLoose, eta, pt);
     gt->electronSfMedium[iL]     = GetCorr(cEleMedium, eta, pt);
     gt->electronSfTight[iL]      = GetCorr(cEleTight, eta, pt);
+    gt->electronSfMvaWP90[iL]      = GetCorr(cEleMvaWP90, eta, pt);
+    gt->electronSfMvaWP80[iL]      = GetCorr(cEleMvaWP80, eta, pt);
     gt->electronSfUnc[iL]        = GetError(cEleMedium, eta, pt);
     gt->electronSfReco[iL]       = GetCorr(cEleReco, eta, pt);
     gt->electronSelBit[iL]       = eleSelBit;

@@ -142,14 +142,32 @@ void PandaAnalyzer::ComplicatedLeptons() {
     bool isMedium = ele.medium;
     bool isTight  = ele.tight;
     bool isDxyz   = ElectronIP(ele.eta(),ele.dxy,ele.dz);
+    bool eleMVAPresel = 
+      pt > 15 && ((
+        aeta < 1.4442 && 
+        ele.sieie < 0.012 && 
+        ele.hOverE < 0.09 &&
+        ele.ecalIso/pt < 0.4 && 
+        ele.hcalIso/pt < 0.25 && 
+        ele.trackIso/pt < 0.18 &&
+        fabs(ele.dEtaInSeed) < 0.0095 && 
+        fabs(ele.dPhiIn) < 0.065
+      ) || (
+        aeta > 1.5660 && 
+        ele.sieie < 0.033 && 
+        ele.hOverE < 0.09 &&
+        ele.ecalIso/pt < 0.45 && 
+        ele.hcalIso/pt < 0.28 &&
+        ele.trackIso/pt < 0.18
+    ));
     if (isTight) gt->nTightElectron++;
     int eleSelBit            = kLoose;
     if (isFake  ) eleSelBit |= kFake;
     if (isMedium) eleSelBit |= kMedium;
     if (isTight ) eleSelBit |= kTight;
     if (isDxyz  ) eleSelBit |= kDxyz;
-    if (ele.mvaWP90) eleSelBit |= kEleMvaWP90;
-    if (ele.mvaWP80) eleSelBit |= kEleMvaWP80;
+    if (ele.mvaWP90 && eleMVAPresel) eleSelBit |= kEleMvaWP90;
+    if (ele.mvaWP80 && eleMVAPresel) eleSelBit |= kEleMvaWP80;
     gt->electronPt[iL]           = pt;
     gt->electronEta[iL]          = eta;
     gt->electronPhi[iL]          = ele.phi();
@@ -183,9 +201,10 @@ void PandaAnalyzer::ComplicatedLeptons() {
     looseLeps.push_back(&ele);
     matchLeps.push_back(&ele);
     matchEles.push_back(&ele);
-    gt->nLooseElectron++;
+    // WARNING: The definition of "loose" here may not match your analysis definition of a loose electron for lepton multiplicity or jet cleaning considerations.
+    // It is the user's responsibility to make sure he is cutting on the correct multiplicity. Enough information is provided to do this downstream.
+    gt->nLooseElectron++; 
     if (gt->nLooseElectron>=NLEP) break;
-
   }
 
   // muons
@@ -216,6 +235,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
     pt *= ptCorrection;
     if (analysis->hbb) {
       if (pt<5 || aeta>2.4 || !mu.loose || fabs(mu.dxy)>0.5 || fabs(mu.dz)>1.0 || mu.combIso()/pt>0.4) continue;
+      if (!(mu.global && (mu.global or mu.tracker))) continue;
     } else {
       if (pt<10 || aeta>2.4 || !mu.loose) continue;
     }
@@ -261,6 +281,8 @@ void PandaAnalyzer::ComplicatedLeptons() {
     matchLeps.push_back(&mu);
     TVector2 vMu; vMu.SetMagPhi(pt,mu.phi());
     vMETNoMu += vMu;
+    // WARNING: The definition of "loose" here may not match your analysis definition of a loose muon for lepton multiplicity or jet cleaning considerations.
+    // It is the user's responsibility to make sure he is cutting on the correct multiplicity. Enough information is provided to do this downstream.
     gt->nLooseMuon++;
     if (gt->nLooseMuon>=NLEP) break;
   }

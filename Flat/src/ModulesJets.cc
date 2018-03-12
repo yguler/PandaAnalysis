@@ -505,8 +505,8 @@ void PandaAnalyzer::RJet()
       gt->hbbjtidx[0] = tmp_hbbjtidx1;
       gt->hbbjtidx[1] = tmp_hbbjtidx2;
 
-      tr.TriggerEvent("monohiggs");
   }
+      tr.TriggerEvent("monohiggs");
 }
 
 void PandaAnalyzer::JetHbbReco() 

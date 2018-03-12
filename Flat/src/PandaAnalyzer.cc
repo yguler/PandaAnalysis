@@ -70,7 +70,7 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
 
   fOut->WriteTObject(hDTotalMCWeight);    
 
-  gt->monohiggs      = (analysis->monoh || analysis->hbb);
+  gt->monohiggs      = (analysis->boosted || analysis->hbb);
   gt->vbf            = analysis->vbf;
   gt->fatjet         = analysis->fatjet;
   gt->leptonic       = analysis->complicatedLeptons;
@@ -575,7 +575,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
   }
 
 
-  if (analysis->monoh || analysis->hbb) {
+  if (analysis->boosted || analysis->hbb) {
     // mSD corr
     MSDcorr = new TFile(dirPath+"/puppiCorr.root");
     puppisd_corrGEN = (TF1*)MSDcorr->Get("puppiJECcorr_gen");;
@@ -1174,7 +1174,8 @@ void PandaAnalyzer::Run()
 
       if (analysis->hbb) {
         // Higgs reconstruction for resolved analysis - highest pt pair of b jets
-        JetHbbReco();
+      //  JetHbbReco();
+        ResolvedJet();
       }
 
       Taus();

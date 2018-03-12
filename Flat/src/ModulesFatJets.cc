@@ -299,7 +299,7 @@ void PandaAnalyzer::FatjetBasics()
     float eta = fj.eta();
     float mass = fj.m();
     float ptcut = 200;
-    if (analysis->monoh)
+    if (analysis->boosted)
       ptcut = 200;
     if (analysis->deep)
       ptcut = 400;
@@ -394,7 +394,7 @@ void PandaAnalyzer::FatjetBasics()
         gt->fj1MSDSmeared_sj = gt->fj1MSD * (sjSumSmear.Pt()/sjSum.Pt());
       }
 
-      if (analysis->monoh) {
+      if (analysis->boosted) {
         // mSD correction
         float corrweight=1.;
         corrweight = GetMSDCorr(pt,eta);
@@ -440,7 +440,7 @@ void PandaAnalyzer::FatjetBasics()
       }
 
       gt->fj1DoubleCSV = fj.double_sub;
-      if (analysis->monoh) {
+      if (analysis->boosted) {
         for (unsigned int iSJ=0; iSJ!=fj.subjets.size(); ++iSJ) {
           auto& subjet = fj.subjets.objAt(iSJ);
           gt->fj1sjPt[iSJ]=subjet.pt();

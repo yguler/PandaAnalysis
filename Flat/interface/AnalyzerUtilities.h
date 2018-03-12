@@ -102,7 +102,8 @@ public:
   bool hfCounting = false;
   bool jetFlavorPartons = true;
   bool jetFlavorJets = false;
-  bool monoh = false;
+ // bool monoh = false;
+  bool boosted = false;
   bool puppi_jets = true;
   bool recluster = false;
   bool reclusterGen = false;

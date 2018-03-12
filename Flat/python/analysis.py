@@ -34,6 +34,27 @@ def analysis(name, **kwargs):
 
 
 # predefined!
+boosted = lambda v=False : _analysis(
+        name = 'boosted',
+        verbose = v,
+        boosted = True,
+    )
+
+resolved = lambda v=False : _analysis(
+        name = 'resolved',
+        verbose = v,
+    )
+
+monojet = lambda v=False : _analysis(
+        name = 'monojet',
+        verbose = v,
+    )
+
+lepmonotop = lambda v=False : _analysis(
+        name = 'lepmonotop',
+        verbose = v,
+    )
+
 monotop = lambda v=False : _analysis(
         name = 'monotop',
         verbose = v,
@@ -48,16 +69,9 @@ vbf = lambda v=False : _analysis(
         puppi_jets = False
     )
 
-monoh = lambda v=False : _analysis(
-        name = 'monoh',
-        verbose = v,
-        monoh = True,
-    )
-
 gghbb = lambda v=False : _analysis(
         name = 'gghbb',
         verbose = v,
-        monoh = True,
         recoil = False,
         ak8 = True,
     )

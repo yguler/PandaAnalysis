@@ -474,7 +474,7 @@ void PandaAnalyzer::JetVBFSystem()
 
   tr->TriggerSubEvent("VBF jet system");
 }
-
+/*
 void PandaAnalyzer::RJet()
 { 
   float tmp_hbbpt=-99;
@@ -512,7 +512,7 @@ void PandaAnalyzer::RJet()
   }
       tr.TriggerEvent("monohiggs");
 }
-
+*/
 void PandaAnalyzer::JetHbbReco() 
 {
   if (centralJets.size() > 1) {

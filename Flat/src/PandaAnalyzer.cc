@@ -1272,13 +1272,9 @@ void PandaAnalyzer::Run()
     }
 
     gt->Fill();
-<<<<<<< HEAD
     
-=======
-
     tr->TriggerEvent("fill");
 
->>>>>>> 80d0305e1bb254a4e84c782394c0549b40ba45bf
   } // entry loop
 
   tr->Summary();

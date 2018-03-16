@@ -63,10 +63,11 @@ void PandaAnalyzer::JetBasics()
     // For VBF we require nTightLep>0, but in monotop looseLep1IsTight
     // No good reason to do that, should switch to former
     // Should update jet cleaning accordingly (just check all loose objects)
-    if (IsMatched(&matchLeps,0.16,jet.eta(),jet.phi()) ||
-        IsMatched(&matchPhos,0.16,jet.eta(),jet.phi()))
+    if (IsMatched(&matchLeps,0.16,jet.eta(),jet.phi()))
       continue;
-    if (analysis->vbf && !jet.loose)
+    if(!analysis->hbb && IsMatched(&matchPhos,0.16,jet.eta(),jet.phi()))
+      continue;
+    if ((analysis->vbf || analysis->hbb) && !jet.loose)
       continue;
 
 
@@ -348,6 +349,7 @@ void PandaAnalyzer::IsoJet(panda::Jet& jet)
 
   if (isIsoJet) {
     isoJets.push_back(&jet);
+    gt->nIsoJet++;
     float csv = (fabs(jet.eta())<2.5) ? jet.csv : -1;
     if (csv>0.5426)
       ++gt->isojetNBtags;
@@ -358,11 +360,9 @@ void PandaAnalyzer::IsoJet(panda::Jet& jet)
       gt->isojet2Pt = jet.pt();
       gt->isojet2CSV = jet.csv;
     }
-    if (analysis->boosted)
       gt->jetIso[cleanedJets.size()-1]=1;
   } else {
-    if (analysis->boosted)
-      gt->jetIso[cleanedJets.size()-1]=0;
+      gt->jetIso[cleanedJets.size()-1]=1;
   }
   tr->TriggerSubEvent("iso jets");
 }
@@ -377,6 +377,7 @@ void PandaAnalyzer::JetVaryJES(panda::Jet& jet)
         jotUp2 = jotUp1;
         gt->jot2PtUp = gt->jot1PtUp;
         gt->jot2EtaUp = gt->jot1EtaUp;
+        gt->jot2PhiUp = gt->jot1PhiUp;
       }
       jotUp1 = &jet;
       gt->jot1PtUp = jet.ptCorrUp;
@@ -385,6 +386,7 @@ void PandaAnalyzer::JetVaryJES(panda::Jet& jet)
       jotUp2 = &jet;
       gt->jot2PtUp = jet.ptCorrUp;
       gt->jot2EtaUp = jet.eta();
+      gt->jot2PhiUp = jet.phi();
     }
     // central only jets:
     if (fabs(jet.eta()) < 2.4) {
@@ -411,6 +413,7 @@ void PandaAnalyzer::JetVaryJES(panda::Jet& jet)
         jotDown2 = jotDown1;
         gt->jot2PtDown = gt->jot1PtDown;
         gt->jot2EtaDown = gt->jot1EtaDown;
+        gt->jot2PhiDown = gt->jot1PhiDown;
       }
       jotDown1 = &jet;
       gt->jot1PtDown = jet.ptCorrDown;
@@ -419,6 +422,7 @@ void PandaAnalyzer::JetVaryJES(panda::Jet& jet)
       jotDown2 = &jet;
       gt->jot2PtDown = jet.ptCorrDown;
       gt->jot2EtaDown = jet.eta();
+      gt->jot2PhiDown = jet.phi();
     }
     // central only jets:
     if (fabs(jet.eta()) < 2.4) {
@@ -583,7 +587,7 @@ void PandaAnalyzer::JetHbbReco()
         // Don't propagate the JES uncertainty to the hardest track/lepton or the EM fraction for now
         bjetreg_vars[0] = gt->jetPtUp[gt->hbbjtidx[i]];
         bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtUp[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
-        gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+        gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
         hbbdaughters_corr_jesUp[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPtUp[gt->hbbjtidx[i]],
           gt->jetEta[gt->hbbjtidx[i]],
@@ -593,7 +597,7 @@ void PandaAnalyzer::JetHbbReco()
         // B-jet regression with jet energy varied down
         bjetreg_vars[0] = gt->jetPtDown[gt->hbbjtidx[i]];
         bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]] * gt->jetPtDown[gt->hbbjtidx[i]] / gt->jetPt[gt->hbbjtidx[i]];
-        gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+        gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
         hbbdaughters_corr_jesDown[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPtDown[gt->hbbjtidx[i]],
           gt->jetEta[gt->hbbjtidx[i]],
@@ -602,7 +606,9 @@ void PandaAnalyzer::JetHbbReco()
         );
         // B-jet regression with central value for jet energy
         // Call this last so that the central value for jetRegFac[i] is stored in gt
-        gt->jetRegFac[i] = (bjetreg_reader->EvaluateRegression("BDT method"))[0];
+        bjetreg_vars[0] = gt->jetPt[gt->hbbjtidx[i]];
+        bjetreg_vars[3] = gt->jetE[gt->hbbjtidx[i]];
+        gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
         hbbdaughters_corr[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPt[gt->hbbjtidx[i]],
           gt->jetEta[gt->hbbjtidx[i]],
@@ -779,6 +785,13 @@ void PandaAnalyzer::JetHbbSoftActivity() {
     panda::PFCand *softTrack=0;
     for (auto &softTrackRef : allTracks) {
       softTrack = &softTrackRef;
+      // Minimum track pT threshold (300 MeV default)
+      if (softTrack->pt() < minSoftTrackPt) continue;
+      // High quality track flag
+      if (!softTrack->track.isValid() || !softTrack->track.get()->highPurity) continue;
+      // Only consider tracks with dz < 0.2 w.r.t. the primary vertex
+      if (fabs(softTrack->track.get()->dz()) > 0.2) continue;
+      // Track cannot be a constituent of loose leptons or the two b-jets
       bool trackIsSpokenFor=false;
       if (!trackIsSpokenFor) for (UShort_t iJetTrack=0; iJetTrack<jet1Tracks.size(); iJetTrack++) {
         if (!jet1Tracks.at(iJetTrack).isValid()) continue;
@@ -793,9 +806,6 @@ void PandaAnalyzer::JetHbbSoftActivity() {
         if (softTrack==looseLeps[iLep]->matchedPF.get()) { trackIsSpokenFor=true; break; }
       }
       if (trackIsSpokenFor) continue;
-      if (softTrack->pt() < minSoftTrackPt) continue;
-      // Only consider tracks with dz < 0.2 w.r.t. the primary vertex
-      if (!softTrack->track.isValid() || fabs(softTrack->track.get()->dz()) > 0.2) continue;
       // Require tracks to have the lowest |dz| with the hardest PV amongst all others
       int idxVertexWithMinAbsDz=-1; float minAbsDz=9999;
       for (int iV=0; iV!=event.vertices.size(); iV++) {

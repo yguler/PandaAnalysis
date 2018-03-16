@@ -22,6 +22,36 @@
 // root
 #include "TRotation.h"
 
+////////////////////////////////////////////////////////////////////////////////////
+
+class JetTree {
+  public:
+    JetTree(fastjet::PseudoJet& root): _root(root) { }
+    ~JetTree() { }
+    std::vector<int> GetTerminals() {
+      std::vector<int> v;
+      _root.GetTerminals(v);
+      return v;
+    }
+
+    struct compare : public std::unary_function<fastjet::PseudoJet, bool> {
+      explicit compare(int x_) : _x(x_) {}
+      bool operator() (const fastjet::PseudoJet& y_) { return _x == y_.user_index(); }
+      int _x;
+    };
+
+  private:
+    class Node {
+      public:
+        Node(fastjet::PseudoJet& pj_);
+        ~Node() { delete l; delete r; }
+        void GetTerminals(std::vector<int>&);
+        fastjet::PseudoJet _pj;
+        Node *l=0, *r=0;   
+    };
+
+    Node _root;
+};
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -88,6 +118,7 @@ public:
   bool btagSFs = true;
   bool btagWeights = false;
   bool complicatedLeptons = false;
+  bool complicatedPhotons = false;
   bool deep = false;
   bool deepAntiKtSort = false;
   bool deepGen = false;

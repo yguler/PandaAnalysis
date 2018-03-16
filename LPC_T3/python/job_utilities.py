@@ -42,6 +42,7 @@ else:
         raise e
 
 
+# derived from t3serv006.mit.edu:/etc/bestman2/conf/bestman2.rc
 _gsiftp_doors = [
         't3btch000.mit.edu',
         't3btch001.mit.edu',
@@ -52,7 +53,6 @@ _gsiftp_doors = [
         't3btch010.mit.edu',
         't3btch013.mit.edu',
         't3btch014.mit.edu',
-        't3btch015.mit.edu',
         't3btch018.mit.edu',
         't3btch021.mit.edu',
         't3btch025.mit.edu',
@@ -218,11 +218,18 @@ def stageout(outdir,outfilename,infilename='output.root',n_attempts=10,ls=None):
         door = choice(gsiftp_doors); gsiftp_doors.remove(door)
         failed = False
         if stageout_protocol == 'cp':
-            cpargs = 'cp -v $PWD/%s %s/%s'%(infilename,outdir,outfilename)
+            cpargs =     ' '.join(['cp',
+                                   '-v', 
+                                   '$PWD/%s'%infilename,
+                                   '%s/%s'%(outdir,outfilename)])
             if ls:
-                lsargs = 'ls %s/%s'%(outdir,outfilename)
+                lsargs = ' '.join(['ls',
+                                   '%s/%s'%(outdir,outfilename)])
             else:
-                lsargs = 'cp -v %s/%s $PWD/testfile'%(outdir,outfilename)
+                lsargs = ' '.join(['cp',
+                                   '-v',
+                                   '%s/%s'%(outdir,outfilename),
+                                   '$PWD/testfile'])
         elif stageout_protocol == 'gfal':
             cpargs =     ' '.join(['gfal-copy',
                                    '-f', 

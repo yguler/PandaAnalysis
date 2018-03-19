@@ -261,6 +261,7 @@ void PandaAnalyzer::JetHbbBasics(panda::Jet& jet)
   gt->jetPtDown[N]=jet.ptCorrDown;
   gt->jetEta[N]=jet.eta();
   gt->jetPhi[N]=jet.phi();
+  gt->jetM[N]=jet.m();
   gt->jetE[N]=jet.e();
   gt->jetCSV[N]=csv;
   gt->jetCMVA[N]=cmva;
@@ -509,16 +510,20 @@ void PandaAnalyzer::JetHbbReco()
       gt->bosonjtidx[1] = tmp_bosonjtidx2;
 
     // Daughter jet energies varied Up
-    bosondaughter1_jesUp.SetPtEtaPhiM(jet_1->ptCorrUp,jet_1->eta(),jet_1->phi(),jet_1->m());
-    bosondaughter2_jesUp.SetPtEtaPhiM(jet_2->ptCorrUp,jet_2->eta(),jet_2->phi(),jet_2->m());
+    bosondaughter1_jesUp.SetPtEtaPhiM(gt->jetPtUp[tmp_bosonjtidx1],gt->jetEta[tmp_bosonjtidx1],gt->jetPhi[tmp_bosonjtidx1],gt->jetM[tmp_bosonjtidx1]);
+    bosondaughter2_jesUp.SetPtEtaPhiM(gt->jetPtUp[tmp_bosonjtidx2],gt->jetEta[tmp_bosonjtidx2],gt->jetPhi[tmp_bosonjtidx2],gt->jetM[tmp_bosonjtidx2]);
+    //bosondaughter1_jesUp.SetPtEtaPhiM(jet_1->ptCorrUp,jet_1->eta(),jet_1->phi(),jet_1->m());
+  //  bosondaughter2_jesUp.SetPtEtaPhiM(jet_2->ptCorrUp,jet_2->eta(),jet_2->phi(),jet_2->m());
     bosonsystem_jesUp = bosondaughter1_jesUp + bosondaughter2_jesUp;
     gt->bosonpt_jesUp = bosonsystem_jesUp.Pt();
     gt->bosoneta_jesUp = bosonsystem_jesUp.Eta();
     gt->bosonphi_jesUp = bosonsystem_jesUp.Phi();
     gt->bosonm_jesUp = bosonsystem_jesUp.M();
     // Daughter jet energies varied Down
-    bosondaughter1_jesDown.SetPtEtaPhiM(jet_1->ptCorrDown,jet_1->eta(),jet_1->phi(),jet_1->m());
-    bosondaughter2_jesDown.SetPtEtaPhiM(jet_2->ptCorrDown,jet_2->eta(),jet_2->phi(),jet_2->m());
+    bosondaughter1_jesDown.SetPtEtaPhiM(gt->jetPtDown[tmp_bosonjtidx1],gt->jetEta[tmp_bosonjtidx1],gt->jetPhi[tmp_bosonjtidx1],gt->jetM[tmp_bosonjtidx1]);
+    bosondaughter2_jesDown.SetPtEtaPhiM(gt->jetPtDown[tmp_bosonjtidx2],gt->jetEta[tmp_bosonjtidx2],gt->jetPhi[tmp_bosonjtidx2],gt->jetM[tmp_bosonjtidx2]);
+    //bosondaughter1_jesDown.SetPtEtaPhiM(jet_1->ptCorrDown,jet_1->eta(),jet_1->phi(),jet_1->m());
+    //bosondaughter2_jesDown.SetPtEtaPhiM(jet_2->ptCorrDown,jet_2->eta(),jet_2->phi(),jet_2->m());
     bosonsystem = bosondaughter1_jesDown + bosondaughter2_jesDown;
     gt->bosonpt_jesDown = bosonsystem_jesDown.Pt();
     gt->bosoneta_jesDown = bosonsystem_jesDown.Eta();

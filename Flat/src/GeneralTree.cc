@@ -55,6 +55,7 @@ GeneralTree::GeneralTree() {
     jetPtDown[iJ] = -1;
     jetEta[iJ] = -1;
     jetPhi[iJ] = -1;
+    jetM[iJ] = -1;
     jetE[iJ] = -1;
     jetCSV[iJ] = -1;
     jetCMVA[iJ] = -1;
@@ -125,6 +126,7 @@ void GeneralTree::Reset() {
     jetPtDown[iJ] = -99;
     jetEta[iJ] = -99;
     jetPhi[iJ] = -99;
+    jetM[iJ] = -99;
     jetE[iJ] = -99;
     jetCSV[iJ] = -99;
     jetCMVA[iJ] = -99;
@@ -625,6 +627,7 @@ void GeneralTree::WriteTree(TTree *t) {
     Book("jetPtDown",jetPtDown,"jetPtDown[nJot]/F");
     Book("jetEta",jetEta,"jetEta[nJot]/F");
     Book("jetPhi",jetPhi,"jetPhi[nJot]/F");
+    Book("jetM",jetM,"jetM[nJot]/F");
     Book("jetE",jetE,"jetE[nJot]/F");
     Book("jetCSV",jetCSV,"jetCSV[nJot]/F");
     Book("jetCMVA",jetCMVA,"jetCMVA[nJot]/F");

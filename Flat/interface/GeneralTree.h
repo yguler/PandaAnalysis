@@ -229,6 +229,7 @@ class GeneralTree : public genericTree {
       float jetPtDown[NJET];
       float jetEta[NJET];
       float jetPhi[NJET];
+      float jetM[NJET];
       float jetE[NJET];
       float jetCSV[NJET];
       float jetCMVA[NJET];

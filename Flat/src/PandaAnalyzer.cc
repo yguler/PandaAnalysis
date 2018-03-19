@@ -817,7 +817,7 @@ bool PandaAnalyzer::PassPreselection()
     if (
       bestMet>150 && 
       bestLeadingJet>50 && bestSubLeadingJet>25 &&
-      (gt->hbbpt>50 || gt->nFatjet>0)
+      (gt->bosonpt>50 || gt->nFatjet>0)
     ) isGood=true;
     // WlnHbb
     else if (
@@ -826,7 +826,7 @@ bool PandaAnalyzer::PassPreselection()
        (gt->nTightElectron >0 && gt->electronPt[0]>25) ||
        (gt->nTightMuon > 0 && gt->muonPt[0]>25)
       ) &&
-      (gt->hbbpt>50 || gt->nFatjet>0)
+      (gt->bosonpt>50 || gt->nFatjet>0)
     ) isGood=true;
     // ZllHbb
     else if (
@@ -844,7 +844,7 @@ bool PandaAnalyzer::PassPreselection()
         gt->muonPt[1]>20 
        )
       ) &&
-      (gt->hbbpt>50 || gt->nFatjet>0)
+      (gt->bosonpt>50 || gt->nFatjet>0)
     ) isGood=true;
   }
 

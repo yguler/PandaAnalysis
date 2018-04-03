@@ -29,7 +29,7 @@ def fn(input_name, isData, full_path):
 #    analysis = vbf(True)
     analysis = monojet(True)
     analysis.processType = utils.classify_sample(full_path, isData)
-    analysis.genOnly = False  # yg
+#    analysis.genOnly = False  # yg
     skimmer.SetAnalysis(analysis)
     skimmer.isData = isData
     skimmer.SetPreselectionBit(root.PandaAnalyzer.kMonojet) #yg

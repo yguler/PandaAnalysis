@@ -34,6 +34,20 @@ def analysis(name, **kwargs):
 
 
 # predefined!
+monojet = lambda v=False : _analysis(
+        name = 'monojet',
+        verbose = v,
+	monojet = True,
+        fatjet = True,
+        btagSFs = True,
+        puppi_jets = True,
+	hfCounting = True,
+	jetFlavorJets = True,
+        btagWeights = True,
+        useCMVA = True,
+	
+)
+
 monotop = lambda v=False : _analysis(
         name = 'monotop',
         verbose = v,

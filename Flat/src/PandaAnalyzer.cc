@@ -77,7 +77,6 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
   gt->hfCounting     = analysis->hfCounting;
   gt->btagWeights    = analysis->btagWeights;
   gt->useCMVA        = analysis->useCMVA;
-
   if (analysis->deep) {
     auxFilePath = fOutName.ReplaceAll(".root","_pf_%u.root");
     IncrementAuxFile();

@@ -9,7 +9,9 @@ from sys import argv
 import argparse
 
 parser = argparse.ArgumentParser(description='make config file')
-parser.add_argument('--catalog',type=str,default='/home/cmsprod/catalog/t2mit/pandaf/009')
+#parser.add_argument('--catalog',type=str,default='root://xrootd.cmsaf.mit.edu//mnt/hadoop/cms/store/user/paus/pandaf/008')
+parser.add_argument('--catalog',type=str,default='root://xrootd.cmsaf.mit.edu//store/user/paus/pandaf/004')
+#parser.add_argument('--catalog',type=str,default='root://xrootd.cmsaf.mit.edu//home/cmsprod/catalog/t2mit/pandaf/009')
 parser.add_argument('--user_catalog', action='store_true')
 parser.add_argument('--mc_catalog',type=str,default=None)
 parser.add_argument('--data_catalog',type=str,default=None)
@@ -50,15 +52,17 @@ class CatalogSample:
             book_ = '/'.join(args.catalog.split('/')[-2:])
             lines.append('{0:<25} {2:<10} {3:<15} {1}\n'.format(nickname,f,self.dtype,self.xsec)) 
             if smartcache_args is not None:
-                smartcache_args.append('/cms/store/user/paus/%s/%s'%(book_,ds_))
+                if not path.isfile(f.replace('root://xrootd.cmsaf.mit.edu','/mnt/hadoop/cms')):
+                    smartcache_args.append('--file %s --dataset %s --book %s'%(f_,ds_,book_))
         return lines
 
 def smartcache(arguments):
     #arguments = ' '.join(arguments)
-    for a in arguments:
-        cmd = ('dynamoCache request --datasets %s'%(a))
+    system('/uscms/home/naina25/SmartCache/Client/addDownloadRequest.py %s >/dev/null'%arguments)
+#    for a in arguments:
+#        cmd = ('dynamoCache request --datasets %s'%(a))
         #print cmd
-        system(cmd)
+#        system(cmd)
 
 def checkDS(nickname,include,exclude):
   included=False

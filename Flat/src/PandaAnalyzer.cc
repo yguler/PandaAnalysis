@@ -579,16 +579,16 @@ void PandaAnalyzer::SetDataDir(const char *s)
     bjetreg_vars = new float[10];
     bjetregReader = new TMVA::Reader("!Color:!Silent");
 
-    bjetregReader->AddVariable("jetPt[hbbjtidx[0]]",&bjetreg_vars[0]);
+    bjetregReader->AddVariable("jetPt[bosonjtidx[0]]",&bjetreg_vars[0]);
     bjetregReader->AddVariable("nJot",&bjetreg_vars[1]);
-    bjetregReader->AddVariable("jetEta[hbbjtidx[0]]",&bjetreg_vars[2]);
-    bjetregReader->AddVariable("jetE[hbbjtidx[0]]",&bjetreg_vars[3]);
+    bjetregReader->AddVariable("jetEta[bosonjtidx[0]]",&bjetreg_vars[2]);
+    bjetregReader->AddVariable("jetE[bosonjtidx[0]]",&bjetreg_vars[3]);
     bjetregReader->AddVariable("npv",&bjetreg_vars[4]);
-    bjetregReader->AddVariable("jetLeadingTrkPt[hbbjtidx[0]]",&bjetreg_vars[5]);
-    bjetregReader->AddVariable("jetLeadingLepPt[hbbjtidx[0]]",&bjetreg_vars[6]);
-    bjetregReader->AddVariable("jetNLep[hbbjtidx[0]]",&bjetreg_vars[7]);
-    bjetregReader->AddVariable("jetEMFrac[hbbjtidx[0]]",&bjetreg_vars[8]);
-    bjetregReader->AddVariable("jetHadFrac[hbbjtidx[0]]",&bjetreg_vars[9]);
+    bjetregReader->AddVariable("jetLeadingTrkPt[bosonjtidx[0]]",&bjetreg_vars[5]);
+    bjetregReader->AddVariable("jetLeadingLepPt[bosonjtidx[0]]",&bjetreg_vars[6]);
+    bjetregReader->AddVariable("jetNLep[bosonjtidx[0]]",&bjetreg_vars[7]);
+    bjetregReader->AddVariable("jetEMFrac[bosonjtidx[0]]",&bjetreg_vars[8]);
+    bjetregReader->AddVariable("jetHadFrac[bosonjtidx[0]]",&bjetreg_vars[9]);
 
     gSystem->Exec(
         Form("wget -O %s/trainings/bjet_regression_v0.weights.xml http://t3serv001.mit.edu/~snarayan/pandadata/trainings/bjet_regression_v0.weights.xml",dirPath.Data())
@@ -1203,7 +1203,7 @@ void PandaAnalyzer::Run()
 
       if (analysis->hbb) {
         // Higgs reconstruction for resolved analysis - highest pt pair of b jets
-        JetHbbReco();
+        JetBosonReco();
       }
 
       Taus();

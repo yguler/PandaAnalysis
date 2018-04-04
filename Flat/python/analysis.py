@@ -43,6 +43,7 @@ boosted = lambda v=False : _analysis(
 resolved = lambda v=False : _analysis(
         name = 'resolved',
         verbose = v,
+        bjetRegression = True,
     )
 
 monojet = lambda v=False : _analysis(

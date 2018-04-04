@@ -473,7 +473,7 @@ void PandaAnalyzer::JetVBFSystem()
   tr->TriggerSubEvent("VBF jet system");
 }
 
-void PandaAnalyzer::JetHbbReco() 
+void PandaAnalyzer::JetBosonReco() 
 {
   float tmp_bosonpt=-99;
   float tmp_bosoneta=-99;
@@ -558,7 +558,7 @@ void PandaAnalyzer::JetHbbReco()
           gt->jetRegFac[i]*gt->jetPtUp[gt->bosonjtidx[i]],
           gt->jetEta[gt->bosonjtidx[i]],
           gt->jetPhi[gt->bosonjtidx[i]],
-          btagSortedJets.at(i)->m()
+          cleanedJets.at(gt->bosonjtidx[i])->m()
         );
         // B-jet regression with jet energy varied down
         bjetreg_vars[0] = gt->jetPtDown[gt->bosonjtidx[i]];
@@ -568,7 +568,7 @@ void PandaAnalyzer::JetHbbReco()
           gt->jetRegFac[i]*gt->jetPtDown[gt->bosonjtidx[i]],
           gt->jetEta[gt->bosonjtidx[i]],
           gt->jetPhi[gt->bosonjtidx[i]],
-          btagSortedJets.at(i)->m()
+          cleanedJets.at(gt->bosonjtidx[i])->m()
         );
         // B-jet regression with central value for jet energy
         // Call this last so that the central value for jetRegFac[i] is stored in gt
@@ -577,7 +577,7 @@ void PandaAnalyzer::JetHbbReco()
           gt->jetRegFac[i]*gt->jetPt[gt->bosonjtidx[i]],
           gt->jetEta[gt->bosonjtidx[i]],
           gt->jetPhi[gt->bosonjtidx[i]],
-          btagSortedJets.at(i)->m()
+          cleanedJets.at(gt->bosonjtidx[i])->m()
         );
 
       }
@@ -622,11 +622,11 @@ void PandaAnalyzer::JetHbbReco()
       WP4 = leptonP4 + nuP4;
       // If using b-jet regression, use the regressed jets for the top mass reconstruction
       // Otherwise, use the un regressed jets
-      if (analysis->bjetRegression) {
-        jet1P4 = &bosondaughters_corr[0]; jet2P4 = &bosondaughters_corr[1];
-      } else {
-        jet1P4 = &bosondaughter1; jet2P4 = &bosondaughter2;
-      }
+     // if (analysis->bjetRegression) {
+     //   jet1P4 = &bosondaughters_corr[0]; jet2P4 = &bosondaughters_corr[1];
+    //  } else {
+      jet1P4 = &bosondaughter1; jet2P4 = &bosondaughter2;
+    //  }
       dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
       topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
       gt->topMassLep1Met = topP4.M();
@@ -642,11 +642,11 @@ void PandaAnalyzer::JetHbbReco()
         WP4 = leptonP4 + nuP4;
         // If using b-jet regression, use the regressed jets for the top mass reconstruction
         // Otherwise, use the un regressed jets
-        if (analysis->bjetRegression) {
-          jet1P4 = &bosondaughters_corr_jesUp[0]; jet2P4 = &bosondaughters_corr_jesUp[1];
-        } else {
-          jet1P4 = &bosondaughter1_jesUp; jet2P4 = &bosondaughter2_jesUp;
-        }
+     //   if (analysis->bjetRegression) {
+     //     jet1P4 = &bosondaughters_corr_jesUp[0]; jet2P4 = &bosondaughters_corr_jesUp[1];
+      //  } else {
+        jet1P4 = &bosondaughter1_jesUp; jet2P4 = &bosondaughter2_jesUp;
+      //  }
         dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
         topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
         gt->topMassLep1Met_jesUp = topP4.M();
@@ -657,11 +657,11 @@ void PandaAnalyzer::JetHbbReco()
         WP4 = leptonP4 + nuP4;
         // If using b-jet regression, use the regressed jets for the top mass reconstruction
         // Otherwise, use the un regressed jets
-        if (analysis->bjetRegression) {
-          jet1P4 = &bosondaughters_corr_jesDown[0]; jet2P4 = &bosondaughters_corr_jesDown[1];
-        } else {
-          jet1P4 = &bosondaughter1_jesDown; jet2P4 = &bosondaughter2_jesDown;
-        }
+      //  if (analysis->bjetRegression) {
+     //     jet1P4 = &bosondaughters_corr_jesDown[0]; jet2P4 = &bosondaughters_corr_jesDown[1];
+     //   } else {
+        jet1P4 = &bosondaughter1_jesDown; jet2P4 = &bosondaughter2_jesDown;
+     //   }
         dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
         topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
         gt->topMassLep1Met_jesDown = topP4.M();
@@ -735,8 +735,8 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       ellipse_cosA = cos(ellipse_alpha);
       ellipse_sinA = sin(ellipse_alpha);
       if (DEBUG > 10) {
-        PDebug("PandaAnalyzer::JetHbbReco",Form("Calculating ellipse with (eta1,phi1)=(%.2f,%.2f), (eta2,phi2)=(%.2f,%.2f)",eta1,phi1,eta2,phi2));
-        PDebug("PandaAnalyzer::JetHbbReco",Form("Found ellipse parameters (a,b,h,k,alpha)=(%.2f,%.2f,%.2f,%.2f,%.2f)",ellipse_a,ellipse_b,ellipse_h,ellipse_k,ellipse_alpha));
+        PDebug("PandaAnalyzer::JetBosonReco",Form("Calculating ellipse with (eta1,phi1)=(%.2f,%.2f), (eta2,phi2)=(%.2f,%.2f)",eta1,phi1,eta2,phi2));
+        PDebug("PandaAnalyzer::JetBosonReco",Form("Found ellipse parameters (a,b,h,k,alpha)=(%.2f,%.2f,%.2f,%.2f,%.2f)",ellipse_a,ellipse_b,ellipse_h,ellipse_k,ellipse_alpha));
       }
     }
 
@@ -777,13 +777,13 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       for (int iV=0; iV!=event.vertices.size(); iV++) {
         auto& theVertex = event.vertices[iV];
         float vertexAbsDz = fabs(softTrack->dz(theVertex.position()));
-        if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
+        if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
         if (vertexAbsDz >= minAbsDz) continue;
         idxVertexWithMinAbsDz = iV;
         minAbsDz = vertexAbsDz;
       }
       if (idxVertexWithMinAbsDz!=0 || minAbsDz>0.2) continue;
-      if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
+      if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
       // Need to add High Quality track flags :-)
       bool trackIsInHbbEllipse=false; {
         double ellipse_x = softTrack->eta();
@@ -801,16 +801,16 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       } if (trackIsInHbbEllipse) continue;
       softTracksPJ.emplace_back(softTrack->px(),softTrack->py(),softTrack->pz(),softTrack->e());
     }
-    if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Found %ld soft tracks that passed track quality cuts and the ellipse, jet constituency, and lepton matching vetoes",softTracksPJ.size()));
+    if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Found %ld soft tracks that passed track quality cuts and the ellipse, jet constituency, and lepton matching vetoes",softTracksPJ.size()));
     softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
     fastjet::ClusterSequenceArea softTrackSequence(softTracksPJ, *softTrackJetDefinition, *areaDef);
     
     std::vector<fastjet::PseudoJet> softTrackJets(softTrackSequence.inclusive_jets(1.));
-    if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
+    if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
     for (std::vector<fastjet::PseudoJet>::size_type iSTJ=0; iSTJ<softTrackJets.size(); iSTJ++) {
       if (fabs(softTrackJets[iSTJ].eta()) > 4.7) continue;
       gt->sumEtSoft1 += softTrackJets[iSTJ].Et(); 
-      if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
+      if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
       if (softTrackJets[iSTJ].pt() >  2.)  gt->nSoft2++; else continue;
       if (softTrackJets[iSTJ].pt() >  5.)  gt->nSoft5++; else continue;
       if (softTrackJets[iSTJ].pt() > 10.) gt->nSoft10++; else continue;

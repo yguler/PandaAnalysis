@@ -113,7 +113,9 @@ void PandaAnalyzer::JetBtagSFs()
       for (unsigned int iJ=0; iJ!=nJ; ++iJ) {
         panda::Jet *jet = bCandJets.at(iJ);
         bool isIsoJet=false;
-        if (!analysis->fatjet || // if we do not consider fatjets, everything is an isojet 
+      
+// 
+        if (!analysis->boosted || // if we do not consider fatjets, everything is an isojet 
             std::find(isoJets.begin(), isoJets.end(), jet) != isoJets.end()) // otherwise, explicitly check isojet
           isIsoJet = true;
         int flavor = bCandJetGenFlavor[jet];
@@ -138,7 +140,11 @@ void PandaAnalyzer::JetBtagSFs()
               gt->isojet2Flav = flavor;
           }
 
-          CalcBJetSFs(bJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
+          BTagType wp = bJetM;
+          if (analysis->boosted) wp = bJetL;          
+
+
+          CalcBJetSFs(wp,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
           btagcands.emplace_back(iJ,flavor,eff,sf,sfUp,sfDown);
           sf_cent.push_back(sf);
 

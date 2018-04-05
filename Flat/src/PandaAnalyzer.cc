@@ -806,7 +806,17 @@ bool PandaAnalyzer::PassPreselection()
       }
     }
   }
-
+  if (preselBits & kLepMonoTop){
+    if (gt->nJet>=1 && gt->jet1Pt>25){
+      if
+      (
+       (gt->nTightElectron >0 && gt->electronPt[0]>25) ||
+       (gt->nTightMuon > 0 && gt->muonPt[0]>25)
+       ){
+	isGood = true;
+      }
+    }
+  }
 
   if (preselBits & kVHBB) {
     double bestMet = TMath::Max(TMath::Max(gt->pfmetUp, gt->pfmetDown), gt->pfmet);

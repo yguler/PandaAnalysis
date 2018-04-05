@@ -128,12 +128,12 @@ void PandaAnalyzer::JetBasics()
       }
 
       if (jet.pt()>jetPtThreshold) { // nominal jets
-        if ((analysis->hbb || analysis->boosted) && cleanedJets.size() >= NJET) 
+        if ((analysis->hbb || analysis->boosted || analysis->lepmonotop) && cleanedJets.size() >= NJET) 
           continue;
         cleanedJets.push_back(&jet);
         // Set jetGenPt, jetGenFlavor for these jets
         // This will be overwritten later if reclusterGen is turned on
-        if (analysis->hbb || analysis->boosted) {
+        if (analysis->hbb || analysis->boosted || analysis->lepmonotop) {
           gt->jetGenFlavor[cleanedJets.size()-1] = flavor;
           gt->jetGenPt    [cleanedJets.size()-1] = genpt ;
         }

@@ -73,8 +73,6 @@ void PandaAnalyzer::JetBasics()
       continue;
     if(analysis->monojet && !jet.loose)
       continue;
-    if ((analysis->vbf || analysis->hbb) && !jet.loose)
-      continue;
 
     if (jet.pt()>jetPtThreshold || jet.pt()>bJetPtThreshold) { // nominal or b jets
 

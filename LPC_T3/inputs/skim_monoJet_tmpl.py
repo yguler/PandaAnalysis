@@ -16,7 +16,7 @@ from PandaCore.Tools.Misc import *
 from PandaCore.Tools.Load import *
 import PandaCore.Tools.job_config as cb
 import PandaAnalysis.LPC_T3.job_utilities as utils
-from PandaAnalysis.Flat.analysis import monojet #yg
+from PandaAnalysis.Flat.analysis import monojet 
 
 Load('PandaAnalyzer')
 data_dir = getenv('CMSSW_BASE') + '/src/PandaAnalysis/data/'
@@ -29,10 +29,10 @@ def fn(input_name, isData, full_path):
 #    analysis = vbf(True)
     analysis = monojet(True)
     analysis.processType = utils.classify_sample(full_path, isData)
-#    analysis.genOnly = False  # yg
+#    analysis.genOnly = False 
     skimmer.SetAnalysis(analysis)
     skimmer.isData = isData
-    skimmer.SetPreselectionBit(root.PandaAnalyzer.kMonojet) #yg
+    skimmer.SetPreselectionBit(root.PandaAnalyzer.kMonojet)
 
     return utils.run_PandaAnalyzer(skimmer, isData, input_name)
 

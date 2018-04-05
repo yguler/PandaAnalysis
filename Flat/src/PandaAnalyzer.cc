@@ -70,7 +70,7 @@ void PandaAnalyzer::SetOutputFile(TString fOutName)
 
   fOut->WriteTObject(hDTotalMCWeight);    
 
-  gt->monohiggs      = (analysis->boosted || analysis->hbb);
+  gt->monohiggs      = (analysis->boosted || analysis->boson);
   gt->vbf            = analysis->vbf;
   gt->fatjet         = analysis->fatjet;
   gt->leptonic       = analysis->complicatedLeptons;
@@ -136,10 +136,10 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
       readlist += {jetname+"CA15Jets", "subjets", jetname+"CA15Subjets","Subjets"};
     
     if (analysis->recluster || analysis->bjetRegression || 
-        analysis->deep || analysis->hbb || analysis->complicatedPhotons) {
+        analysis->deep || analysis->boson || analysis->complicatedPhotons) {
       readlist.push_back("pfCandidates");
     }
-    if (analysis->deepTracks || analysis->bjetRegression || analysis->hbb) {
+    if (analysis->deepTracks || analysis->bjetRegression || analysis->boson) {
       readlist += {"tracks","vertices"};
     }
 
@@ -245,7 +245,7 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     }
   }
 
-  if (analysis->recluster || analysis->reclusterGen || analysis->deep || analysis->deepGen || analysis->hbb) {
+  if (analysis->recluster || analysis->reclusterGen || analysis->deep || analysis->deepGen || analysis->boson) {
     int activeAreaRepeats = 1;
     double ghostArea = 0.01;
     double ghostEtaMax = 7.0;
@@ -264,13 +264,13 @@ int PandaAnalyzer::Init(TTree *t, TH1D *hweights, TTree *weightNames)
     double radius = 0.4;
     jetDefGen = new fastjet::JetDefinition(fastjet::antikt_algorithm,radius);
   }
-  if (analysis->hbb)
+  if (analysis->boson)
     softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
 
   // Custom jet pt threshold
-  if (analysis->hbb) jetPtThreshold=20;
-  if (analysis->vbf || analysis->hbb || analysis->complicatedLeptons) 
-    bJetPtThreshold=20;
+//  if (analysis->boson) jetPtThreshold=20;
+//  if (analysis->vbf || analysis->boson || analysis->complicatedLeptons) 
+//    bJetPtThreshold=20;
 
   if (DEBUG) PDebug("PandaAnalyzer::Init","Finished configuration");
 
@@ -447,7 +447,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
     OpenCorrection(cMuReco,dirPath+"moriond17/Tracking_12p9.root","htrack2",1);
   }
   // Differential Electroweak VH Corrections
-  if (analysis->hbb) {
+/*  if (analysis->boson) {
     OpenCorrection(cWmHEwkCorr    ,dirPath+"higgs/Wm_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_rebin"     ,1);
     OpenCorrection(cWmHEwkCorrUp  ,dirPath+"higgs/Wm_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
     OpenCorrection(cWmHEwkCorrDown,dirPath+"higgs/Wm_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
@@ -461,7 +461,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
     OpenCorrection(cZllHEwkCorrUp  ,dirPath+"higgs/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_up_rebin"  ,1);
     OpenCorrection(cZllHEwkCorrDown,dirPath+"higgs/Zll_nloEWK_weight_unnormalized.root","SignalWeight_nloEWK_down_rebin",1);
   }
-
+*/
   // photons
   OpenCorrection(cPho,dirPath+"moriond17/scalefactors_80x_medium_photon_37ifb.root",
                  "EGamma_SF2D",2);
@@ -599,7 +599,7 @@ void PandaAnalyzer::SetDataDir(const char *s)
   }
 
 
-  if (analysis->boosted || analysis->hbb) {
+  if (analysis->boosted || analysis->boson) {
     // mSD corr
     MSDcorr = new TFile(dirPath+"/puppiCorr.root");
     puppisd_corrGEN = (TF1*)MSDcorr->Get("puppiJECcorr_gen");;
@@ -1201,7 +1201,7 @@ void PandaAnalyzer::Run()
       // first identify interesting jets
       JetBasics();
 
-      if (analysis->hbb) {
+      if (analysis->boson) {
         // Higgs reconstruction for resolved analysis - highest pt pair of b jets
         JetBosonReco();
       }
@@ -1211,7 +1211,7 @@ void PandaAnalyzer::Run()
       if (!PassPreselection()) // only check reco presel here
         continue;
 
-      if (analysis->hbb) {
+      if (analysis->boson) {
         JetHbbSoftActivity();
         GetMETSignificance();
       }
@@ -1246,7 +1246,7 @@ void PandaAnalyzer::Run()
 
       SignalInfo();
 
-      if (analysis->reclusterGen && analysis->hbb) {
+      if (analysis->reclusterGen && analysis->boson) {
         GenJetsNu();
         MatchGenJets(genJetsNu);
       }

@@ -129,12 +129,13 @@ public:
   bool fatjet = true;
   bool firstGen = true;
   bool genOnly = false;
-  bool hbb = false;
+  bool boson = false;
   bool hfCounting = false;
   bool jetFlavorPartons = true;
   bool jetFlavorJets = false;
  // bool monoh = false;
   bool boosted = false;
+  bool monojet = false;
   bool puppi_jets = true;
   bool recluster = false;
   bool reclusterGen = false;

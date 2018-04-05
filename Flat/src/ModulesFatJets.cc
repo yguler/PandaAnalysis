@@ -400,7 +400,8 @@ void PandaAnalyzer::FatjetBasics()
         gt->fj1MSDSmeared_sj = gt->fj1MSD * (sjSumSmear.Pt()/sjSum.Pt());
       }
 
-      if (analysis->boosted || analysis->hbb) {
+      if (analysis->boosted) {
+     // if (analysis->boosted || analysis->hbb) {
        
         // mSD correction
         float corrweight=1.;
@@ -758,7 +759,8 @@ void PandaAnalyzer::FatjetMatching()
         } else {
           eff = lfeff[bineta][binpt];
         }
-        if (analysis->hbb)
+       // if (analysis->hbb)
+        if (analysis->boson)
           CalcBJetSFs(bSubJetM,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
         else
           CalcBJetSFs(bSubJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);

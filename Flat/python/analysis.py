@@ -43,12 +43,18 @@ boosted = lambda v=False : _analysis(
 resolved = lambda v=False : _analysis(
         name = 'resolved',
         verbose = v,
+        boson = True;
         bjetRegression = True,
     )
 
 monojet = lambda v=False : _analysis(
         name = 'monojet',
         verbose = v,
+	monojet = True,
+        btagWeights = True,
+        useCMVA = True,
+        hfCounting = True,
+        jetFlavorJets = True
     )
 
 lepmonotop = lambda v=False : _analysis(
@@ -102,7 +108,7 @@ wlnhbb = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,
         ak8 = True,
-        hbb = True,
+        boson = True,
         monoh = False,
         recoil = True,
         fatjet = True,
@@ -122,7 +128,7 @@ wlnhbb_ca15 = lambda v=False : _analysis(
         name = 'wlnhbb',
         verbose = v,
         ak8 = False,
-        hbb = True,
+        boson = True,
         monoh = False,
         recoil = True,
         fatjet = True,

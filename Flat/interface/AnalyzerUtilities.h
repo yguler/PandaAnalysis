@@ -144,6 +144,7 @@ public:
   bool useCMVA = false;
   bool varyJES = false;
   bool vbf = false;
+  bool lepmonotop= false;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////

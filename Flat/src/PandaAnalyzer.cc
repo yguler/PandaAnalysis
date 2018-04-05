@@ -1202,7 +1202,7 @@ void PandaAnalyzer::Run()
 
       if (analysis->hbb) {
         // Higgs reconstruction for resolved analysis - highest pt pair of b jets
-        JetHbbReco();
+        //JetHbbReco();
       }
 
       Taus();

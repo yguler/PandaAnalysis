@@ -53,10 +53,7 @@ monojet = lambda v=False : _analysis(
 lepmonotop = lambda v=False : _analysis(
         name = 'lepmonotop',
         verbose = v,
-	ak8 = False,
-	hbb = False,
         lepmonotop = True,
-        monoh = False,
         recoil = True,
         fatjet = False,
         btagSFs = True,
@@ -68,7 +65,7 @@ lepmonotop = lambda v=False : _analysis(
         bjetRegression = False,
         varyJES = True,
         rerunJES = True,
-        jetFlavorPartons = True,
+        jetFlavorPartons = False,
         jetFlavorJets = True,
     )
 

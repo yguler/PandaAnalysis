@@ -285,7 +285,7 @@ private:
     void JetBtagSFs();
     void JetCMVAWeights();
     void JetHbbBasics(panda::Jet&);
-    void JetHbbReco();
+    void JetBosonReco();
     void JetHbbSoftActivity();
     void JetVBFBasics(panda::Jet&);
     void JetVBFSystem();

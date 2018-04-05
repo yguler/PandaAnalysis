@@ -51,6 +51,7 @@ void PandaAnalyzer::JetBasics()
   gt->dphipuppiUZ=999; gt->dphipfUZ=999;
   gt->dphipuppiUA=999; gt->dphipfUA=999;
   float maxJetEta = (analysis->vbf) ? 4.7 : 4.5;
+  float maxJetEtaMJ = (analysis->monojet) ? 2.5 : 4.5;
   unsigned nJetDPhi = (analysis->vbf) ? 4 : 5;
 
   gt->badECALFilter = 1;
@@ -59,17 +60,21 @@ void PandaAnalyzer::JetBasics()
     // only do eta-phi checks here
     if (abs(jet.eta()) > maxJetEta)
       continue;
+    if (abs(jet.eta()) > maxJetEtaMJ)
+      continue;
     // NOTE:
     // For VBF we require nTightLep>0, but in monotop looseLep1IsTight
     // No good reason to do that, should switch to former
     // Should update jet cleaning accordingly (just check all loose objects)
-    if (IsMatched(&matchLeps,0.16,jet.eta(),jet.phi()))
+    if (IsMatched(&matchLeps,0.16,jet.eta(),jet.phi()) ||
+        IsMatched(&matchPhos,0.16,jet.eta(),jet.phi()))
       continue;
-    if(!analysis->hbb && IsMatched(&matchPhos,0.16,jet.eta(),jet.phi()))
+    if (analysis->vbf && !jet.loose)
+      continue;
+    if(analysis->monojet && !jet.loose)
       continue;
     if ((analysis->vbf || analysis->hbb) && !jet.loose)
       continue;
-
 
     if (jet.pt()>jetPtThreshold || jet.pt()>bJetPtThreshold) { // nominal or b jets
 
@@ -474,100 +479,68 @@ void PandaAnalyzer::JetVBFSystem()
 
   tr->TriggerSubEvent("VBF jet system");
 }
-/*
-void PandaAnalyzer::RJet()
-{ 
-  float tmp_hbbpt=-99;
-  float tmp_hbbeta=-99;
-  float tmp_hbbphi=-99;
-  float tmp_hbbm=-99;
-  int tmp_hbbjtidx1=-1;
-  int tmp_hbbjtidx2=-1;
+
+void PandaAnalyzer::JetBosonReco() 
+{
+  float tmp_bosonpt=-99;
+  float tmp_bosoneta=-99;
+  float tmp_bosonphi=-99;
+  float tmp_bosonm=-99;
+  int tmp_bosonjtidx1=-1;
+  int tmp_bosonjtidx2=-1;
   if (cleanedJets.size() > 1) {
+     TLorentzVector bosondaughter1, bosondaughter2, bosonsystem,
+                    bosondaughter1_jesUp, bosondaughter2_jesUp, bosonsystem_jesUp,
+                    bosondaughter1_jesDown, bosondaughter2_jesDown, bosonsystem_jesDown;
      for (unsigned int i = 0;i<cleanedJets.size();i++){
          panda::Jet *jet_1 = cleanedJets.at(i);
-         TLorentzVector hbbdaughter1, hbbdaughter2, hbbsystem;
-         hbbdaughter1.SetPtEtaPhiM(jet_1->pt(),jet_1->eta(),jet_1->phi(),jet_1->m());
+         bosondaughter1.SetPtEtaPhiM(jet_1->pt(),jet_1->eta(),jet_1->phi(),jet_1->m());
          for (unsigned int j = i+1;j<cleanedJets.size();j++){
              panda::Jet *jet_2 = cleanedJets.at(j);
-             hbbdaughter2.SetPtEtaPhiM(jet_2->pt(),jet_2->eta(),jet_2->phi(),jet_2->m());
-             hbbsystem = hbbdaughter1 + hbbdaughter2;
-             if (hbbsystem.Pt()>tmp_hbbpt){
-                tmp_hbbpt = hbbsystem.Pt();
-                tmp_hbbeta = hbbsystem.Eta();
-                tmp_hbbphi = hbbsystem.Phi();
-                tmp_hbbm = hbbsystem.M();
-                tmp_hbbjtidx1 = i; 
-                tmp_hbbjtidx2 = j;  
+             bosondaughter2.SetPtEtaPhiM(jet_2->pt(),jet_2->eta(),jet_2->phi(),jet_2->m());
+             bosonsystem = bosondaughter1 + bosondaughter2;
+             if (bosonsystem.Pt()>tmp_bosonpt){
+                tmp_bosonpt = bosonsystem.Pt();
+                tmp_bosoneta = bosonsystem.Eta();
+                tmp_bosonphi = bosonsystem.Phi();
+                tmp_bosonm = bosonsystem.M();
+                tmp_bosonjtidx1 = i;
+                tmp_bosonjtidx2 = j;
              }
          }
      }
-      gt->bosonpt = tmp_hbbpt;
-      gt->bosoneta = tmp_hbbeta;
-      gt->bosonphi = tmp_hbbphi;
-      gt->bosonm = tmp_hbbm;
-      gt->bosonjtidx[0] = tmp_hbbjtidx1;
-      gt->bosonjtidx[1] = tmp_hbbjtidx2;
+      gt->bosonpt = tmp_bosonpt;
+      gt->bosoneta = tmp_bosoneta;
+      gt->bosonphi = tmp_bosonphi;
+      gt->bosonm = tmp_bosonm;
+      gt->bosonjtidx[0] = tmp_bosonjtidx1;
+      gt->bosonjtidx[1] = tmp_bosonjtidx2;
 
-  }
-      tr.TriggerEvent("monohiggs");
-}
-*/
-void PandaAnalyzer::JetHbbReco() 
-{
-  if (centralJets.size() > 1) {
-    vector<Jet*> btagSortedJets = centralJets;
-    sort(
-      btagSortedJets.begin(),
-      btagSortedJets.end(),
-      analysis->useCMVA?
-        [](panda::Jet *x, panda::Jet *y) -> bool { return x->cmva > y->cmva; } :
-        [](panda::Jet *x, panda::Jet *y) -> bool { return x->csv  > y->csv ; }
-    );
-    map<Jet*, unsigned> order;
-    for (unsigned i = 0; i != cleanedJets.size(); ++i) 
-      order[cleanedJets[i]] = i;
-
-    // the 2 best b-tagged central jets
-    panda::Jet *jet_1 = btagSortedJets.at(0);
-    panda::Jet *jet_2 = btagSortedJets.at(1);
-    gt->bosonjtidx[0] = order[jet_1];
-    gt->bosonjtidx[1] = order[jet_2];
-    
-    // Form the Higgs dijet system with the two daughters
-    TLorentzVector hbbdaughter1, hbbdaughter2, hbbsystem,
-                   hbbdaughter1_jesUp, hbbdaughter2_jesUp, hbbsystem_jesUp,
-                   hbbdaughter1_jesDown, hbbdaughter2_jesDown, hbbsystem_jesDown;
-    
-    // Central value for the jet energy
-    hbbdaughter1 = jet_1->p4();
-    hbbdaughter2 = jet_2->p4();
-    hbbsystem = hbbdaughter1 + hbbdaughter2;
-    gt->bosonpt = hbbsystem.Pt();
-    gt->bosoneta = hbbsystem.Eta();
-    gt->bosonphi = hbbsystem.Phi();
-    gt->bosonm = hbbsystem.M();
     // Daughter jet energies varied Up
-    hbbdaughter1_jesUp.SetPtEtaPhiM(jet_1->ptCorrUp,jet_1->eta(),jet_1->phi(),jet_1->m());
-    hbbdaughter2_jesUp.SetPtEtaPhiM(jet_2->ptCorrUp,jet_2->eta(),jet_2->phi(),jet_2->m());
-    hbbsystem_jesUp = hbbdaughter1_jesUp + hbbdaughter2_jesUp;
-    gt->bosonpt_jesUp = hbbsystem_jesUp.Pt();
-    gt->bosoneta_jesUp = hbbsystem_jesUp.Eta();
-    gt->bosonphi_jesUp = hbbsystem_jesUp.Phi();
-    gt->bosonm_jesUp = hbbsystem_jesUp.M();
+    bosondaughter1_jesUp.SetPtEtaPhiM(gt->jetPtUp[tmp_bosonjtidx1],gt->jetEta[tmp_bosonjtidx1],gt->jetPhi[tmp_bosonjtidx1],gt->jetM[tmp_bosonjtidx1]);
+    bosondaughter2_jesUp.SetPtEtaPhiM(gt->jetPtUp[tmp_bosonjtidx2],gt->jetEta[tmp_bosonjtidx2],gt->jetPhi[tmp_bosonjtidx2],gt->jetM[tmp_bosonjtidx2]);
+    //bosondaughter1_jesUp.SetPtEtaPhiM(jet_1->ptCorrUp,jet_1->eta(),jet_1->phi(),jet_1->m());
+  //  bosondaughter2_jesUp.SetPtEtaPhiM(jet_2->ptCorrUp,jet_2->eta(),jet_2->phi(),jet_2->m());
+    bosonsystem_jesUp = bosondaughter1_jesUp + bosondaughter2_jesUp;
+    gt->bosonpt_jesUp = bosonsystem_jesUp.Pt();
+    gt->bosoneta_jesUp = bosonsystem_jesUp.Eta();
+    gt->bosonphi_jesUp = bosonsystem_jesUp.Phi();
+    gt->bosonm_jesUp = bosonsystem_jesUp.M();
     // Daughter jet energies varied Down
-    hbbdaughter1_jesDown.SetPtEtaPhiM(jet_1->ptCorrDown,jet_1->eta(),jet_1->phi(),jet_1->m());
-    hbbdaughter2_jesDown.SetPtEtaPhiM(jet_2->ptCorrDown,jet_2->eta(),jet_2->phi(),jet_2->m());
-    hbbsystem = hbbdaughter1_jesDown + hbbdaughter2_jesDown;
-    gt->bosonpt_jesDown = hbbsystem_jesDown.Pt();
-    gt->bosoneta_jesDown = hbbsystem_jesDown.Eta();
-    gt->bosonphi_jesDown = hbbsystem_jesDown.Phi();
-    gt->bosonm_jesDown = hbbsystem_jesDown.M();
+    bosondaughter1_jesDown.SetPtEtaPhiM(gt->jetPtDown[tmp_bosonjtidx1],gt->jetEta[tmp_bosonjtidx1],gt->jetPhi[tmp_bosonjtidx1],gt->jetM[tmp_bosonjtidx1]);
+    bosondaughter2_jesDown.SetPtEtaPhiM(gt->jetPtDown[tmp_bosonjtidx2],gt->jetEta[tmp_bosonjtidx2],gt->jetPhi[tmp_bosonjtidx2],gt->jetM[tmp_bosonjtidx2]);
+    //bosondaughter1_jesDown.SetPtEtaPhiM(jet_1->ptCorrDown,jet_1->eta(),jet_1->phi(),jet_1->m());
+    //bosondaughter2_jesDown.SetPtEtaPhiM(jet_2->ptCorrDown,jet_2->eta(),jet_2->phi(),jet_2->m());
+    bosonsystem = bosondaughter1_jesDown + bosondaughter2_jesDown;
+    gt->bosonpt_jesDown = bosonsystem_jesDown.Pt();
+    gt->bosoneta_jesDown = bosonsystem_jesDown.Eta();
+    gt->bosonphi_jesDown = bosonsystem_jesDown.Phi();
+    gt->bosonm_jesDown = bosonsystem_jesDown.M();
     tr->TriggerSubEvent("Bare Hbb reco");
     
     
-    TLorentzVector hbbdaughters_corr[2], hbbdaughters_corr_jesUp[2], hbbdaughters_corr_jesDown[2];
-    TLorentzVector hbbsystem_corr, hbbsystem_corr_jesUp, hbbsystem_corr_jesDown;
+    TLorentzVector bosondaughters_corr[2], bosondaughters_corr_jesUp[2], bosondaughters_corr_jesDown[2];
+    TLorentzVector bosonsystem_corr, bosonsystem_corr_jesUp, bosonsystem_corr_jesDown;
     if (analysis->bjetRegression && gt->bosonm>0.) {
       
       for (unsigned i = 0; i<2; i++) {
@@ -588,60 +561,58 @@ void PandaAnalyzer::JetHbbReco()
         bjetreg_vars[0] = gt->jetPtUp[gt->bosonjtidx[i]];
         bjetreg_vars[3] = gt->jetE[gt->bosonjtidx[i]] * gt->jetPtUp[gt->bosonjtidx[i]] / gt->jetPt[gt->bosonjtidx[i]];
         gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
-        hbbdaughters_corr_jesUp[i].SetPtEtaPhiM(
+        bosondaughters_corr_jesUp[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPtUp[gt->bosonjtidx[i]],
           gt->jetEta[gt->bosonjtidx[i]],
           gt->jetPhi[gt->bosonjtidx[i]],
-          btagSortedJets.at(i)->m()
+          cleanedJets.at(gt->bosonjtidx[i])->m()
         );
         // B-jet regression with jet energy varied down
         bjetreg_vars[0] = gt->jetPtDown[gt->bosonjtidx[i]];
         bjetreg_vars[3] = gt->jetE[gt->bosonjtidx[i]] * gt->jetPtDown[gt->bosonjtidx[i]] / gt->jetPt[gt->bosonjtidx[i]];
         gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
-        hbbdaughters_corr_jesDown[i].SetPtEtaPhiM(
+        bosondaughters_corr_jesDown[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPtDown[gt->bosonjtidx[i]],
           gt->jetEta[gt->bosonjtidx[i]],
           gt->jetPhi[gt->bosonjtidx[i]],
-          btagSortedJets.at(i)->m()
+          cleanedJets.at(gt->bosonjtidx[i])->m()
         );
         // B-jet regression with central value for jet energy
         // Call this last so that the central value for jetRegFac[i] is stored in gt
-        bjetreg_vars[0] = gt->jetPt[gt->bosonjtidx[i]];
-        bjetreg_vars[3] = gt->jetE[gt->bosonjtidx[i]];
         gt->jetRegFac[i] = (bjetregReader->EvaluateRegression("BDT method"))[0];
-        hbbdaughters_corr[i].SetPtEtaPhiM(
+        bosondaughters_corr[i].SetPtEtaPhiM(
           gt->jetRegFac[i]*gt->jetPt[gt->bosonjtidx[i]],
           gt->jetEta[gt->bosonjtidx[i]],
           gt->jetPhi[gt->bosonjtidx[i]],
-          btagSortedJets.at(i)->m()
+          cleanedJets.at(gt->bosonjtidx[i])->m()
         );
 
       }
-      hbbsystem_corr = hbbdaughters_corr[0] + hbbdaughters_corr[1];
-      gt->bosonm_reg = hbbsystem_corr.M();
-      gt->bosonpt_reg = hbbsystem_corr.Pt();
-      hbbsystem_corr_jesUp = hbbdaughters_corr_jesUp[0] + hbbdaughters_corr_jesUp[1];
-      gt->bosonm_reg_jesUp = hbbsystem_corr_jesUp.M();
-      gt->bosonpt_reg_jesUp = hbbsystem_corr_jesUp.Pt();
-      hbbsystem_corr_jesDown = hbbdaughters_corr_jesDown[0] + hbbdaughters_corr_jesDown[1];
-      gt->bosonm_reg_jesDown = hbbsystem_corr_jesDown.M();
-      gt->bosonpt_reg_jesDown = hbbsystem_corr_jesDown.Pt();
+      bosonsystem_corr = bosondaughters_corr[0] + bosondaughters_corr[1];
+      gt->bosonm_reg = bosonsystem_corr.M();
+      gt->bosonpt_reg = bosonsystem_corr.Pt();
+      bosonsystem_corr_jesUp = bosondaughters_corr_jesUp[0] + bosondaughters_corr_jesUp[1];
+      gt->bosonm_reg_jesUp = bosonsystem_corr_jesUp.M();
+      gt->bosonpt_reg_jesUp = bosonsystem_corr_jesUp.Pt();
+      bosonsystem_corr_jesDown = bosondaughters_corr_jesDown[0] + bosondaughters_corr_jesDown[1];
+      gt->bosonm_reg_jesDown = bosonsystem_corr_jesDown.M();
+      gt->bosonpt_reg_jesDown = bosonsystem_corr_jesDown.Pt();
       
       tr->TriggerSubEvent("Regr. Hbb reco");
     }
     if (gt->bosonm>0.) { 
-      gt->bosonCosThetaJJ   = hbbsystem.CosTheta();
+      gt->bosonCosThetaJJ   = bosonsystem.CosTheta();
       // Collins-Soper frame calculation
       if (analysis->bjetRegression) {
-        if (hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) 
-          gt->bosonCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughters_corr[0],hbbdaughters_corr[1]);
+        if (bosondaughters_corr[0].Pt() > bosondaughters_corr[1].Pt()) 
+          gt->bosonCosThetaCSJ1 = CosThetaCollinsSoper(bosondaughters_corr[0],bosondaughters_corr[1]);
         else
-          gt->bosonCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughters_corr[1],hbbdaughters_corr[0]);
+          gt->bosonCosThetaCSJ1 = CosThetaCollinsSoper(bosondaughters_corr[1],bosondaughters_corr[0]);
       } else {
-        if (hbbdaughters_corr[0].Pt() > hbbdaughters_corr[1].Pt()) 
-          gt->bosonCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughter1,hbbdaughter2);
+        if (bosondaughters_corr[0].Pt() > bosondaughters_corr[1].Pt()) 
+          gt->bosonCosThetaCSJ1 = CosThetaCollinsSoper(bosondaughter1,bosondaughter2);
         else
-          gt->bosonCosThetaCSJ1 = CosThetaCollinsSoper(hbbdaughter2,hbbdaughter1);
+          gt->bosonCosThetaCSJ1 = CosThetaCollinsSoper(bosondaughter2,bosondaughter1);
       }
       tr->TriggerSubEvent("Hbb spin correl.");
     }
@@ -658,11 +629,11 @@ void PandaAnalyzer::JetHbbReco()
       WP4 = leptonP4 + nuP4;
       // If using b-jet regression, use the regressed jets for the top mass reconstruction
       // Otherwise, use the un regressed jets
-      if (analysis->bjetRegression) {
-        jet1P4 = &hbbdaughters_corr[0]; jet2P4 = &hbbdaughters_corr[1];
-      } else {
-        jet1P4 = &hbbdaughter1; jet2P4 = &hbbdaughter2;
-      }
+     // if (analysis->bjetRegression) {
+     //   jet1P4 = &bosondaughters_corr[0]; jet2P4 = &bosondaughters_corr[1];
+    //  } else {
+      jet1P4 = &bosondaughter1; jet2P4 = &bosondaughter2;
+    //  }
       dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
       topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
       gt->topMassLep1Met = topP4.M();
@@ -678,11 +649,11 @@ void PandaAnalyzer::JetHbbReco()
         WP4 = leptonP4 + nuP4;
         // If using b-jet regression, use the regressed jets for the top mass reconstruction
         // Otherwise, use the un regressed jets
-        if (analysis->bjetRegression) {
-          jet1P4 = &hbbdaughters_corr_jesUp[0]; jet2P4 = &hbbdaughters_corr_jesUp[1];
-        } else {
-          jet1P4 = &hbbdaughter1_jesUp; jet2P4 = &hbbdaughter2_jesUp;
-        }
+     //   if (analysis->bjetRegression) {
+     //     jet1P4 = &bosondaughters_corr_jesUp[0]; jet2P4 = &bosondaughters_corr_jesUp[1];
+      //  } else {
+        jet1P4 = &bosondaughter1_jesUp; jet2P4 = &bosondaughter2_jesUp;
+      //  }
         dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
         topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
         gt->topMassLep1Met_jesUp = topP4.M();
@@ -693,11 +664,11 @@ void PandaAnalyzer::JetHbbReco()
         WP4 = leptonP4 + nuP4;
         // If using b-jet regression, use the regressed jets for the top mass reconstruction
         // Otherwise, use the un regressed jets
-        if (analysis->bjetRegression) {
-          jet1P4 = &hbbdaughters_corr_jesDown[0]; jet2P4 = &hbbdaughters_corr_jesDown[1];
-        } else {
-          jet1P4 = &hbbdaughter1_jesDown; jet2P4 = &hbbdaughter2_jesDown;
-        }
+      //  if (analysis->bjetRegression) {
+     //     jet1P4 = &bosondaughters_corr_jesDown[0]; jet2P4 = &bosondaughters_corr_jesDown[1];
+     //   } else {
+        jet1P4 = &bosondaughter1_jesDown; jet2P4 = &bosondaughter2_jesDown;
+     //   }
         dRJet1W=jet1P4->DeltaR(leptonP4); dRJet2W=jet2P4->DeltaR(leptonP4); jet1IsCloser = (dRJet1W < dRJet2W);
         topP4 = jet1IsCloser? (*jet1P4)+WP4 : (*jet2P4)+WP4;
         gt->topMassLep1Met_jesDown = topP4.M();
@@ -710,6 +681,8 @@ void PandaAnalyzer::JetHbbReco()
   
   tr->TriggerEvent("monohiggs");
 }
+
+
 
 void PandaAnalyzer::GenJetsNu()
 {
@@ -769,8 +742,8 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       ellipse_cosA = cos(ellipse_alpha);
       ellipse_sinA = sin(ellipse_alpha);
       if (DEBUG > 10) {
-        PDebug("PandaAnalyzer::JetHbbReco",Form("Calculating ellipse with (eta1,phi1)=(%.2f,%.2f), (eta2,phi2)=(%.2f,%.2f)",eta1,phi1,eta2,phi2));
-        PDebug("PandaAnalyzer::JetHbbReco",Form("Found ellipse parameters (a,b,h,k,alpha)=(%.2f,%.2f,%.2f,%.2f,%.2f)",ellipse_a,ellipse_b,ellipse_h,ellipse_k,ellipse_alpha));
+        PDebug("PandaAnalyzer::JetBosonReco",Form("Calculating ellipse with (eta1,phi1)=(%.2f,%.2f), (eta2,phi2)=(%.2f,%.2f)",eta1,phi1,eta2,phi2));
+        PDebug("PandaAnalyzer::JetBosonReco",Form("Found ellipse parameters (a,b,h,k,alpha)=(%.2f,%.2f,%.2f,%.2f,%.2f)",ellipse_a,ellipse_b,ellipse_h,ellipse_k,ellipse_alpha));
       }
     }
 
@@ -811,13 +784,13 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       for (int iV=0; iV!=event.vertices.size(); iV++) {
         auto& theVertex = event.vertices[iV];
         float vertexAbsDz = fabs(softTrack->dz(theVertex.position()));
-        if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
+        if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Track has |dz| %.2f with vertex %d",vertexAbsDz,iV));
         if (vertexAbsDz >= minAbsDz) continue;
         idxVertexWithMinAbsDz = iV;
         minAbsDz = vertexAbsDz;
       }
       if (idxVertexWithMinAbsDz!=0 || minAbsDz>0.2) continue;
-      if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
+      if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Track above 300 MeV has dz %.3f", softTrack->track.isValid()?softTrack->track.get()->dz():-1));
       // Need to add High Quality track flags :-)
       bool trackIsInHbbEllipse=false; {
         double ellipse_x = softTrack->eta();
@@ -835,16 +808,16 @@ void PandaAnalyzer::JetHbbSoftActivity() {
       } if (trackIsInHbbEllipse) continue;
       softTracksPJ.emplace_back(softTrack->px(),softTrack->py(),softTrack->pz(),softTrack->e());
     }
-    if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Found %ld soft tracks that passed track quality cuts and the ellipse, jet constituency, and lepton matching vetoes",softTracksPJ.size()));
+    if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Found %ld soft tracks that passed track quality cuts and the ellipse, jet constituency, and lepton matching vetoes",softTracksPJ.size()));
     softTrackJetDefinition = new fastjet::JetDefinition(fastjet::antikt_algorithm,0.4);
     fastjet::ClusterSequenceArea softTrackSequence(softTracksPJ, *softTrackJetDefinition, *areaDef);
     
     std::vector<fastjet::PseudoJet> softTrackJets(softTrackSequence.inclusive_jets(1.));
-    if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
+    if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Clustered %ld jets of pT>1GeV using anti-kT algorithm (dR 0.4) from the soft tracks",softTrackJets.size()));
     for (std::vector<fastjet::PseudoJet>::size_type iSTJ=0; iSTJ<softTrackJets.size(); iSTJ++) {
       if (fabs(softTrackJets[iSTJ].eta()) > 4.7) continue;
       gt->sumEtSoft1 += softTrackJets[iSTJ].Et(); 
-      if (DEBUG > 10) PDebug("PandaAnalyzer::JetHbbReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
+      if (DEBUG > 10) PDebug("PandaAnalyzer::JetBosonReco",Form("Soft jet %d has pT %.2f",(int)iSTJ,softTrackJets[iSTJ].pt()));
       if (softTrackJets[iSTJ].pt() >  2.)  gt->nSoft2++; else continue;
       if (softTrackJets[iSTJ].pt() >  5.)  gt->nSoft5++; else continue;
       if (softTrackJets[iSTJ].pt() > 10.) gt->nSoft10++; else continue;

@@ -65,7 +65,8 @@ public :
      kGenFatJet  =(1<<11),
      kVHBB       =(1<<12),
      kLepton     =(1<<13),
-     kLeptonFake =(1<<14)
+     kLeptonFake =(1<<14),
+     kLepMonoTop    =(1<<15),
     };
     
     enum LepSelectionBit {
@@ -435,8 +436,8 @@ private:
     panda::Jet *jotDown1 = 0, *jotDown2 = 0;
     panda::Jet *jetUp1 = 0, *jetUp2 = 0;
     panda::Jet *jetDown1 = 0, *jetDown2 = 0;
-    float jetPtThreshold=30;
-    float bJetPtThreshold=30;
+    float jetPtThreshold=20;  //changed from 30 to 20
+    float bJetPtThreshold=20; //changed from 30 to 20
     std::map<panda::Jet*,int> bCandJetGenFlavor;
     std::map<panda::Jet*,float> bCandJetGenPt;
 

@@ -207,7 +207,7 @@ class GeneralTree : public genericTree {
       std::vector<int> get_orders() const { return orders; }
         
       // public config
-      bool monohiggs=false, vbf=false, fatjet=true, leptonic=false, photonic=false, hfCounting=false;
+      bool monohiggs=false, monojet=false,  vbf=false, fatjet=true, leptonic=false, photonic=false, hfCounting=false;
       bool btagWeights=false, useCMVA=false;
 
 //STARTCUSTOMDEF

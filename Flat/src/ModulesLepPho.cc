@@ -131,7 +131,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
   looseLep1PdgId=-1, looseLep2PdgId=-1, looseLep3PdgId=-1, looseLep4PdgId=-1;
   for (auto& ele : event.electrons) {
     float pt = ele.smearedPt; float eta = ele.eta(); float aeta = fabs(eta);
-    if (analysis->hbb) {
+    if (analysis->lepmonotop) {
       if (pt<7 || aeta>2.4 || fabs(ele.dxy)>0.05 || fabs(ele.dz)>0.2 || ele.combIso()/pt>0.4) continue;
     } else {
       if (pt<10 || aeta>2.5 || !ele.veto) continue;
@@ -235,7 +235,7 @@ void PandaAnalyzer::ComplicatedLeptons() {
       }
     }
     pt *= ptCorrection;
-    if (analysis->hbb) {
+    if (analysis->lepmonotop) {
       if (pt<5 || aeta>2.4 || !mu.loose || fabs(mu.dxy)>0.5 || fabs(mu.dz)>1.0 || mu.combIso()/pt>0.4) continue;
     } else {
       if (pt<10 || aeta>2.4 || !mu.loose) continue;

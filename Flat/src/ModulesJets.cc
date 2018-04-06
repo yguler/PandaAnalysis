@@ -128,12 +128,12 @@ void PandaAnalyzer::JetBasics()
       }
 
       if (jet.pt()>jetPtThreshold) { // nominal jets
-        if ((analysis->boson || analysis->boosted || analysis->lepmonotop) && cleanedJets.size() >= NJET) 
+        if ((analysis->monojet || analysis->boson || analysis->boosted || analysis->lepmonotop) && cleanedJets.size() >= NJET) 
           continue;
         cleanedJets.push_back(&jet);
         // Set jetGenPt, jetGenFlavor for these jets
         // This will be overwritten later if reclusterGen is turned on
-        if (analysis->boson || analysis->boosted || analysis->lepmonotop) {
+        if (analysis->monojet || analysis->boson || analysis->boosted || analysis->lepmonotop) {
           gt->jetGenFlavor[cleanedJets.size()-1] = flavor;
           gt->jetGenPt    [cleanedJets.size()-1] = genpt ;
         }
@@ -144,7 +144,8 @@ void PandaAnalyzer::JetBasics()
             gt->badECALFilter = 0;
         }
 
-        if (analysis->fatjet)
+        //if (analysis->fatjet)
+        if (analysis->boosted)
           IsoJet(jet);
 
         float csv = (fabs(jet.eta())<2.5) ? jet.csv : -1;

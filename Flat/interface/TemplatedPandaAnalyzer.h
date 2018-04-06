@@ -113,9 +113,6 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
   genJetInfo.reset();  
   gt->genFatJetPt = 0;
   gt->genFatJetNProngs = -1;
-  if (analysis->deepGenGrid)
-    grid->clear();
-
   std::vector<int> leptonIndices; // hard leptons from t->W->lv decay
   std::vector<fastjet::PseudoJet> finalStates;
   unsigned idx = -1;
@@ -129,7 +126,8 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
         apdgid == 16)
       continue; 
     if (p.pt() > 0.001) {
-      if (!analysis->deepGenGrid || (pdgToQ[apdgid] != 0)) { // it's charged, so we have tracking
+      //if (!analysis->deepGenGrid || (pdgToQ[apdgid] != 0)) { // it's charged, so we have tracking
+      if ((pdgToQ[apdgid] != 0)) { // it's charged, so we have tracking
         finalStates.emplace_back(p.px(), p.py(), p.pz(), p.e());
         finalStates.back().set_user_index(idx);
 
@@ -166,15 +164,6 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
       }
     }
   }
-  if (analysis->deepGenGrid) {
-    int user_idx = -2;
-    for (auto &v : grid->get()) {
-      finalStates.emplace_back(v.Px(), v.Py(), v.Pz(), v.E());
-      finalStates.back().set_user_index(user_idx); // not associated with a real particle
-      --user_idx;
-    } 
-  }
-
   // cluster the  jet 
   fastjet::ClusterSequenceArea seq(finalStates, *jetDef, *areaDef);
   std::vector<fastjet::PseudoJet> allJets(fastjet::sorted_by_pt(seq.inclusive_jets(0.)));
@@ -283,74 +272,10 @@ void PandaAnalyzer::FillGenTree(panda::Collection<T>& genParticles)
 
   std::vector<int> indices;
   std::vector<int> unclustered; // I honestly don't know where these come from...
-  if (analysis->deepAntiKtSort) {
-    indices.reserve(nC);
-    std::vector<bool> mask(nC, false);
-
-    JetTree jt(*fullJet);
-    tr->TriggerSubEvent("filling jet history");
-
-    std::vector<int> terminalIdx = jt.GetTerminals();
-    for (auto uidx : terminalIdx) {
-      if (uidx != -1) {
-        auto iter = std::find_if(allConstituents.begin(), allConstituents.end(),
-                                 JetTree::compare(uidx));
-        if (iter == allConstituents.end())
-          continue;
-        
-        int idx = static_cast<int>(iter - allConstituents.begin());
-        indices.push_back(idx);
-        mask[idx] = true;
-      }
-    }
-
-    unclustered.reserve(nC/5); // whatever, just an estimate
-    for (unsigned iC = 0; iC != nC; ++iC) {
-      if (!mask[iC])
-        unclustered.push_back(iC);
-    }
-
-
-    /* // old algorithm
-    auto& history = seq.history();
-    auto& jets = seq.jets();
-    std::vector<JetHistory> ordered_jets;
-    for (auto& h : history) {
-      if (h.jetp_index >= 0) {
-        auto& j = jets.at(h.jetp_index);
-        if (j.user_index() != -1) { // >=0 implies a real particle, <=-2 implies a calo tower
-          auto iter = std::find(allConstituents.begin(), allConstituents.end(), j);
-          if (iter == allConstituents.end()) {
-            continue;
-          }
-          JetHistory jh;
-          jh.user_idx = static_cast<int>(iter - allConstituents.begin());
-          jh.child_idx = h.child;
-          ordered_jets.push_back(jh);
-        }
-      }
-    }
-    std::sort(ordered_jets.begin(), ordered_jets.end(),
-              [](JetHistory x, JetHistory y) { return x.child_idx < y.child_idx; });
-    for (auto& jh : ordered_jets) {
-      indices.push_back(jh.user_idx);
-      unclustered.erase(std::remove(unclustered.begin(), unclustered.end(), jh.user_idx),
-                        unclustered.end());
-    }
-    */
-  }
-
   // now we fill the particles
   nC = std::min(nC, (unsigned)NMAXPF);
   for (unsigned iC = 0; iC != nC; ++iC) {
     unsigned iC_ = iC;
-    if (analysis->deepAntiKtSort) {
-      if (iC < indices.size()) {
-        iC_ = indices.at(iC);
-      } else {
-        iC_ = unclustered.at(iC - indices.size());
-      }
-    }
     fastjet::PseudoJet &c = allConstituents.at(iC_);
 
     if (c.perp() < 0.001) // not a real particle

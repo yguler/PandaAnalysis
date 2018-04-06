@@ -65,7 +65,8 @@ public :
      kGenFatJet  =(1<<11),
      kVHBB       =(1<<12),
      kLepton     =(1<<13),
-     kLeptonFake =(1<<14)
+     kLeptonFake =(1<<14),
+     kLepMonoTop    =(1<<15),
     };
     
     enum LepSelectionBit {

@@ -133,7 +133,7 @@ void PandaAnalyzer::JetBtagSFs()
         else
           eff = lfeff[bineta][binpt];
         if (isIsoJet) {
-          if (analysis->fatjet) {
+          if (analysis->boosted) {
             if (jet==isoJets.at(0))
               gt->isojet1Flav = flavor;
             else if (jet==isoJets.at(1))

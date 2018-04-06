@@ -119,13 +119,6 @@ public:
   bool btagWeights = false;
   bool complicatedLeptons = false;
   bool complicatedPhotons = false;
-  bool deep = false;
-  bool deepAntiKtSort = false;
-  bool deepGen = false;
-  bool deepGenGrid = false;
-  bool deepKtSort = false;
-  bool deepSVs = false;
-  bool deepTracks = false;
   bool fatjet = true;
   bool firstGen = true;
   bool genOnly = false;
@@ -133,7 +126,6 @@ public:
   bool hfCounting = false;
   bool jetFlavorPartons = true;
   bool jetFlavorJets = false;
- // bool monoh = false;
   bool boosted = false;
   bool monojet = false;
   bool puppi_jets = true;

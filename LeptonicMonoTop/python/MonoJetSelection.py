@@ -8,14 +8,20 @@ phoTrigger='(trigger&4)!=0'
 metFilter='metFilter==1'# && egmFilter==1'
 presel = '!(nFatjet==1 && fj1Pt>200) && nJet>0 && jet1Pt>100 && abs(jet1Eta)<2.5 && nTau==0'
 
+calocutSR = '(abs(calomet-pfmet)/pfUmag)<0.5'
+calocutW = '(abs(calomet-pfmet)/pfUWmag)<0.5'
+calocutZ = '(abs(calomet-pfmet)/pfUZmag)<0.5'
+calocutA = '(abs(calomet-pfmet)/pfUAmag)<0.5'
+calocutWW = '(abs(calomet-pfmet)/pfUWWmag)<0.5'
+
 cuts = {
-    'signal' : tAND(metFilter,tAND(presel,'nLooseLep==0 && nLooseElectron==0 && nLoosePhoton==0 && pfUmag>250 && dphipfmet>0.5')),
-    'wmn'    : tAND(metFilter,tAND(presel,'nLoosePhoton==0 && nLooseLep==1 && looseLep1IsTight==1 && abs(looseLep1PdgId)==13 && pfUWmag>250 && dphipfUW>0.5')),
-    'wen'    : tAND(metFilter,tAND(presel,'nLoosePhoton==0 && nLooseLep==1 && looseLep1IsTight==1 && looseLep1IsHLTSafe==1 && abs(looseLep1PdgId)==11 && pfmet>50 && pfUWmag>250 && dphipfUW>0.5')),
-    'zmm'    : tAND(metFilter,tAND(presel,'pfUZmag>250 && dphipfUZ>0.5 && nLooseElectron==0 && nLoosePhoton==0 && nLooseMuon==2 && nTightLep>0 && 60<diLepMass && diLepMass<120')),
-    'zee'    : tAND(metFilter,tAND(presel,'pfUZmag>250 && dphipfUZ>0.5 && nLoosePhoton==0 && nLooseMuon==0 && nLooseElectron==2 && nTightLep>0 && 60<diLepMass && diLepMass<120')),
-    'tme'    : tAND(metFilter,tAND(presel,'pfUWWmag>250 && dphipfUWW>0.5 && nLoosePhoton==0 && nLooseLep==2 && looseLep1IsTight==1 && (looseLep1PdgId==13 && looseLep2PdgId==-11 || looseLep1PdgId==-13 && looseLep2PdgId==11)')),
-    'tem'    : tAND(metFilter,tAND(presel,'pfUWWmag>250 && dphipfUWW>0.5 && nLoosePhoton==0 && nLooseLep==2 && looseLep1IsTight==1 && looseLep1IsHLTSafe==1 && (looseLep1PdgId==11 && looseLep2PdgId==-13 || looseLep1PdgId==-11 && looseLep2PdgId==13)')),
+    'signal' : tAND(metFilter,tAND(presel,tAND(calocutSR,'nLooseLep==0 && nLooseElectron==0 && nLoosePhoton==0 && pfUmag>250 && dphipfmet>0.5'))),
+    'wmn'    : tAND(metFilter,tAND(presel,tAND(calocutW,'nLoosePhoton==0 && nLooseLep==1 && looseLep1IsTight==1 && abs(looseLep1PdgId)==13 && pfUWmag>250 && dphipfUW>0.5'))),
+    'wen'    : tAND(metFilter,tAND(presel,tAND(calocutW,'nLoosePhoton==0 && nLooseLep==1 && looseLep1IsTight==1 && looseLep1IsHLTSafe==1 && abs(looseLep1PdgId)==11 && pfmet>50 && pfUWmag>250 && dphipfUW>0.5'))),
+    'zmm'    : tAND(metFilter,tAND(presel,tAND(calocutZ,'pfUZmag>250 && dphipfUZ>0.5 && nLooseElectron==0 && nLoosePhoton==0 && nLooseMuon==2 && nTightLep>0 && 60<diLepMass && diLepMass<120'))),
+    'zee'    : tAND(metFilter,tAND(presel,tAND(calocutZ,'pfUZmag>250 && dphipfUZ>0.5 && nLoosePhoton==0 && nLooseMuon==0 && nLooseElectron==2 && nTightLep>0 && 60<diLepMass && diLepMass<120'))),
+    'tme'    : tAND(metFilter,tAND(presel,tAND(calocutWW,'pfUWWmag>250 && dphipfUWW>0.5 && nLoosePhoton==0 && nLooseLep==2 && looseLep1IsTight==1 && (looseLep1PdgId==13 && looseLep2PdgId==-11 || looseLep1PdgId==-13 && looseLep2PdgId==11)'))),
+    'tem'    : tAND(metFilter,tAND(presel,tAND(calocutWW,'pfUWWmag>250 && dphipfUWW>0.5 && nLoosePhoton==0 && nLooseLep==2 && looseLep1IsTight==1 && looseLep1IsHLTSafe==1 && (looseLep1PdgId==11 && looseLep2PdgId==-13 || looseLep1PdgId==-11 && looseLep2PdgId==13)'))),
     'pho'    : tAND(metFilter,tAND(presel,'pfUAmag>250 && dphipfUA>0.5 && nLooseLep==0 && nLoosePhoton==1 && loosePho1IsTight==1 && fabs(loosePho1Eta)<1.4442')),
     }
 

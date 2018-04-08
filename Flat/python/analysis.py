@@ -38,21 +38,31 @@ boosted = lambda v=False : _analysis(
         name = 'boosted',
         verbose = v,
         boosted = True,
+        btagWeights = True,
+        useCMVA = True,
+        hfCounting = True,
+        jetFlavorJets = True
     )
 
 resolved = lambda v=False : _analysis(
         name = 'resolved',
         verbose = v,
+        boson = True,
+        bjetRegression = True,
+        btagWeights = True,
+        useCMVA = True,
+        hfCounting = True,
+        jetFlavorJets = True
     )
 
 monojet = lambda v=False : _analysis(
         name = 'monojet',
         verbose = v,
-        monojet = True,
-        hfCounting = True,
-        jetFlavorJets = True,
+	monojet = True,
         btagWeights = True,
         useCMVA = True,
+        hfCounting = True,
+        jetFlavorJets = True
     )
 
 lepmonotop = lambda v=False : _analysis(
@@ -74,10 +84,6 @@ lepmonotop = lambda v=False : _analysis(
         jetFlavorJets = True,
     )
 
-monotop = lambda v=False : _analysis(
-        name = 'monotop',
-        verbose = v,
-    )
 
 vbf = lambda v=False : _analysis(
         name = 'vbf',
@@ -88,85 +94,3 @@ vbf = lambda v=False : _analysis(
         puppi_jets = False
     )
 
-gghbb = lambda v=False : _analysis(
-        name = 'gghbb',
-        verbose = v,
-        recoil = False,
-        ak8 = True,
-    )
-
-deep = lambda v=False : _analysis(
-        name = 'deep',
-        verbose = v,
-        ak8 = True,
-        deep = True,
-        deepTracks = True,
-        deepSVs = True,
-        deepAntiKtSort = True,
-        btagSFs = False,
-        jetFlavorPartons = False,
-    )
-
-deepgen = lambda v=False : _analysis(
-        name = 'deepgen',
-        verbose = v,
-        ak8 = True,
-        btagSFs = False,
-        deepGen = True,
-        genOnly = True,
-    )
-
-wlnhbb = lambda v=False : _analysis(
-        name = 'wlnhbb',
-        verbose = v,
-        ak8 = True,
-        hbb = True,
-        monoh = False,
-        recoil = True,
-        fatjet = True,
-        btagSFs = True,
-        btagWeights = True,
-        useCMVA = True,
-        complicatedLeptons = True,
-        hfCounting = True,
-        reclusterGen = True,
-        bjetRegression = True,
-        varyJES = True,
-        rerunJES = True,
-        jetFlavorPartons = False,
-        jetFlavorJets = True,
-    )
-wlnhbb_ca15 = lambda v=False : _analysis(
-        name = 'wlnhbb',
-        verbose = v,
-        ak8 = False,
-        hbb = True,
-        monoh = False,
-        recoil = True,
-        fatjet = True,
-        btagSFs = True,
-        btagWeights = True,
-        useCMVA = True,
-        complicatedLeptons = True,
-        hfCounting = True,
-        reclusterGen = True,
-        bjetRegression = True,
-        varyJES = True,
-        rerunJES = True,
-        jetFlavorPartons = False,
-        jetFlavorJets = True,
-    )
-
-vv = lambda v=False : _analysis(
-        name = 'vv',
-        verbose = v,
-        recoil = False,
-        fatjet = False,
-        btagSFs = True,
-        complicatedLeptons = True,
-        complicatedPhotons = True,
-        applyMCTriggers = True,
-        varyJES = True,
-        jetFlavorPartons = False,
-        jetFlavorJets = True,
-    )

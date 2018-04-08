@@ -130,13 +130,6 @@ void PandaAnalyzer::FillPFTree()
       pfInfo[i][j] = 0;
     }
   }
-  if (analysis->deepSVs) {
-    for (unsigned i = 0; i != NMAXSV; ++i) {
-      for (unsigned j = 0; j != NSVPROPS; ++j) {
-        svInfo[i][j] = 0;
-      }
-    }}
-
   if (!fj1)
     return;
 
@@ -154,70 +147,12 @@ void PandaAnalyzer::FillPFTree()
   // secondary vertices come first so we can link to tracks later
   std::map<const SecondaryVertex*, std::unordered_set<const PFCand*>> svTracks;
   std::map<const SecondaryVertex*, int> svIdx;
-  if (analysis->deepSVs) {
-    unsigned idx = 0;
-    for (auto &sv : event.secondaryVertices) {
-      if (idx == NMAXSV)
-        break;
-
-      svInfo[idx][0] = sv.x;
-      svInfo[idx][1] = sv.y;
-      svInfo[idx][2] = sv.z;
-      svInfo[idx][3] = sv.ntrk;
-      svInfo[idx][4] = sv.ndof;
-      svInfo[idx][5] = sv.chi2;
-      svInfo[idx][6] = sv.significance;
-      svInfo[idx][7] = sv.vtx3DVal;
-      svInfo[idx][8] = sv.vtx3DeVal;
-      svInfo[idx][9] = sv.pt();
-      svInfo[idx][10] = sv.eta();
-      svInfo[idx][11] = sv.phi();
-      svInfo[idx][12] = sv.m();
-
-      auto *svPtr = &sv;
-      svIdx[svPtr] = idx;
-      svTracks[svPtr] = {};
-      for (auto pf : sv.daughters) {
-        svTracks[svPtr].insert(pf.get());
-      }
-    }
-  }
-
 
   std::vector<const PFCand*> sortedC;
-  if (analysis->deepKtSort || analysis->deepAntiKtSort) {
-    VPseudoJet particles = ConvertPFCands(fj1->constituents,analysis->puppi_jets,0.001);
-    fastjet::ClusterSequenceArea seq(particles,
-                                     *(analysis->deepKtSort ? jetDefKt : jetDef),
-                                     *areaDef);
-    VPseudoJet allJets(seq.inclusive_jets(0.));
-  
-    auto &history = seq.history();
-    auto &jets = seq.jets();
-    vector<JetHistory> ordered_jets;
-    for (auto &h : history) {
-      if (h.jetp_index >= 0) {
-        auto &j = jets.at(h.jetp_index);
-        if (j.user_index() >= 0) {
-          JetHistory jh;
-          jh.user_idx = j.user_index();
-          jh.child_idx = h.child;
-          ordered_jets.push_back(jh);
-        }
-      }
-    }
-    sort(ordered_jets.begin(), ordered_jets.end(),
-         [](JetHistory x, JetHistory y) { return x.child_idx < y.child_idx; });
-    for (auto &jh : ordered_jets) {
-      const PFCand *cand = fj1->constituents.at(jh.user_idx).get();
-      sortedC.push_back(cand);
-    }
-  } else {
     for (auto ref : fj1->constituents)
       sortedC.push_back(ref.get());
     sort(sortedC.begin(), sortedC.end(),
          [](const PFCand *x, const PFCand *y) { return x->pt() > y->pt(); });
-  }
 
   unsigned idx = 0;
   for (auto *cand : sortedC) {
@@ -232,29 +167,6 @@ void PandaAnalyzer::FillPFTree()
     pfInfo[idx][6] = cand->puppiW();
     pfInfo[idx][7] = cand->puppiWNoLep(); 
     pfInfo[idx][8] = cand->hCalFrac;
-    if (analysis->deepTracks) {
-      if (cand->track.isValid())  {
-        TVector3 pca = cand->pca();
-        pfInfo[idx][9] = pca.Perp();
-        pfInfo[idx][10] = pca.Z();
-        pfInfo[idx][11] = cand->track->ptError();
-        pfInfo[idx][12] = cand->track->dxy();
-        pfInfo[idx][13] = cand->track->dz();
-        pfInfo[idx][14] = cand->track->dPhi();
-        pfInfo[idx][15] = cand->q();
-        if (analysis->deepSVs) {
-          for (auto &iter : svTracks) {
-            if (iter.second.find(cand) != iter.second.end()) {
-              TVector3 pos = iter.first->position();
-              pfInfo[idx][16] = svIdx[iter.first] + 1; // offset from 0 value
-              pfInfo[idx][17] = cand->dxy(pos);
-              pfInfo[idx][18] = cand->dz(pos); 
-              break;
-            }
-          }
-        }
-      }
-    }
     idx++;
   }
 
@@ -296,8 +208,6 @@ void PandaAnalyzer::FatjetBasics()
     float ptcut = 200;
     if (analysis->boosted)
       ptcut = 200;
-    if (analysis->deep)
-      ptcut = 400;
     
     // Here, we require the Fatjet pt's to be larger than some nominal value, ptcut
     // if flag rerunJES is on, Fatjets will pass if their JES uncertainties could
@@ -400,7 +310,8 @@ void PandaAnalyzer::FatjetBasics()
         gt->fj1MSDSmeared_sj = gt->fj1MSD * (sjSumSmear.Pt()/sjSum.Pt());
       }
 
-      if (analysis->boosted || analysis->hbb) {
+      if (analysis->boosted) {
+     // if (analysis->boosted || analysis->hbb) {
        
         // mSD correction
         float corrweight=1.;
@@ -758,10 +669,7 @@ void PandaAnalyzer::FatjetMatching()
         } else {
           eff = lfeff[bineta][binpt];
         }
-        if (analysis->hbb)
-          CalcBJetSFs(bSubJetM,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
-        else
-          CalcBJetSFs(bSubJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
+        CalcBJetSFs(bSubJetL,flavor,eta,pt,eff,btagUncFactor,sf,sfUp,sfDown);
         sj_btagcands.push_back(btagcand(iSJ,flavor,eff,sf,sfUp,sfDown));
         sj_sf_cent.push_back(sf);
         if (flavor>0) {

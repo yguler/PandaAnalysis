@@ -51,7 +51,6 @@ void PandaAnalyzer::JetBasics()
   gt->dphipuppiUZ=999; gt->dphipfUZ=999;
   gt->dphipuppiUA=999; gt->dphipfUA=999;
   float maxJetEta = (analysis->vbf) ? 4.7 : 4.5;
-  float maxJetEtaMJ = (analysis->monojet) ? 2.5 : 4.5;
   unsigned nJetDPhi = (analysis->vbf) ? 4 : 5;
 
   gt->badECALFilter = 1;
@@ -59,8 +58,6 @@ void PandaAnalyzer::JetBasics()
 
     // only do eta-phi checks here
     if (abs(jet.eta()) > maxJetEta)
-      continue;
-    if (abs(jet.eta()) > maxJetEtaMJ)
       continue;
     // NOTE:
     // For VBF we require nTightLep>0, but in monotop looseLep1IsTight
@@ -70,8 +67,6 @@ void PandaAnalyzer::JetBasics()
         IsMatched(&matchPhos,0.16,jet.eta(),jet.phi()))
       continue;
     if (analysis->vbf && !jet.loose)
-      continue;
-    if(analysis->monojet && !jet.loose)
       continue;
 
     if (jet.pt()>jetPtThreshold || jet.pt()>bJetPtThreshold) { // nominal or b jets
